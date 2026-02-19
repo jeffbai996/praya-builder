@@ -1,0 +1,19 @@
+name: PrayaBuilder
+version: ${version}
+main: org.govpraya.builder.PrayaBuilderPlugin
+api-version: "1.21"
+description: AI-assisted construction tool for Praya
+authors:
+  - JeffBai
+softdepend:
+  - WorldEdit
+  - FastAsyncWorldEdit
+commands:
+  pbuilder:
+    description: AI building generator
+    usage: /pbuilder generate <description>
+    permission: prayabuilder.use
+permissions:
+  prayabuilder.use:
+    description: Allows use of the building generator
+    default: op

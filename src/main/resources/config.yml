@@ -1,0 +1,40 @@
+# Praya Builder Configuration
+
+# Gemini API
+gemini:
+  api-key: "YOUR_API_KEY_HERE"
+  model: "gemini-2.0-flash"
+
+# Generation limits (blocks)
+limits:
+  max-width: 48
+  max-height: 64
+  max-depth: 48
+
+# Rate limiting
+rate-limit:
+  cooldown-seconds: 30
+
+# Block palette — controls which blocks the AI can use
+palette:
+  structural:
+    - minecraft:white_concrete
+    - minecraft:light_gray_concrete
+    - minecraft:gray_concrete
+    - minecraft:quartz_block
+    - minecraft:smooth_quartz
+    - minecraft:stone_bricks
+    - minecraft:polished_andesite
+  glass:
+    - minecraft:glass
+    - minecraft:light_gray_stained_glass
+    - minecraft:light_blue_stained_glass
+  accent:
+    - minecraft:dark_oak_planks
+    - minecraft:iron_bars
+    - minecraft:sea_lantern
+    - minecraft:glowstone
+  ground:
+    - minecraft:smooth_stone
+    - minecraft:gray_concrete
+    - minecraft:stone_brick_slab
