@@ -37,6 +37,13 @@ build/
 # OS
 .DS_Store
 
+# Python
+venv/
+
+# Tools
+tools/.env
+tools/output/
+
 # Claude Code
 CLAUDE.md
 .claude/
