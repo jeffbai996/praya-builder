@@ -26,8 +26,10 @@ public class BuildPrompt {
             - Y is vertical (up). Ground level is y=0.
             - Only use blocks from this palette: %s
             - Maximum dimensions: %dx%dx%d blocks (width x height x depth)
+            - Maximum number of block entries: %d; coordinates must be unique and inside the declared dimensions
             - Omit air blocks — only include solid blocks
             - Use minecraft: namespaced block IDs (e.g., "minecraft:white_concrete")
+            - Set directional properties when needed, e.g. minecraft:stone_brick_slab[type=top,waterlogged=false]
             - Buildings should be structurally plausible (walls, floors, roof, windows)
             - Interior floors should have open space (rooms, not solid fill)
             - Ground floor should be slightly larger or differentiated (lobby, entrance)
@@ -51,6 +53,7 @@ public class BuildPrompt {
         int maxHeight = config.getInt("limits.max-height", 64);
         int maxDepth = config.getInt("limits.max-depth", 48);
 
-        return SYSTEM_TEMPLATE.formatted(paletteStr, maxWidth, maxHeight, maxDepth);
+        int maxBlocks = config.getInt("limits.max-blocks", 10_000);
+        return SYSTEM_TEMPLATE.formatted(paletteStr, maxWidth, maxHeight, maxDepth, maxBlocks);
     }
 }

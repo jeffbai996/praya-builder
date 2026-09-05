@@ -5,13 +5,12 @@ api-version: "1.21"
 description: AI-assisted construction tool for Praya
 authors:
   - JeffBai
-softdepend:
+depend:
   - WorldEdit
-  - FastAsyncWorldEdit
 commands:
   pbuilder:
     description: AI building generator
-    usage: /pbuilder generate <description>
+    usage: /pbuilder generate [-save] <description>
     permission: prayabuilder.use
 permissions:
   prayabuilder.use:

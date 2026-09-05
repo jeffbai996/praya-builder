@@ -1,6 +1,6 @@
 # Praya Builder Configuration
 
-# Gemini API
+# GEMINI_API_KEY in the server environment takes precedence over api-key.
 gemini:
   api-key: "YOUR_API_KEY_HERE"
   model: "gemini-2.5-flash"
@@ -10,6 +10,8 @@ limits:
   max-width: 48
   max-height: 64
   max-depth: 48
+  # Bounds work per build; it is not a model quality or latency guarantee.
+  max-blocks: 10000
 
 # Rate limiting
 rate-limit:

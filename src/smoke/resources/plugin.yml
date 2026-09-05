@@ -1,0 +1,5 @@
+name: BuilderSmokeTests
+version: '1.0'
+main: org.govpraya.builder.smoke.BuilderSmokeTests
+api-version: '1.21'
+depend: [WorldEdit, PrayaBuilder]

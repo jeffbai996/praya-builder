@@ -8,8 +8,15 @@ import com.google.gson.JsonParser;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.regex.Pattern;
 
 public class BlockGrid {
+
+    public static final int DEFAULT_MAX_BLOCKS = 10_000;
+    private static final Pattern BLOCK_STATE = Pattern.compile(
+            "minecraft:[a-z0-9_]+(?:\\[[a-z0-9_]+=[a-z0-9_]+(?:,[a-z0-9_]+=[a-z0-9_]+)*\\])?");
 
     private final String name;
     private final int dimX;
@@ -26,11 +33,17 @@ public class BlockGrid {
     }
 
     /**
-     * Parses Gemini's JSON response into a validated BlockGrid.
-     * Invalid block IDs fall back to minecraft:stone. Blocks outside
-     * dimension limits are silently dropped.
+     * Preserves valid legacy grids, but rejects malformed builds as a whole.
+     * Registry/state validation happens in the placer before any world mutation.
      */
     public static BlockGrid parse(String json, int maxWidth, int maxHeight, int maxDepth) {
+        return parse(json, maxWidth, maxHeight, maxDepth, DEFAULT_MAX_BLOCKS);
+    }
+
+    public static BlockGrid parse(String json, int maxWidth, int maxHeight, int maxDepth, int maxBlocks) {
+        if (maxWidth <= 0 || maxHeight <= 0 || maxDepth <= 0 || maxBlocks <= 0) {
+            throw new IllegalArgumentException("Build limits must be positive.");
+        }
         JsonObject root = JsonParser.parseString(json).getAsJsonObject();
 
         String name = root.has("name") ? root.get("name").getAsString() : "Unnamed";
@@ -40,27 +53,34 @@ public class BlockGrid {
         int dimZ = maxDepth;
         if (root.has("dimensions")) {
             JsonObject dims = root.getAsJsonObject("dimensions");
-            dimX = Math.min(dims.get("x").getAsInt(), maxWidth);
-            dimY = Math.min(dims.get("y").getAsInt(), maxHeight);
-            dimZ = Math.min(dims.get("z").getAsInt(), maxDepth);
+            dimX = boundedDimension(dims, "x", maxWidth);
+            dimY = boundedDimension(dims, "y", maxHeight);
+            dimZ = boundedDimension(dims, "z", maxDepth);
         }
 
         JsonArray blocksJson = root.getAsJsonArray("blocks");
+        if (blocksJson == null || blocksJson.isEmpty() || blocksJson.size() > maxBlocks) {
+            throw new IllegalArgumentException("Build must contain between 1 and " + maxBlocks + " blocks.");
+        }
         List<Entry> entries = new ArrayList<>();
+        Set<Position> occupied = new HashSet<>();
 
         for (JsonElement elem : blocksJson) {
             JsonObject block = elem.getAsJsonObject();
-            int x = block.get("x").getAsInt();
-            int y = block.get("y").getAsInt();
-            int z = block.get("z").getAsInt();
+            int x = integer(block, "x");
+            int y = integer(block, "y");
+            int z = integer(block, "z");
             String blockId = block.get("block").getAsString();
 
-            if (x < 0 || x >= maxWidth || y < 0 || y >= maxHeight || z < 0 || z >= maxDepth) {
-                continue;
+            if (x < 0 || x >= dimX || y < 0 || y >= dimY || z < 0 || z >= dimZ) {
+                throw new IllegalArgumentException("Block outside declared dimensions: " + x + "," + y + "," + z);
             }
 
-            if (!blockId.startsWith("minecraft:")) {
-                blockId = "minecraft:stone";
+            if (!BLOCK_STATE.matcher(blockId).matches()) {
+                throw new IllegalArgumentException("Malformed block state: " + blockId);
+            }
+            if (!occupied.add(new Position(x, y, z))) {
+                throw new IllegalArgumentException("Duplicate block position: " + x + "," + y + "," + z);
             }
 
             entries.add(new Entry(x, y, z, blockId));
@@ -68,6 +88,28 @@ public class BlockGrid {
 
         return new BlockGrid(name, dimX, dimY, dimZ, entries);
     }
+
+    private static int boundedDimension(JsonObject dims, String key, int limit) {
+        int value = integer(dims, key);
+        if (value <= 0 || value > limit) {
+            throw new IllegalArgumentException("Dimension " + key + " must be between 1 and " + limit);
+        }
+        return value;
+    }
+
+    private static int integer(JsonObject object, String key) {
+        JsonElement value = object.get(key);
+        if (value == null || !value.isJsonPrimitive() || !value.getAsJsonPrimitive().isNumber()) {
+            throw new IllegalArgumentException(key + " must be an integer number.");
+        }
+        try {
+            return value.getAsBigDecimal().intValueExact();
+        } catch (ArithmeticException | NumberFormatException e) {
+            throw new IllegalArgumentException(key + " must be an integer in range.", e);
+        }
+    }
+
+    private record Position(int x, int y, int z) {}
 
     public String name() { return name; }
     public int dimX() { return dimX; }

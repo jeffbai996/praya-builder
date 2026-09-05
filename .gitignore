@@ -39,6 +39,12 @@ build/
 
 # Python
 venv/
+__pycache__/
+.pytest_cache/
+*.pyc
+.env
+.env.*
+!.env.example
 
 # Tools
 tools/.env

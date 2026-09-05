@@ -11,8 +11,8 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 import org.govpraya.builder.ai.BuildPrompt;
-import org.govpraya.builder.ai.GeminiClient;
-import org.govpraya.builder.ai.GeminiClient.GeminiException;
+import org.govpraya.builder.ai.BlockGenerator;
+import org.govpraya.builder.ai.GenerationException;
 import org.govpraya.builder.generation.BlockGrid;
 import org.govpraya.builder.generation.SchematicPlacer;
 
@@ -21,6 +21,9 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.Set;
+import java.util.HashSet;
+import java.util.logging.Level;
 
 public class BuilderCommand implements CommandExecutor {
 
@@ -29,6 +32,7 @@ public class BuilderCommand implements CommandExecutor {
 
     private final PrayaBuilderPlugin plugin;
     private final Map<UUID, Long> cooldowns = new ConcurrentHashMap<>();
+    private final Set<UUID> pending = new HashSet<>();
 
     public BuilderCommand(PrayaBuilderPlugin plugin) {
         this.plugin = plugin;
@@ -45,6 +49,11 @@ public class BuilderCommand implements CommandExecutor {
             return false;
         }
 
+        if (pending.contains(player.getUniqueId())) {
+            sendError(player, "A build is already being generated for you.");
+            return true;
+        }
+
         // Rate limit check
         int cooldownSecs = plugin.getConfig().getInt("rate-limit.cooldown-seconds", 30);
         long now = System.currentTimeMillis();
@@ -58,7 +67,7 @@ public class BuilderCommand implements CommandExecutor {
         // Parse -save flag and description
         boolean saveMode = false;
         int descStart = 1;
-        if (args.length > 2 && args[1].equalsIgnoreCase("-save")) {
+        if (args[1].equalsIgnoreCase("-save")) {
             saveMode = true;
             descStart = 2;
         }
@@ -70,9 +79,13 @@ public class BuilderCommand implements CommandExecutor {
 
         String description = String.join(" ", Arrays.copyOfRange(args, descStart, args.length))
                 .replaceAll("^\"|\"$", "");
+        if (description.isBlank()) {
+            sendError(player, "Provide a building description.");
+            return true;
+        }
 
-        GeminiClient gemini = plugin.getGeminiClient();
-        if (gemini == null) {
+        BlockGenerator generator = plugin.getGenerator();
+        if (generator == null) {
             sendError(player, "Gemini API key not configured.");
             return true;
         }
@@ -83,37 +96,46 @@ public class BuilderCommand implements CommandExecutor {
         cooldowns.put(playerId, now);
 
         String systemPrompt = BuildPrompt.buildSystemPrompt(plugin.getConfig());
+        int maxW = plugin.getConfig().getInt("limits.max-width", 48);
+        int maxH = plugin.getConfig().getInt("limits.max-height", 64);
+        int maxD = plugin.getConfig().getInt("limits.max-depth", 48);
+        int maxBlocks = plugin.getConfig().getInt("limits.max-blocks", BlockGrid.DEFAULT_MAX_BLOCKS);
         boolean finalSaveMode = saveMode;
+        pending.add(playerId);
 
         sendInfo(player, "Generating: " + description);
 
         plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
             try {
-                String jsonText = gemini.generate(systemPrompt, description);
-
-                int maxW = plugin.getConfig().getInt("limits.max-width", 48);
-                int maxH = plugin.getConfig().getInt("limits.max-height", 64);
-                int maxD = plugin.getConfig().getInt("limits.max-depth", 48);
-                BlockGrid grid = BlockGrid.parse(jsonText, maxW, maxH, maxD);
+                String jsonText = generator.generate(systemPrompt, description);
+                BlockGrid grid = BlockGrid.parse(jsonText, maxW, maxH, maxD, maxBlocks);
 
                 plugin.getServer().getScheduler().runTask(plugin, () -> {
+                    pending.remove(playerId);
                     Player p = Bukkit.getPlayer(playerId);
                     if (p == null) return;
 
-                    if (finalSaveMode) {
-                        handleSave(p, grid);
-                    } else {
-                        int placed = SchematicPlacer.placeAtLocation(grid, playerLoc);
-                        sendSuccess(p, "Placed " + placed + " blocks (" + grid.name() + ")");
+                    try {
+                        if (finalSaveMode) {
+                            handleSave(p, grid);
+                        } else {
+                            int placed = SchematicPlacer.placeAtLocation(grid, playerLoc, p);
+                            sendSuccess(p, "Changed " + placed + " blocks (" + grid.name() + "). Use //undo to revert.");
+                        }
+                    } catch (Exception e) {
+                        sendError(p, "Build could not be placed. If changes occurred, use //undo. Check server console.");
+                        plugin.getLogger().log(Level.SEVERE, "Placement failed", e);
                     }
                 });
 
-            } catch (GeminiException e) {
-                bounceError(playerId, "Gemini error: " + e.getMessage());
-                plugin.getLogger().severe("Gemini API error: " + e.getMessage());
+            } catch (GenerationException e) {
+                bounceError(playerId, "Generation error: " + e.getMessage());
+                plugin.getLogger().warning("Generation failed: " + e.getMessage());
+            } catch (IllegalArgumentException e) {
+                bounceError(playerId, "Invalid build: " + e.getMessage());
             } catch (Exception e) {
                 bounceError(playerId, "Unexpected error — check server console.");
-                plugin.getLogger().severe("Generation error: " + e.getMessage());
+                plugin.getLogger().log(Level.SEVERE, "Generation failed", e);
             }
         });
 
@@ -123,7 +145,9 @@ public class BuilderCommand implements CommandExecutor {
     private void handleSave(Player player, BlockGrid grid) {
         try {
             File dir = new File(plugin.getDataFolder(), "schematics");
-            String filename = grid.name().replaceAll("[^a-zA-Z0-9_-]", "_") + ".schem";
+            String name = grid.name().replaceAll("[^a-zA-Z0-9_-]", "_");
+            if (name.isBlank()) name = "building";
+            String filename = name.substring(0, Math.min(name.length(), 80)) + ".schem";
             File file = new File(dir, filename);
             SchematicPlacer.saveSchematic(grid, file);
             sendSuccess(player, "Saved " + grid.blockCount() + " blocks to " + filename);
@@ -135,6 +159,7 @@ public class BuilderCommand implements CommandExecutor {
 
     private void bounceError(UUID playerId, String message) {
         plugin.getServer().getScheduler().runTask(plugin, () -> {
+            pending.remove(playerId);
             Player p = Bukkit.getPlayer(playerId);
             if (p != null) sendError(p, message);
         });
