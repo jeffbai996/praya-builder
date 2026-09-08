@@ -4,6 +4,7 @@ import {materialIcon} from './material-icons.js';
 import {readTheme,saveTheme,bindThemeToggle,readReview,saveReview} from './review-state.js';
 import {bindExports} from './exports.js';
 import {bindViewerTools} from './viewer-tools.js';
+import {renderSupport} from './support-list.js';
 const $=id=>document.getElementById(id);
 const key=b=>`${b.x},${b.y},${b.z}`;
 const element=(tag,className,text)=>{const node=document.createElement(tag);if(className)node.className=className;if(text!==undefined)node.textContent=text;return node;};
@@ -122,6 +123,7 @@ async function load(){
     $('diff').textContent=previous?`Versus ${baseline.toUpperCase()}: ${counts.add} added · ${counts.change} changed · ${counts.remove} removed`:'Initial submission. Select a future revision to compare changes.';
     selection();$('edit-in-studio').href=`/studio?catalogue=${current.id}/${revision}`;$('edit-in-studio').hidden=false;
     materialSchedule();if(changedArtifact)loadNote();
+    const support=current.revisions.find(r=>r.id===revision)?.support||[];renderSupport($('support'),support);$('support-section').hidden=!support.length;
     scene.show();highlight();$('loading').className='hidden';
     for(const id of ['download','export-review','export-schematic','save-note','copy-hash'])$(id).disabled=false;
     document.body.dataset.ready='true';document.body.dataset.revision=revision;document.body.dataset.project=current.id;

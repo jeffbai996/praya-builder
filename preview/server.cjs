@@ -10,6 +10,7 @@ const {materialIcon} = require('./material-icons.cjs');
 const {exportSchematic,exportManifest} = require('./schematic.cjs');
 const {STYLE_VERSION,readThumbnail}=require('./thumbnails.cjs');
 const {workspaceApi}=require('./workspace-api.cjs');
+const {assetSupport}=require('./asset-support.cjs');
 const port = Number(process.env.PREVIEW_PORT || 8091);
 if(!Number.isInteger(port)||port<1024||port>65535) throw Error('Invalid PREVIEW_PORT');
 const hosts=allowedHosts(port,process.env.PREVIEW_PUBLIC_ORIGIN);
@@ -31,7 +32,7 @@ const icons=new Map();
 const workspace=workspaceApi({artifacts,port});
 const files = new Map([
   ['/plot-editor.js',['plot-editor.js','text/javascript']], ['/capture-controls.js',['capture-controls.js','text/javascript']],
-  ['/studio-interface.js',['studio-interface.js','text/javascript']], ['/sign-presets.js',['sign-presets.js','text/javascript']], ['/version-thumbs.js',['version-thumbs.js','text/javascript']],
+  ['/studio-interface.js',['studio-interface.js','text/javascript']], ['/sign-presets.js',['sign-presets.js','text/javascript']], ['/version-thumbs.js',['version-thumbs.js','text/javascript']], ['/support-list.js',['support-list.js','text/javascript']],
   ['/studio',['studio.html','text/html']], ['/studio.js',['studio.js','text/javascript']], ['/studio.css',['studio.css','text/css']],
   ['/', ['index.html','text/html']], ['/style.css',['style.css','text/css']],
   ['/app.js',['app.js','text/javascript']], ['/scene.js',['scene.js','text/javascript']],
@@ -70,7 +71,7 @@ const server=http.createServer(async(req,res)=> {
     } else if(url.pathname==='/api/projects') {
       body=Buffer.from(JSON.stringify(projects.map(project=>({...project,revisions:project.revisions.map(revision=>{
         const artifact=artifacts.get(`${project.id}/${revision.id}`);
-        return {...revision,hash:artifact.hash,cells:artifact.blocks.length,dimensions:artifact.dimensions};
+        return {...revision,hash:artifact.hash,cells:artifact.blocks.length,dimensions:artifact.dimensions,support:assetSupport(artifact,null)};
       })}))));
     } else if(thumbnailMatch) {
       const [,style,projectId,revision]=thumbnailMatch;

@@ -4,8 +4,8 @@ import * as THREE from '/vendor/three/build/three.module.js';
 const WIDTH=256,HEIGHT=160;
 let renderer,atlas,queue=Promise.resolve();
 const texture=()=>atlas??=new Promise((resolve,reject)=>new THREE.TextureLoader().load('/texture.png',t=>{t.magFilter=t.minFilter=THREE.NearestFilter;t.flipY=false;t.encoding=THREE.sRGBEncoding;resolve(t);},undefined,reject));
-async function render(hash,background){
-  const response=await fetch(`/api/workspace/artifacts/${hash}/mesh?ceiling=64`,{signal:AbortSignal.timeout(60000)});
+async function render(url,hash,background){
+  const response=await fetch(url,{signal:AbortSignal.timeout(60000)});
   if(!response.ok)throw Error('Could not load the saved version');
   const mesh=await response.json();if(mesh.hash!==hash)throw Error('Version identity mismatch');
   renderer??=(()=>{const r=new THREE.WebGLRenderer({antialias:true,preserveDrawingBuffer:true});r.setSize(WIDTH,HEIGHT);r.outputEncoding=THREE.sRGBEncoding;r.toneMapping=THREE.ACESFilmicToneMapping;return r;})();
@@ -25,4 +25,6 @@ async function render(hash,background){
     return renderer.domElement.toDataURL('image/jpeg',.8);
   }finally{for(const o of group.children)o.geometry.dispose();material.dispose();renderer.renderLists.dispose();}
 }
-export function versionThumbnail(hash,{background='#e8e8e6'}={}){const job=queue.then(()=>render(hash,background));queue=job.catch(()=>{});return job;}
+function enqueue(url,hash,background){const job=queue.then(()=>render(url,hash,background));queue=job.catch(()=>{});return job;}
+export function versionThumbnail(hash,{background='#e8e8e6'}={}){return enqueue(`/api/workspace/artifacts/${hash}/mesh?ceiling=64`,hash,background);}
+// The register keeps its pre-rendered PNGs (generate-thumbnails.cjs) and the same view direction, so both lists match.

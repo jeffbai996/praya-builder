@@ -3,6 +3,7 @@ import {createScene} from './scene.js';
 import {readTheme,saveTheme,bindThemeToggle} from './review-state.js';
 import {presets,compose} from './sign-presets.js';
 import {versionThumbnail} from './version-thumbs.js';
+import {renderSupport} from './support-list.js';
 const $=id=>document.getElementById(id);
 let scene,draft,site,index,projects=[],ticket=0,busy=false,changes=[],contextFloor=0,contextSurface=0,compareHash=null,bridge=null;
 // Meshes are immutable per candidate hash, so floor switching after the first fetch needs no network round trip.
@@ -95,7 +96,7 @@ async function renderDraft(next,{frame=false}={}){
 }
 async function support(){
  const rows=await api(`drafts/${draft.id}/support${bridge?.connected&&bridge.capabilities?.signData===1?'?signData=1':''}`);
- $('asset-support').replaceChildren(...rows.map(row=>{const li=document.createElement('li'),name=document.createElement('strong');name.textContent=`${row.count.toLocaleString()} ${row.label}`;li.append(name);for(const [stage,ok,extra] of [['Preview',row.preview],['Schematic',row.schematic],['Bridge placement',row.placement,row.placementNote]]){const span=document.createElement('span');span.className='stage';span.dataset.ok=String(ok);span.textContent=stage+(extra&&!ok?' · '+extra:'');li.append(span);}return li;}));
+ renderSupport($('asset-support'),rows);
 }
 // Signs owned by the selected component; plan and candidate share coordinates, so ownership comes from the compiled cells.
 function componentSigns(){

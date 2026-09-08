@@ -201,3 +201,6 @@ body[data-panel=review] .page-heading{display:none}.drawing-actions{display:flex
 .selection-line details{display:inline;margin:0}.selection-line summary{display:inline;margin-left:8px;font-size:11px;cursor:pointer;text-decoration:underline;text-underline-offset:3px}.selection-line code{font:11px ui-monospace,Consolas,monospace;overflow-wrap:anywhere}
 .drawing-actions{align-items:center}.studio-link{display:inline-flex;align-items:center;text-decoration:none;margin-left:auto}
 .project-card-top .case-stamp{color:var(--muted);font-size:8px;letter-spacing:.5px}
+
+/* Special-block support rows, shared with the studio */
+.support-list{list-style:none;padding:0;margin:0 0 6px;font-size:11px;line-height:1.6}.support-list li{display:flex;flex-wrap:wrap;gap:2px 10px;padding:6px 0;border-top:1px solid var(--line)}.support-list li:first-child{border-top:0;padding-top:0}.support-list li>strong{flex:1 1 100%;font-weight:600;color:var(--text)}.support-list .stage{color:var(--muted)}.support-list .stage[data-ok=true]:before{content:"✓ ";color:#4f8f66}.support-list .stage[data-ok=false]:before{content:"✗ ";color:var(--warning)}
