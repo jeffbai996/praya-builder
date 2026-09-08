@@ -27,6 +27,9 @@ async function main(){
   // Version history and compare baseline: choosing a version swaps the diff without moving the camera.
   const versions=index.revisions.filter(r=>r.project===withVersions.project);
   assert.equal(await page.locator('#version-list li').count(),versions.length);
+  // Every saved version gets a picture: served from the workspace, or rendered once here and stored for other devices.
+  if(versions.length){await page.waitForFunction(()=>{const imgs=[...document.querySelectorAll('#version-list img.version-thumb')];return imgs.length===document.querySelectorAll('#version-list li').length&&imgs.every(i=>i.complete&&i.naturalWidth>0);},null,{timeout:120000});
+   const stored=await fetch(`${base}/api/workspace/revisions/${versions[0].id}/thumbnail`);assert.equal(stored.status,200);assert.equal(stored.headers.get('content-type'),'image/jpeg');}
   if(versions.length>=2){
    const camera=await page.evaluate(()=>studioStatus().camera);
    const options=await page.locator('#compare-select option').evaluateAll(o=>o.map(x=>x.value).filter(Boolean));assert.ok(options.length>=1);

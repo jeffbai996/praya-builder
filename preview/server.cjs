@@ -31,7 +31,7 @@ const icons=new Map();
 const workspace=workspaceApi({artifacts,port});
 const files = new Map([
   ['/plot-editor.js',['plot-editor.js','text/javascript']], ['/capture-controls.js',['capture-controls.js','text/javascript']],
-  ['/studio-interface.js',['studio-interface.js','text/javascript']], ['/sign-presets.js',['sign-presets.js','text/javascript']],
+  ['/studio-interface.js',['studio-interface.js','text/javascript']], ['/sign-presets.js',['sign-presets.js','text/javascript']], ['/version-thumbs.js',['version-thumbs.js','text/javascript']],
   ['/studio',['studio.html','text/html']], ['/studio.js',['studio.js','text/javascript']], ['/studio.css',['studio.css','text/css']],
   ['/', ['index.html','text/html']], ['/style.css',['style.css','text/css']],
   ['/app.js',['app.js','text/javascript']], ['/scene.js',['scene.js','text/javascript']],

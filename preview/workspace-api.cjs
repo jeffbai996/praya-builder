@@ -76,6 +76,16 @@ function workspaceApi({artifacts,port}){
     if(!revision.siteId)throw Error('This revision has no surveyed site');
     send(placementPackage(revision,store.get('sites',revision.siteId),store.getArtifact(revision.artifactHash)));
    }
+   // Version thumbnails: rendered once by a browser from the immutable artifact, then kept with the revision.
+   else if(/^revisions\/[a-z0-9-]+\/thumbnail$/.test(route)){
+    const id=route.split('/')[1];store.get('revisions',id);const file=path.join(store.root,'thumbnails',id+'.jpg');
+    if(req.method==='GET'){let bytes;try{bytes=fs.readFileSync(file);}catch(error){if(error.code!=='ENOENT')throw error;send({error:'No thumbnail yet'},404);return true;}res.writeHead(200,{'Content-Type':'image/jpeg','Cache-Control':'private, max-age=31536000, immutable'});res.end(bytes);}
+    else{const match=/^data:image\/jpeg;base64,([A-Za-z0-9+/]+=*)$/.exec(body.image||'');if(!match)throw Error('Expected a JPEG data URL');const bytes=Buffer.from(match[1],'base64');if(bytes.length<4||bytes.length>96*1024||bytes.readUIntBE(0,3)!==0xffd8ff)throw Error('Thumbnail must be a JPEG under 96 KiB');fs.mkdirSync(path.dirname(file),{recursive:true,mode:0o700});const temp=file+'.'+process.pid+'.tmp';fs.writeFileSync(temp,bytes,{mode:0o600});fs.renameSync(temp,file);send({stored:true,bytes:bytes.length},201);}
+   }
+   else if(/^artifacts\/[a-f0-9]{64}\/mesh$/.test(route)&&req.method==='GET'){
+    const a=store.getArtifact(route.split('/')[1]),ceiling=Number(url.searchParams.get('ceiling')??64);if(!Number.isInteger(ceiling)||ceiling<1||ceiling>64)throw Error('Invalid ceiling');
+    send(meshArtifact(a,ceiling));
+   }
    else if(route==='construction/status'&&req.method==='GET')send(await construction.status());
    else if(route==='construction/prepare'&&req.method==='POST')send(await construction.prepare(body.draftId,body),201);
    else if(/^construction\/jobs\/[a-z0-9-]+(?:\/[a-z]+)?$/.test(route)){

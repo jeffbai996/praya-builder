@@ -2,6 +2,7 @@ import {label,componentLabel,coordinates,setCoordinates,record,review,finishChoi
 import {createScene} from './scene.js';
 import {readTheme,saveTheme,bindThemeToggle} from './review-state.js';
 import {presets,compose} from './sign-presets.js';
+import {versionThumbnail} from './version-thumbs.js';
 const $=id=>document.getElementById(id);
 let scene,draft,site,index,projects=[],ticket=0,busy=false,changes=[],contextFloor=0,contextSurface=0,compareHash=null,bridge=null;
 // Meshes are immutable per candidate hash, so floor switching after the first fetch needs no network round trip.
@@ -49,8 +50,14 @@ function localCells(cells){const offset=site?draft.transform.origin.map((v,i)=>v
 function highlight(){const id=$('studio-component').value;scene.select(id?localCells(draft.candidate.blocks.filter(c=>c.component===id)):[]);const overlays=$('diff-visible').checked?localCells(changes):[];if($('impact-visible').checked&&site&&draft.assessment)for(const [cells,kind]of [[draft.assessment.collisions,'change'],[draft.assessment.excavations,'remove']])for(const c of cells)overlays.push({...c,x:c.x-site.origin[0],y:c.y-site.origin[1],z:c.z-site.origin[2],kind});scene.differences(overlays);}
 // Versions: saved artifacts of this draft's project, oldest first, numbered for people.
 const versions=()=>index.revisions.filter(r=>r.project===draft.project).sort((a,b)=>a.createdAt.localeCompare(b.createdAt)).map((r,i)=>({...r,number:i+1}));
-const thumbKey=id=>'pbd.studio.thumb.'+id;
-function thumbnail(revision){const img=document.createElement('img');img.className='version-thumb';img.alt='';let src=null;try{src=localStorage.getItem(thumbKey(revision.id));}catch{}if(src){img.src=src;return img;}const box=document.createElement('span');box.className='version-thumb';box.textContent='V'+revision.number;return box;}
+// Stored thumbnails are served with the revision; a missing one is rendered here once and sent back for every other device.
+const rendering=new Set();
+function thumbnail(revision){
+ const box=document.createElement('span');box.className='version-thumb';box.textContent='V'+revision.number;
+ const img=document.createElement('img');img.className='version-thumb';img.alt='';img.loading='lazy';img.src=`/api/workspace/revisions/${revision.id}/thumbnail`;
+ img.onerror=async()=>{img.replaceWith(box);if(rendering.has(revision.id))return;rendering.add(revision.id);try{const image=await versionThumbnail(revision.artifactHash,{background:getComputedStyle(document.documentElement).getPropertyValue('--canvas').trim()||'#e8e8e6'});await api(`revisions/${revision.id}/thumbnail`,{image});img.onerror=null;img.src=image;box.replaceWith(img);}catch{/* The V-number tile stays; nothing else depends on the picture. */}finally{rendering.delete(revision.id);}};
+ return img;
+}
 function renderVersions(){
  const list=versions(),current=list.filter(r=>r.artifactHash===draft.candidate.hash).at(-1),latest=list.at(-1);
  const state=$('save-state');state.hidden=false;
@@ -141,7 +148,7 @@ $('continue-revision').onclick=()=>action(async()=>{const r=index.revisions.find
 $('new-proposals').onclick=()=>action(async()=>{if(!site)throw Error('Select a site first');status('Compiling three apartment studies…');const result=await api('proposals',{siteId:site.id});await refresh();await renderDraft(result[0],{frame:true});mode('design');status('Three alternatives created. Switch designs to compare them.');});
 $('apply-material').onclick=()=>action(async()=>{const d=requireDraft();status('Compiling…');await renderDraft(await api(`drafts/${d.id}/edit`,{expectedVersion:d.version,componentId:$('studio-component').value||undefined,palette:{[$('material-role').value]:$('material-state').value}}));status('Updated. Camera kept.');});
 for(const direction of ['undo','redo'])$(direction+'-draft').onclick=()=>action(async()=>{const d=requireDraft();await renderDraft(await api(`drafts/${d.id}/history`,{expectedVersion:d.version,direction}));});
-$('save-revision').onclick=()=>action(async()=>{const d=requireDraft(),saved=await api(`drafts/${d.id}/save`,{expectedVersion:d.version,candidateHash:d.candidate.hash,idempotencyKey:'save-'+d.candidate.hash});try{localStorage.setItem(thumbKey(saved.id),scene.snapshot(128,80));}catch{/* Thumbnails are a convenience; the saved version does not depend on them. */}await refresh();renderVersions();status('Saved version of '+saved.plan.name+'.');});
+$('save-revision').onclick=()=>action(async()=>{const d=requireDraft(),saved=await api(`drafts/${d.id}/save`,{expectedVersion:d.version,candidateHash:d.candidate.hash,idempotencyKey:'save-'+d.candidate.hash});await refresh();renderVersions();status('Saved version of '+saved.plan.name+'.');});
 $('prepare-request').onclick=()=>action(async()=>{const d=requireDraft(),request=await api(`drafts/${d.id}/request`,{expectedVersion:d.version,componentId:$('studio-component').value,instruction:$('revision-instruction').value});download({request,context:await api(`drafts/${d.id}/context`)},'design-request.json');status('Request file downloaded. Give it to your design agent, then import the revised plan.');});
 $('submit-revision').onclick=()=>action(async()=>{const d=requireDraft(),file=$('revision-file').files[0];if(!file)throw Error('Choose the revised plan JSON');await renderDraft(await api(`drafts/${d.id}/edit`,{expectedVersion:d.version,plan:JSON.parse(await file.text())}));});
 $('download-plan').onclick=()=>action(async()=>download(requireDraft().plan,'proposal.plan.json'));
