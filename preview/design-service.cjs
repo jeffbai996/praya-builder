@@ -11,8 +11,10 @@ const {applyVariant}=require('./component-variants.cjs');
 const run=promisify(execFile);
 const clone=v=>JSON.parse(JSON.stringify(v));
 function diff(current,previous){
+ const textAt=a=>new Map((a?.signs||[]).map(s=>[s.at.join(','),JSON.stringify(s.lines)]));
+ const currentText=textAt(current),previousText=textAt(previous);
  const key=c=>`${c.x},${c.y},${c.z}`,old=new Map((previous?.blocks||[]).map(c=>[key(c),c])),result=[];
- for(const c of current.blocks){const before=old.get(key(c));if(!before)result.push({...c,kind:'add'});else if(before.block!==c.block||before.component!==c.component)result.push({...c,kind:'change',before:before.block});old.delete(key(c));}
+ for(const c of current.blocks){const before=old.get(key(c));if(!before)result.push({...c,kind:'add'});else if(before.block!==c.block||before.component!==c.component||currentText.get(key(c))!==previousText.get(key(c)))result.push({...c,kind:'change',before:before.block});old.delete(key(c));}
  for(const c of old.values())result.push({...c,kind:'remove'});return result;
 }
 async function compilePlan(plan){

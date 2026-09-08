@@ -74,22 +74,29 @@ public final class TestWorldBridge implements AutoCloseable {
     }
     private static void safe(BlockData data) {
         String n=data.getMaterial().name();
-        if(!ALLOWED.contains(n))throw new IllegalArgumentException("Block not in tested placement allowlist: "+n);
-        if(n.contains("WATER")||n.contains("LAVA")||n.contains("SAND")||n.equals("GRAVEL")||n.contains("CONCRETE_POWDER")||n.contains("REDSTONE")||n.contains("PISTON")||n.contains("TNT")||n.contains("FIRE")||n.contains("PORTAL")||n.contains("COMMAND")||n.contains("STRUCTURE")||n.contains("SCULK")||n.contains("SPAWNER")||n.contains("OBSERVER")||n.contains("DISPENSER")||n.contains("DROPPER")||n.contains("HOPPER")||n.contains("CHEST")||n.contains("BARREL")||n.contains("FURNACE")||n.contains("SMOKER")||n.contains("SIGN")||n.contains("BANNER")||n.contains("SHULKER")||n.contains("LECTERN")||n.contains("CAMPFIRE")||n.contains("BEE")||n.contains("BREWING"))throw new IllegalArgumentException("Block outside isolated placement policy: "+n);
+        if(!n.endsWith("_WALL_SIGN")&&!ALLOWED.contains(n))throw new IllegalArgumentException("Block not in tested placement allowlist: "+n);
+        if(n.contains("WATER")||n.contains("LAVA")||n.contains("SAND")||n.equals("GRAVEL")||n.contains("CONCRETE_POWDER")||n.contains("REDSTONE")||n.contains("PISTON")||n.contains("TNT")||n.contains("FIRE")||n.contains("PORTAL")||n.contains("COMMAND")||n.contains("STRUCTURE")||n.contains("SCULK")||n.contains("SPAWNER")||n.contains("OBSERVER")||n.contains("DISPENSER")||n.contains("DROPPER")||n.contains("HOPPER")||n.contains("CHEST")||n.contains("BARREL")||n.contains("FURNACE")||n.contains("SMOKER")||(n.contains("SIGN")&&!n.endsWith("_WALL_SIGN"))||n.contains("BANNER")||n.contains("SHULKER")||n.contains("LECTERN")||n.contains("CAMPFIRE")||n.contains("BEE")||n.contains("BREWING"))throw new IllegalArgumentException("Block outside isolated placement policy: "+n);
         if(data.getAsString().contains("waterlogged=true"))throw new IllegalArgumentException("Waterlogged writes are disabled");
     }
     private JsonObject process(String route,JsonObject input) throws Exception {
         World world=world();JsonObject out=new JsonObject();
-        if(route.equals("/status")){out.addProperty("connected",true);out.addProperty("world",world.getName());out.addProperty("worldId",world.getUID().toString());out.add("minimum",JSON.toJsonTree(minimum));out.add("maximum",JSON.toJsonTree(maximum));out.addProperty("dataVersion",Bukkit.getUnsafe().getDataVersion());JsonObject capabilities=new JsonObject();capabilities.addProperty("survey",1);capabilities.addProperty("placement",readOnly?0:1);capabilities.addProperty("batchCells",128);out.add("capabilities",capabilities);return out;}
+        if(route.equals("/status")){out.addProperty("connected",true);out.addProperty("world",world.getName());out.addProperty("worldId",world.getUID().toString());out.add("minimum",JSON.toJsonTree(minimum));out.add("maximum",JSON.toJsonTree(maximum));out.addProperty("dataVersion",Bukkit.getUnsafe().getDataVersion());JsonObject capabilities=new JsonObject();capabilities.addProperty("survey",1);capabilities.addProperty("placement",readOnly?0:1);capabilities.addProperty("batchCells",128);capabilities.addProperty("signData",1);out.add("capabilities",capabilities);return out;}
         if(!world.getUID().toString().equals(input.get("worldId").getAsString()))throw new IllegalArgumentException("World identity mismatch");
         JsonArray cells=input.getAsJsonArray(route.equals("/read")||route.equals("/survey")?"cells":"changes");
         if(cells==null||cells.size()>128)throw new IllegalArgumentException("Bridge batch limit exceeded");
         Set<String> unique=new HashSet<>();
         for(JsonElement value:cells){JsonObject c=value.getAsJsonObject();int x=integer(c,"x"),y=integer(c,"y"),z=integer(c,"z");bounds(world,x,y,z);if(!unique.add(x+","+y+","+z))throw new IllegalArgumentException("Duplicate batch cell");}
-        if(route.equals("/read")){JsonArray states=new JsonArray();for(JsonElement value:cells){JsonObject c=value.getAsJsonObject();states.add(world.getBlockAt(integer(c,"x"),integer(c,"y"),integer(c,"z")).getBlockData().getAsString());}out.add("states",states);return out;}
-        if(route.equals("/survey")){JsonArray states=new JsonArray(),entities=new JsonArray();for(int i=0;i<cells.size();i++){JsonObject c=cells.get(i).getAsJsonObject();var block=world.getBlockAt(integer(c,"x"),integer(c,"y"),integer(c,"z"));states.add(block.getBlockData().getAsString());if(block.getState() instanceof TileState)entities.add(i);}out.add("states",states);out.add("blockEntities",entities);return out;}
+        if(route.equals("/read")||route.equals("/survey")){
+            JsonArray states=new JsonArray(),entities=new JsonArray(),signs=new JsonArray();
+            for(int i=0;i<cells.size();i++){
+                JsonObject c=cells.get(i).getAsJsonObject();var block=world.getBlockAt(integer(c,"x"),integer(c,"y"),integer(c,"z"));var state=block.getState();
+                states.add(block.getBlockData().getAsString());signs.add(SignData.read(state));if(state instanceof TileState)entities.add(i);
+            }
+            out.add("states",states);out.add("signs",signs);if(route.equals("/survey"))out.add("blockEntities",entities);return out;
+        }
         ArrayList<BlockData> intended=new ArrayList<>(),before=new ArrayList<>();
-        for(JsonElement value:cells){JsonObject c=value.getAsJsonObject();BlockData a=Bukkit.createBlockData(c.get("block").getAsString()),b=Bukkit.createBlockData(c.get("before").getAsString());safe(a);safe(b);intended.add(a);before.add(b);if(world.getBlockAt(integer(c,"x"),integer(c,"y"),integer(c,"z")).getState() instanceof TileState)throw new IllegalArgumentException("Existing block-entity data is outside placement policy");}
+        ArrayList<JsonElement> signAfter=new ArrayList<>(),signBefore=new ArrayList<>();
+        for(JsonElement value:cells){JsonObject c=value.getAsJsonObject();BlockData a=Bukkit.createBlockData(c.get("block").getAsString()),b=Bukkit.createBlockData(c.get("before").getAsString());safe(a);safe(b);intended.add(a);before.add(b);signAfter.add(SignData.checked(c.get("sign"),a.getMaterial().name().endsWith("_WALL_SIGN")));signBefore.add(SignData.checked(c.get("beforeSign"),b.getMaterial().name().endsWith("_WALL_SIGN")));var existing=world.getBlockAt(integer(c,"x"),integer(c,"y"),integer(c,"z")).getState();if(existing instanceof TileState && !(existing instanceof org.bukkit.block.Sign))throw new IllegalArgumentException("Existing block-entity data is outside placement policy");}
         if(route.equals("/validate")){out.addProperty("valid",true);return out;}
         int applied=0;long started=System.nanoTime();
         try(var edit=WorldEdit.getInstance().newEditSession(BukkitAdapter.adapt(world))) {
@@ -97,8 +104,13 @@ public final class TestWorldBridge implements AutoCloseable {
         edit.setSideEffectApplier(SideEffectSet.none());
         for(int i=0;i<cells.size();i++){
             JsonObject c=cells.get(i).getAsJsonObject();var block=world.getBlockAt(integer(c,"x"),integer(c,"y"),integer(c,"z"));
-            if(!block.getBlockData().equals(before.get(i)))break;
-            if(!edit.setBlock(BlockVector3.at(block.getX(),block.getY(),block.getZ()),BukkitAdapter.adapt(intended.get(i))))break;
+            if(!block.getBlockData().equals(before.get(i))||!SignData.read(block.getState()).equals(signBefore.get(i)))break;
+            if(!block.getBlockData().equals(intended.get(i))&&!edit.setBlock(BlockVector3.at(block.getX(),block.getY(),block.getZ()),BukkitAdapter.adapt(intended.get(i))))break;
+            edit.flushSession();
+            if(!signAfter.get(i).isJsonNull()){
+                if(!(block.getState() instanceof org.bukkit.block.Sign sign))throw new IllegalStateException("Placed sign is unavailable");
+                SignData.write(sign,signAfter.get(i));
+            }
             applied++;
             if(System.nanoTime()-started>4_000_000)break;
         }

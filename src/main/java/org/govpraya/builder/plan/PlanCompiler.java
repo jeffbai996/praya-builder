@@ -34,7 +34,7 @@ public final class PlanCompiler {
 
     private JsonObject expand(JsonObject root) {
         fields(root, "schema_version", "plan_id", "revision", "name", "description", "dimensions",
-                "palette", "components", "spaces", "references");
+                "palette", "components", "spaces", "references", "signs");
         if (integer(root.get("schema_version")) != 1) throw new IllegalArgumentException("Unsupported schema version");
         JsonObject dims = root.getAsJsonObject("dimensions");
         fields(dims, "x", "y", "z");
@@ -91,6 +91,29 @@ public final class PlanCompiler {
             blocks.add(block);
         }
         result.add("blocks", blocks);
+        if (root.has("signs")) {
+            JsonArray signs = root.getAsJsonArray("signs");
+            if (signs.size() > 128) throw new IllegalArgumentException("Too many signs");
+            JsonArray verified = new JsonArray();
+            Set<Cell> seenSigns = new HashSet<>();
+            for (JsonElement element : signs) {
+                JsonObject sign = element.getAsJsonObject(); fields(sign, "at", "lines");
+                int[] at = vector(sign.get("at")); Cell cell = new Cell(at[0], at[1], at[2]);
+                OwnedBlock placed = cells.get(cell);
+                if (placed == null || !placed.state.matches("minecraft:[a-z_]+_wall_sign\\[.*") || !seenSigns.add(cell))
+                    throw new IllegalArgumentException("Sign text requires a unique wall sign block");
+                JsonArray lines = sign.getAsJsonArray("lines");
+                if (lines.size() != 4) throw new IllegalArgumentException("Signs need four lines");
+                for (JsonElement line : lines) {
+                    if (!line.isJsonPrimitive() || !line.getAsJsonPrimitive().isString()) throw new IllegalArgumentException("Sign lines must be strings");
+                    String value = line.getAsString();
+                    if (value.length() > 24 || value.chars().anyMatch(Character::isISOControl))
+                        throw new IllegalArgumentException("Sign line invalid or too long");
+                }
+                verified.add(sign.deepCopy());
+            }
+            result.add("signs", verified);
+        }
         result.addProperty("hash", hash(result.toString()));
         return result;
     }

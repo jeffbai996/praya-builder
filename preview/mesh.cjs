@@ -9,6 +9,8 @@ const models = require(`prismarine-viewer/public/blocksStates/${VERSION}.json`);
 const atlasHeader = require('node:fs').readFileSync(require.resolve(`prismarine-viewer/public/textures/${VERSION}.png`));
 const texel = [1/atlasHeader.readUInt32BE(16),1/atlasHeader.readUInt32BE(20)];
 
+require('./special-block-models.cjs').install(models);
+
 function insetAtlasUVs(uvs) {
   // Upstream quads sample exactly on atlas tile borders, leaking adjacent textures into block seams.
   // Keep each quad within its own texels without changing geometry or authored block states.
@@ -95,6 +97,7 @@ function meshArtifact(artifact, ceiling=64) {
     insetAtlasUVs(geometry.uvs);
     sections.push(Object.fromEntries(Object.entries(geometry).map(([key,value])=>[key,ArrayBuffer.isView(value)?Array.from(value):value])));
   }
-  return {rendererVersion:VERSION,hash:artifact.hash,ceiling,sections,warnings:[]};
+  const signs=(artifact.signs||[]).filter(s=>s.at[1]<ceiling).map(s=>({...s,block:artifact.blocks.find(c=>c.x===s.at[0]&&c.y===s.at[1]&&c.z===s.at[2])?.block}));
+  return {rendererVersion:VERSION,hash:artifact.hash,ceiling,sections,signs,warnings:[]};
 }
 module.exports={meshArtifact,stateBlock,VERSION};
