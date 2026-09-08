@@ -17,8 +17,17 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: preview/package-lock.json
+      - name: Install preview dependencies
+        run: npm --prefix preview ci --ignore-scripts
       - name: Build plugin
         run: bash gradlew --no-daemon build
+      - name: Compile preview revisions
+        run: npm --prefix preview run compile
       - name: Run regression tests
         run: |
           python -m venv venv

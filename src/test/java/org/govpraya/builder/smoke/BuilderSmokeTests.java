@@ -10,6 +10,8 @@ import java.nio.file.Files;
 import java.nio.file.FileAlreadyExistsException;
 import java.util.Arrays;
 import java.util.logging.Level;
+import org.bukkit.Bukkit;
+import com.sk89q.worldedit.bukkit.BukkitAdapter;
 
 /** Opt-in isolated-server probe; never include this jar in a normal deployment. */
 public final class BuilderSmokeTests extends JavaPlugin {
@@ -61,6 +63,67 @@ public final class BuilderSmokeTests extends JavaPlugin {
                 check(!Files.exists(invalidPath), "Invalid build left a schematic");
             }
         }
+        String preview = System.getenv("BUILDER_PREVIEW_FILE");
+        if (preview != null && !preview.isBlank()) {
+            var input = java.nio.file.Path.of(preview);
+            check(Files.size(input) <= 4 * 1024 * 1024, "Preview artifact too large");
+            String json = Files.readString(input);
+            var apartment = BlockGrid.parse(json, 48, 64, 48);
+            var export = directory.resolve("apartment.schem");
+            SchematicPlacer.saveSchematic(apartment, export.toFile());
+            try (var reader = BuiltInClipboardFormat.SPONGE_V3_SCHEMATIC.getReader(Files.newInputStream(export))) {
+                var clipboard = reader.read();
+                check(clipboard.getDimensions().equals(BlockVector3.at(apartment.dimX(), apartment.dimY(), apartment.dimZ())),
+                        "Apartment dimensions differ from the preview");
+                for (var entry : apartment.entries()) {
+                    String expected = BukkitAdapter.adapt(Bukkit.createBlockData(entry.blockId())).getAsString();
+                    String actual = clipboard.getBlock(BlockVector3.at(entry.x(), entry.y(), entry.z())).getAsString();
+                    check(expected.equals(actual), "Apartment block changed during export: " + entry);
+                }
+            }
+            Files.writeString(directory.resolve("apartment.artifact.json"), json,
+                    java.nio.file.StandardOpenOption.CREATE_NEW);
+            getLogger().info("APARTMENT_ROUNDTRIP_PASS cells=" + apartment.blockCount() + " artifact=" + directory);
+        }
+        String browserExports = System.getenv("BUILDER_SCHEMATIC_DIR");
+        if (browserExports != null && !browserExports.isBlank()) {
+            checkBrowserExports(java.nio.file.Path.of(browserExports));
+        }
+    }
+
+    /** Read the browser's bytes directly: re-exporting through Java would mask codec errors. */
+    private void checkBrowserExports(java.nio.file.Path directory) throws Exception {
+        int count = 0;
+        try (var files = Files.list(directory)) {
+            for (var file : files.filter(p -> p.toString().endsWith(".schem")).sorted().toList()) {
+                var source = file.resolveSibling(file.getFileName().toString().replace(".schem", ".json"));
+                var expected = BlockGrid.parse(Files.readString(source), 48, 64, 48);
+                var states = new java.util.HashMap<BlockVector3, String>();
+                for (var entry : expected.entries()) {
+                    states.put(BlockVector3.at(entry.x(), entry.y(), entry.z()),
+                            BukkitAdapter.adapt(Bukkit.createBlockData(entry.blockId())).getAsString());
+                }
+                try (var reader = BuiltInClipboardFormat.SPONGE_V3_SCHEMATIC.getReader(Files.newInputStream(file))) {
+                    var clipboard = reader.read();
+                    check(clipboard.getDimensions().equals(BlockVector3.at(expected.dimX(), expected.dimY(), expected.dimZ())),
+                            "Browser export dimensions changed: " + file);
+                    check(clipboard.getOrigin().equals(BlockVector3.ZERO), "Browser export origin changed");
+                    for (int y = 0; y < expected.dimY(); y++) {
+                        for (int z = 0; z < expected.dimZ(); z++) {
+                            for (int x = 0; x < expected.dimX(); x++) {
+                                var pos = BlockVector3.at(x, y, z);
+                                check(states.getOrDefault(pos, "minecraft:air").equals(clipboard.getBlock(pos).getAsString()),
+                                        "Browser export state changed: " + file + " at " + pos);
+                            }
+                        }
+                    }
+                }
+                count++;
+                getLogger().info("BROWSER_SCHEMATIC_PASS " + file.getFileName());
+            }
+        }
+        check(count > 0, "No browser schematics tested");
+        getLogger().info("BROWSER_SCHEMATICS_PASS count=" + count);
     }
 
     private static BlockGrid grid(String state) {

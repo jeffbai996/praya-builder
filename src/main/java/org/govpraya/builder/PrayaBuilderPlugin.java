@@ -8,6 +8,7 @@ import org.govpraya.builder.ai.BlockGenerator;
 public class PrayaBuilderPlugin extends JavaPlugin {
 
     private BlockGenerator generator;
+    private org.govpraya.builder.generation.TestWorldBridge bridge;
 
     @Override
     public void onEnable() {
@@ -26,12 +27,17 @@ public class PrayaBuilderPlugin extends JavaPlugin {
         }
 
         getCommand("pbuilder").setExecutor(new BuilderCommand(this));
+        if ("1".equals(System.getenv("BUILDER_TEST_BRIDGE"))) {
+            try { bridge = new org.govpraya.builder.generation.TestWorldBridge(this); }
+            catch (Exception error) { getLogger().severe("Isolated bridge disabled: " + error.getMessage()); }
+        }
 
         getLogger().info("Praya Builder v" + getPluginMeta().getVersion() + " enabled");
     }
 
     @Override
     public void onDisable() {
+        if (bridge != null) bridge.close();
         getLogger().info("Praya Builder disabled");
     }
 

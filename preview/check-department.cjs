@@ -1,0 +1,77 @@
+const {setTheme}=require('./check-theme-control.cjs');
+const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'playwright');
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const path=require('node:path');
+async function main(){
+  const browser=await chromium.launch({headless:true,executablePath:process.env.CHROMIUM_PATH,
+    args:['--no-sandbox','--enable-unsafe-swiftshader','--use-angle=swiftshader']});
+  try{
+    const context=await browser.newContext({viewport:{width:1600,height:1050},acceptDownloads:true});
+    const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
+    const output=path.join(__dirname,'test-output');fs.mkdirSync(output,{recursive:true});
+    await page.goto(process.env.PREVIEW_TEST_URL||'http://127.0.0.1:8091');
+    const ready=()=>page.waitForFunction(()=>window.previewStatus?.().ready);
+    await ready();await page.evaluate(()=>document.fonts.ready);
+    assert.equal(await page.textContent('#wordmark'),'builder');
+    assert.equal(await page.textContent('#department-name'),'Buildings Department');
+    assert.match(await page.textContent('#build-number'),/^b\d{8}\.\d+$/);
+    const checkBuildPlacement=async()=>{
+      assert.equal(await page.locator('.department-brand #build-number').count(),1);
+      const department=await page.locator('#department-name').boundingBox();
+      const build=await page.locator('#build-number').boundingBox();
+      assert(build.y>=department.y+department.height);
+      assert(Math.abs(build.x-department.x)<1);
+    };
+    await checkBuildPlacement();
+    assert(!(await page.locator('body').innerText()).includes('Cutaways do not change the plan'));
+    assert.match(await page.locator('#wordmark').evaluate(el=>getComputedStyle(el).fontFamily),/DM Sans/);
+    assert.match(await page.locator('h1').evaluate(el=>getComputedStyle(el).fontFamily),/Urbanist/);
+    assert(await page.evaluate(()=>document.fonts.check('600 38px "DM Sans"')&&document.fonts.check('600 32px Urbanist')));
+    assert.equal(await page.textContent('#connection-label'),'Live');
+    assert(!(await page.locator('body').innerText()).includes('FICTIONAL DEPARTMENT'));
+    await page.screenshot({path:path.join(output,'department-light.png')});
+    await setTheme(page,'dark');assert.equal(await page.getAttribute('html','data-theme'),'dark');
+    await page.reload();await ready();assert.equal(await page.getAttribute('html','data-theme'),'dark');
+    assert.equal(await page.locator('body').evaluate(el=>getComputedStyle(el).backgroundColor),'rgb(20, 20, 20)');
+    await page.screenshot({path:path.join(output,'department-dark.png')});
+    await page.click('[data-panel="register"]');await page.fill('#search','library');
+    assert.equal(await page.locator('.project-card:visible').count(),1);
+    await page.click('[data-open-project="library"]');await ready();
+    assert.equal((await page.evaluate(()=>previewStatus())).project,'library');
+    await page.route('**/api/health',route=>route.fulfill({status:503,body:'offline'}));
+    await page.evaluate(()=>window.dispatchEvent(new Event('online')));
+    await page.waitForFunction(()=>document.getElementById('connection-label').textContent==='Offline');
+    await page.unroute('**/api/health');await page.evaluate(()=>window.dispatchEvent(new Event('online')));
+    await page.waitForFunction(()=>document.getElementById('connection-label').textContent==='Live');
+    assert(await page.isDisabled('#changes'));
+    await page.screenshot({path:path.join(output,'library.png')});
+    await page.selectOption('#project','terrace');await ready();
+    await page.screenshot({path:path.join(output,'terrace.png')});
+    await page.click('[data-tab="notes"]');
+    await page.fill('#review-note','Test note: check entrance proportions.');
+    await page.selectOption('#review-status','changes');await page.click('#save-note');
+    await page.reload();await ready();await page.click('[data-tab="notes"]');
+    assert.equal(await page.inputValue('#review-note'),'Test note: check entrance proportions.');
+    await page.selectOption('#project','courtyard');await ready();
+    assert.equal(await page.inputValue('#review-note'),'');
+    await page.selectOption('#project','terrace');await ready();
+    const pending=page.waitForEvent('download');await page.click('#export-review');
+    const download=await pending,file=path.join(output,'review-record.json');await download.saveAs(file);
+    const record=JSON.parse(fs.readFileSync(file,'utf8'));
+    assert.equal(record.project,'terrace');assert.equal(record.review.status,'changes');
+    assert.equal(record.review.note,'Test note: check entrance proportions.');
+    assert.equal(record.artifactHash,(await page.evaluate(()=>previewStatus())).hash);
+    await page.click('[data-tab="materials"]');assert((await page.locator('#materials li').count())>0);
+    await page.setViewportSize({width:390,height:844});await page.waitForTimeout(250);
+    await checkBuildPlacement();
+    assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+    await page.screenshot({path:path.join(output,'department-mobile.png'),fullPage:true});
+    await page.click('#help');assert(await page.locator('#help-dialog').isVisible());
+    await page.keyboard.press('Escape');assert(!(await page.locator('#help-dialog').isVisible()));
+    await page.goto((process.env.PREVIEW_TEST_URL||'http://127.0.0.1:8091')+'/?project=library&revision=r0');
+    await ready();assert.equal((await page.evaluate(()=>previewStatus())).project,'library');
+    assert.deepEqual(errors,[]);console.log('DEPARTMENT_BROWSER_PASS');
+  }finally{await browser.close();}
+}
+main().catch(e=>{console.error(e);process.exitCode=1;});

@@ -53,3 +53,9 @@ tools/output/
 # Claude Code
 CLAUDE.md
 .claude/
+
+# Browser preview dependencies and generated review artifacts
+node_modules/
+preview/generated/
+preview/test-output/
+preview/.workspace/
