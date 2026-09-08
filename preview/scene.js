@@ -2,6 +2,8 @@ import * as THREE from '/vendor/three/build/three.module.js';
 import {OrbitControls} from '/vendor/three/examples/jsm/controls/OrbitControls.js';
 
 export function createScene(canvas) {
+  let needsRender=true;
+  function invalidate(){needsRender=true;}
   const renderer=new THREE.WebGLRenderer({canvas,antialias:true,preserveDrawingBuffer:true});
   renderer.setPixelRatio(Math.min(devicePixelRatio,2));
   renderer.outputEncoding=THREE.sRGBEncoding;
@@ -24,7 +26,7 @@ export function createScene(canvas) {
   const siteLines=new THREE.Group();scene.add(siteLines);
   function siteBounds(site){
     for(const child of [...siteLines.children]){siteLines.remove(child);child.geometry.dispose();child.material.dispose();}
-    if(!site)return;
+    invalidate();if(!site)return;
     for(const [bounds,color]of [[site.plot,0x718d79],...site.protected.map(b=>[b,0xd79a59])]){
       const min=bounds.min.map((v,i)=>v-site.origin[i]),max=bounds.max.map((v,i)=>v-site.origin[i]);
       const helper=new THREE.Box3Helper(new THREE.Box3(new THREE.Vector3(...min),new THREE.Vector3(...max)),color);siteLines.add(helper);
@@ -41,7 +43,7 @@ export function createScene(canvas) {
   function view(name) {
     currentView=name;const [x,y,z]=presets[name],targetY=name==='street'?7:8;
     camera.position.set(center[0]+(x-16)*viewScale,baseY+targetY+(y-targetY)*viewScale,center[1]+(z-16)*viewScale);
-    controls.target.set(center[0],baseY+targetY,center[1]);controls.update();
+    controls.target.set(center[0],baseY+targetY,center[1]);controls.update();invalidate();
   }
   // Fit once per project, not per revision: comparisons retain their camera.
   function frame(dimensions,groundY=0){center=[dimensions.x/2,dimensions.z/2];baseY=groundY;viewScale=Math.max(1,dimensions.x/32,dimensions.z/32);view(currentView);}
@@ -58,7 +60,7 @@ export function createScene(canvas) {
       const point=new THREE.Vector3(x,y,z).sub(target),depth=point.dot(direction);
       distance=Math.max(distance,Math.abs(point.dot(right))/Math.tan(horizontal)+depth,Math.abs(point.dot(up))/Math.tan(vertical)+depth);
     }
-    controls.target.copy(target);camera.position.copy(target).addScaledVector(direction,distance*1.15);controls.update();
+    controls.target.copy(target);camera.position.copy(target).addScaledVector(direction,distance*1.15);controls.update();invalidate();
   }
   let lightingMode='studio';
   function lighting(name) {
@@ -68,15 +70,21 @@ export function createScene(canvas) {
     renderer.shadowMap.enabled=warm;
     sun.color.set(warm?0xffdfb3:0xffffff);sun.intensity=warm?1.05:.75;
     hemisphere.intensity=warm?.8:1.1;renderer.toneMappingExposure=warm?.95:1;
-    if(material)material.needsUpdate=true;floor.material.needsUpdate=true;
+    if(material)material.needsUpdate=true;floor.material.needsUpdate=true;invalidate();
   }
   lighting('studio');
   view('perspective');
-  function resize(){const rect=canvas.getBoundingClientRect();renderer.setSize(rect.width,rect.height,false);camera.aspect=rect.width/rect.height;camera.updateProjectionMatrix();}
+  function resize(){const rect=canvas.getBoundingClientRect();renderer.setSize(rect.width,rect.height,false);camera.aspect=rect.width/rect.height;camera.updateProjectionMatrix();invalidate();}
   new ResizeObserver(resize).observe(canvas);resize();
   let frames=0,started=performance.now();
-  function draw(){controls.update();renderer.render(scene,camera);frames++;requestAnimationFrame(draw);}draw();
-  function clear(group=building){for(const child of [...group.children]){group.remove(child);child.geometry.dispose();}}
+  // Draw on demand: OrbitControls.update() reports movement (including damping), everything else marks the scene dirty.
+  controls.addEventListener('change',invalidate);
+  document.addEventListener('visibilitychange',invalidate);
+  function draw(){
+    if(!document.hidden){const moved=controls.update();if(moved||needsRender){needsRender=false;renderer.render(scene,camera);frames++;}}
+    requestAnimationFrame(draw);
+  }draw();
+  function clear(group=building){for(const child of [...group.children]){group.remove(child);child.geometry.dispose();if(child.userData.sign){child.material.map.dispose();child.material.dispose();}}}
   async function load(mesh,group=building) {
     const texture=await texturePromise;
     material??=new THREE.MeshLambertMaterial({map:texture,vertexColors:true,transparent:true,alphaTest:.1});
@@ -88,40 +96,57 @@ export function createScene(canvas) {
       geometry.setIndex(part.indices);geometry.computeBoundingSphere();
       const object=new THREE.Mesh(geometry,material);object.position.set(part.sx,part.sy,part.sz);object.castShadow=true;object.receiveShadow=true;group.add(object);
     }
+    for(const sign of mesh.signs||[]){
+      const label=document.createElement('canvas');label.width=384;label.height=192;
+      const ctx=label.getContext('2d');ctx.clearRect(0,0,384,192);ctx.fillStyle='#171411';ctx.font='26px monospace';ctx.textAlign='center';ctx.textBaseline='middle';
+      sign.lines.forEach((line,i)=>ctx.fillText(line,192,30+i*43,360));
+      const map=new THREE.CanvasTexture(label);map.minFilter=THREE.LinearFilter;
+      const object=new THREE.Mesh(new THREE.PlaneGeometry(.96,.48),new THREE.MeshBasicMaterial({map,transparent:true,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-1}));
+      const facing=/facing=(north|south|east|west)/.exec(sign.block)?.[1]||'north';
+      const [x,y,z]=sign.at;object.position.set(x+.5,y+.5,z+.5);
+      if(facing==='north'){object.position.z=z+.873;object.rotation.y=Math.PI;}
+      if(facing==='south'){object.position.z=z+.127;}
+      if(facing==='east'){object.position.x=x+.127;object.rotation.y=Math.PI/2;}
+      if(facing==='west'){object.position.x=x+.873;object.rotation.y=-Math.PI/2;}
+      object.userData.sign=true;group.add(object);
+    }
+    invalidate();
   }
   function select(cells) {
     if(outline){scene.remove(outline);outline.geometry.dispose();outline.material.dispose();outline=null;}
-    if(!cells.length)return;
+    invalidate();if(!cells.length)return;
     const bounds=new THREE.Box3();
     for(const p of cells){bounds.expandByPoint(new THREE.Vector3(p.x,p.y,p.z));bounds.expandByPoint(new THREE.Vector3(p.x+1,p.y+1,p.z+1));}
-    outline=new THREE.Box3Helper(bounds,0xb67b31);scene.add(outline);
+    outline=new THREE.Box3Helper(bounds,0xb67b31);scene.add(outline);invalidate();
   }
   function differences(cells) {
     if(changes){scene.remove(changes);for(const obj of changes.children){obj.geometry.dispose();obj.material.dispose();}changes=null;}
-    if(!cells.length)return;
+    invalidate();if(!cells.length)return;
     changes=new THREE.Group();
     for(const [kind,color] of [['add',0x2dbb88],['change',0xffbf38],['remove',0xef7663]]) {
       const subset=cells.filter(c=>c.kind===kind);if(!subset.length)continue;
       const mesh=new THREE.InstancedMesh(new THREE.BoxGeometry(1.02,1.02,1.02),new THREE.MeshBasicMaterial({color,transparent:true,opacity:.48,depthWrite:false}),subset.length);
       subset.forEach((p,i)=>mesh.setMatrixAt(i,new THREE.Matrix4().makeTranslation(p.x+.5,p.y+.5,p.z+.5)));changes.add(mesh);
-    }scene.add(changes);
+    }scene.add(changes);invalidate();
   }
   function pick(event){const rect=canvas.getBoundingClientRect();const pointer=new THREE.Vector2((event.clientX-rect.left)/rect.width*2-1,-(event.clientY-rect.top)/rect.height*2+1);const ray=new THREE.Raycaster();ray.setFromCamera(pointer,camera);return ray.intersectObjects(building.children)[0];}
+  // Small preview for version lists; rendered fresh so an on-demand loop cannot hand back a stale buffer.
+  function snapshot(width,height){renderer.render(scene,camera);const output=document.createElement('canvas');output.width=width;output.height=height;const ctx=output.getContext('2d');const scale=Math.max(width/canvas.width,height/canvas.height),w=canvas.width*scale,h=canvas.height*scale;ctx.drawImage(canvas,(width-w)/2,(height-h)/2,w,h);return output.toDataURL('image/jpeg',.7);}
   function png(label){renderer.render(scene,camera);const output=document.createElement('canvas');output.width=canvas.width;output.height=canvas.height+64;const ctx=output.getContext('2d');ctx.drawImage(canvas,0,0);ctx.fillStyle='#f7f8f3';ctx.fillRect(0,canvas.height,output.width,64);ctx.fillStyle='#29493e';ctx.font='16px sans-serif';ctx.fillText(label,24,canvas.height+38);return output;}
   canvas.addEventListener('keydown',event=>{
     const offsets={ArrowLeft:-.12,ArrowRight:.12};
     if(event.key in offsets){const v=camera.position.clone().sub(controls.target);v.applyAxisAngle(new THREE.Vector3(0,1,0),offsets[event.key]);camera.position.copy(controls.target).add(v);}
     else if(['+','=','-'].includes(event.key)){camera.position.sub(controls.target).multiplyScalar(event.key==='-'?1.1:.9).add(controls.target);}
     else if(event.key==='ArrowUp'||event.key==='ArrowDown'){camera.position.y+=event.key==='ArrowUp'?2:-2;}
-    else if(event.key.toLowerCase()==='r')view('perspective');else return;event.preventDefault();controls.update();
+    else if(event.key.toLowerCase()==='r')view('perspective');else return;event.preventDefault();controls.update();invalidate();
   });
   function theme(mode){
     const dark=mode==='dark',oled=mode==='oled';
     scene.background.set(oled?'#000000':dark?'#242424':'#e8e8e6');
     floor.material.color.set(oled?'#000000':dark?'#303030':'#e3e3e0').convertSRGBToLinear();
     floor.visible=!oled;
-    grid.material.opacity=oled?.055:dark?.13:.3;
+    grid.material.opacity=oled?.055:dark?.13:.3;invalidate();
   }
-  return {load,siteBounds,loadContext:mesh=>load(mesh,context),contextVisible:value=>{context.visible=value;siteLines.visible=value;},position:offset=>building.position.fromArray(offset),view,frame,fit,lighting,gridVisible:value=>{grid.visible=value;},presentation:()=>({lighting:lightingMode,grid:grid.visible}),select,differences,pick,png,theme,hide:()=>{building.visible=false;},show:()=>{building.visible=true;},
+  return {load,siteBounds,loadContext:mesh=>load(mesh,context),contextVisible:value=>{context.visible=value;siteLines.visible=value;invalidate();},position:offset=>{building.position.fromArray(offset);invalidate();},view,frame,fit,lighting,gridVisible:value=>{grid.visible=value;invalidate();},presentation:()=>({lighting:lightingMode,grid:grid.visible}),select,differences,pick,png,snapshot,theme,hide:()=>{building.visible=false;invalidate();},show:()=>{building.visible=true;invalidate();},
     camera:()=>[...camera.position.toArray(),...controls.target.toArray()],metrics:()=>({frames,elapsed:performance.now()-started,triangles:renderer.info.render.triangles})};
 }

@@ -27,6 +27,13 @@ async function checkConnection(){
 }
 window.addEventListener('offline',()=>connection(false));window.addEventListener('online',checkConnection);
 checkConnection();setInterval(checkConnection,30000);
+// Human label first; the raw block state and coordinates stay one click away for people who need them.
+function selection(name,detail,raw){
+  const box=$('selection');box.replaceChildren();
+  if(!name){box.textContent='Click a block to see which component it belongs to.';return;}
+  box.append(element('b','',name));if(detail)box.append(' · '+detail);
+  if(raw){const details=element('details');details.append(element('summary','','Details'),' ',element('code','',raw));box.append(details);}
+}
 function difference(current,previous){
   if(!previous)return [];
   const old=new Map(previous.blocks.map(b=>[key(b),b])),result=[];
@@ -113,7 +120,7 @@ async function load(){
     $('component').value=next.components.some(c=>c.id===selected)?selected:'';
     const counts=Object.fromEntries(['add','change','remove'].map(kind=>[kind,changed.filter(b=>b.kind===kind).length]));
     $('diff').textContent=previous?`Versus ${baseline.toUpperCase()}: ${counts.add} added · ${counts.change} changed · ${counts.remove} removed`:'Initial submission. Select a future revision to compare changes.';
-    $('selection').textContent='Click a block to identify its component and state.';
+    selection();$('edit-in-studio').href=`/studio?catalogue=${current.id}/${revision}`;$('edit-in-studio').hidden=false;
     materialSchedule();if(changedArtifact)loadNote();
     scene.show();highlight();$('loading').className='hidden';
     for(const id of ['download','export-review','export-schematic','save-note','copy-hash'])$(id).disabled=false;
@@ -146,11 +153,11 @@ function createCards(){
   $('project-cards').replaceChildren(...projects.map(current=>{
     const card=element('article','project-card');card.dataset.id=current.id;
     const top=element('div','project-card-top');
-    top.append(element('span','case-stamp',current.caseId+' / CONCEPT'),projectThumbnail(current));
+    top.append(element('span','case-stamp',current.caseId),projectThumbnail(current));
     const body=element('div','project-card-body'),meta=element('div','project-card-meta');
     const dimensions=current.revisions.find(r=>r.id===current.latest).dimensions;
     meta.append(element('span','',`${dimensions.x} × ${dimensions.z} site`),element('span','',current.floors+' floors'),element('span','',current.units),element('span','',current.revisions.length+' revision'+(current.revisions.length===1?'':'s')));
-    const button=element('button','secondary-button','Open project file ↗');button.dataset.openProject=current.id;
+    const button=element('button','secondary-button','Open design');button.dataset.openProject=current.id;
     button.addEventListener('click',()=>{if(!leaveDraft())return;configureProject(current.id,current.latest);showPanel('review');load();});
     body.append(element('div','eyebrow',current.type.toUpperCase()),element('h3','',current.name),element('p','',current.summary),meta,button);card.append(top,body);return card;
   }));renderRegister();
@@ -160,7 +167,7 @@ function download(blob,name){const url=URL.createObjectURL(blob),link=document.c
 $('project').addEventListener('change',()=>{if(!leaveDraft()){$('project').value=project.id;return;}configureProject($('project').value);showPanel('review');load();});
 $('revision').addEventListener('change',()=>{if(!leaveDraft()){$('revision').value=artifact.revision;return;}setBaselines();load();});
 $('ceiling').addEventListener('change',load);$('baseline').addEventListener('change',load);
-$('component').addEventListener('change',()=>{highlight();const c=artifact?.components.find(c=>c.id===$('component').value);$('selection').textContent=c?`${c.role}. Outline shows owned bounds.`:'Click a block to identify its component and state.';});
+$('component').addEventListener('change',()=>{highlight();const c=artifact?.components.find(c=>c.id===$('component').value);if(c)selection(c.id.replaceAll('-',' '),c.role);else selection();});
 $('changes').addEventListener('change',highlight);
 for(const button of document.querySelectorAll('[data-view]'))button.addEventListener('click',()=>{scene?.view(button.dataset.view);for(const b of document.querySelectorAll('[data-view]')){b.classList.toggle('active',b===button);b.setAttribute('aria-pressed',String(b===button));}});
 for(const button of document.querySelectorAll('[data-panel]'))button.addEventListener('click',()=>showPanel(button.dataset.panel));
@@ -217,7 +224,7 @@ $('model').addEventListener('pointerup',event=>{
   const hit=scene.pick(event);if(!hit)return;
   const candidates=[-.01,.01].map(delta=>({x:Math.floor(hit.point.x+hit.face.normal.x*delta),y:Math.floor(hit.point.y+hit.face.normal.y*delta),z:Math.floor(hit.point.z+hit.face.normal.z*delta)}));
   const block=candidates.map(pos=>artifact.blocks.find(b=>key(b)===key(pos)&&b.block!=='minecraft:air')).find(Boolean);
-  if(block){$('component').value=block.component;$('selection').textContent=`${block.component} · ${block.block} · (${block.x}, ${block.y}, ${block.z})`;highlight();}
+  if(block){$('component').value=block.component;selection(block.component.replaceAll('-',' '),block.block.replace('minecraft:','').split('[')[0].replaceAll('_',' '),`${block.block} · (${block.x}, ${block.y}, ${block.z})`);highlight();}
 });
 window.previewStatus=()=>({ready,project:project?.id,revision:artifact?.revision,hash:artifact?.hash,camera:scene?.camera(),metrics:scene?.metrics(),presentation:scene?.presentation(),changes:changed.length});
 async function init(){

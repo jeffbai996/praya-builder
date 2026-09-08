@@ -35,7 +35,7 @@
       <div><p class="eyebrow">BUILDINGS DEPARTMENT / DESIGN SERVICES</p><h1 id="page-title">Design review</h1><p class="subtitle">Project files, site envelopes and building proposals.</p></div>
     </section>
     <section id="register-panel" hidden aria-label="Project register">
-      <div class="register-summary"><div><span id="project-total">—</span> project files</div><div><span id="revision-total">—</span> design revisions</div><span class="register-scope">Proposal sites · block coordinates</span></div>
+      <div class="register-summary"><div><span id="project-total">—</span> project files</div><div><span id="revision-total">—</span> design revisions</div></div>
       <div class="register-tools"><span id="register-count">— files</span><div class="register-filters"><label for="register-use" class="sr-only">Building use</label><select id="register-use"><option value="">All building uses</option></select><label for="register-sort" class="sr-only">Sort project files</label><select id="register-sort"><option value="case">Case number</option><option value="name">Name A–Z</option><option value="area">Largest site</option></select></div><div class="layout-switch" role="group" aria-label="Register layout"><button data-layout="cards" aria-pressed="true">Cards</button><button data-layout="records" aria-pressed="false">Records</button></div></div>
       <div id="project-cards" class="project-cards" data-layout="cards"></div><p id="no-projects" hidden>No matching projects. Try a name, case ID or building type.</p>
     </section>
@@ -61,9 +61,8 @@
             <div class="north-marker" aria-hidden="true">Z−<span>↑</span></div>
             <div class="view-footer"><div><span id="revision-tag" class="tag">R02</span><span id="identity">Preparing compiled design</span></div><span id="site-dimensions">—</span></div>
           </div>
-          <div class="selection-line"><span class="selection-marker"></span><span id="selection">Click a block to identify its component and state.</span></div>
-          <div class="drawing-actions">        <button id="download" class="secondary-button" disabled>↓ Save view</button>
-        <button id="export-schematic" class="primary-button" disabled>↓ Export schematic</button></div>
+          <div class="selection-line"><span class="selection-marker"></span><span id="selection">Click a block to see which component it belongs to.</span></div>
+          <div class="drawing-actions"><button id="download" class="secondary-button" disabled>↓ Save view</button><button id="export-schematic" class="primary-button" disabled>↓ Export schematic</button><a id="edit-in-studio" class="secondary-button studio-link" href="/studio" hidden>Edit in Studio ↗</a></div>
           <div class="drawing-notice"><p>Minecraft 1.21.4 assets <span aria-hidden="true">·</span> 1.21.11 target <span aria-hidden="true">·</span> Study lighting</p></div>
         </section>
         <aside class="inspector">

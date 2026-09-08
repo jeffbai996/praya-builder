@@ -20,7 +20,7 @@ async function main(){
   const initialDrafts=await page.locator('#draft-select option').count();
   await page.locator('#fixture-slope').click();await page.waitForFunction(()=>document.querySelector('#site-select').value&&document.body.dataset.busy==='false');
   await page.locator('#new-proposals').click();await page.waitForFunction(()=>document.body.dataset.ready==='true'&&document.body.dataset.busy==='false',null,{timeout:90000});
-  assert.equal(await page.locator('#draft-select option').count(),initialDrafts+3);assert.match(await page.locator('#candidate-state').textContent(),/Valid/);
+  assert.equal(await page.locator('#draft-select option').count(),initialDrafts+3);assert.match(await page.locator('#candidate-state').textContent(),/Ready to review/);
   const draftId=await page.getAttribute('body','data-draft');
   await page.locator('#studio-component').selectOption('home-1-1-envelope');await page.locator('#material-role').selectOption('brick');await page.locator('#material-choice').selectOption('minecraft:gray_terracotta');
   const before=await(await fetch(`${base}/api/workspace/drafts/${draftId}`)).json();
@@ -30,10 +30,10 @@ async function main(){
   await page.locator('#undo-draft').click();await page.waitForFunction(()=>document.body.dataset.busy==='false');
   await page.locator('#redo-draft').click();await page.waitForFunction(()=>document.body.dataset.busy==='false');
   await page.locator('#studio-component').selectOption('wing-0-roof');await page.locator('#roof-variant').selectOption('open');await page.locator('#apply-variant').click();await page.waitForFunction(()=>document.body.dataset.busy==='false');
-  assert.match(await page.locator('#candidate-state').textContent(),/Valid/);
+  assert.match(await page.locator('#candidate-state').textContent(),/Ready to review/);
   await page.locator('#undo-draft').click();await page.waitForFunction(()=>document.body.dataset.busy==='false');
-  await page.locator('#save-revision').click();await page.waitForFunction(()=>document.querySelector('#studio-status').textContent.startsWith('Saved revision of'));
-  const handoffPromise=page.waitForEvent('download');await page.locator('#download-handoff').click();const handoff=await handoffPromise;const packageFile=path.join(workspace,'placement-package.json');await handoff.saveAs(packageFile);const bundle=JSON.parse(fs.readFileSync(packageFile));assert.equal(bundle.kind,'builder-placement-handoff');assert.equal(bundle.execution,'review-required');assert.equal(bundle.artifactHash,bundle.artifact.hash);assert.ok(bundle.surveyHash);assert.equal(bundle.world,'builder-isolated');
+  await page.locator('#save-revision').click();await page.waitForFunction(()=>document.querySelector('#studio-status').textContent.startsWith('Saved version of'));
+  await page.locator('.studio-steps a[data-mode=construction]').click();const handoffPromise=page.waitForEvent('download');await page.locator('#download-handoff').click();const handoff=await handoffPromise;const packageFile=path.join(workspace,'placement-package.json');await handoff.saveAs(packageFile);const bundle=JSON.parse(fs.readFileSync(packageFile));assert.equal(bundle.kind,'builder-placement-handoff');assert.equal(bundle.execution,'review-required');assert.equal(bundle.artifactHash,bundle.artifact.hash);assert.ok(bundle.surveyHash);assert.equal(bundle.world,'builder-isolated');
   await page.reload();await page.waitForFunction(()=>document.body.dataset.ready==='true'&&document.body.dataset.busy==='false');assert.equal(await page.getAttribute('body','data-draft'),draftId);
   for(const theme of ['light','dark','oled']){await setTheme(page,theme);await page.screenshot({path:path.join(workspace,'studio-'+theme+'.png'),fullPage:true});}
   for(const view of ['front','side','rear','roof']){await page.locator(`[data-studio-view=${view}]`).click();await page.waitForTimeout(250);await page.screenshot({path:path.join(workspace,'study-'+view+'.png')});}

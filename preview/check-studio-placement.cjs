@@ -7,7 +7,7 @@ async function main(){
  const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH,headless:true,args:['--no-sandbox','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});const page=await browser.newPage({viewport:{width:1440,height:1080}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
  try{
   await page.goto(base+'/studio?draft='+chosen.id);await page.waitForFunction(()=>document.body.dataset.ready==='true'&&document.body.dataset.busy==='false');
-  await page.locator('#prepare-placement').click();await page.waitForFunction(()=>!document.querySelector('#apply-placement').disabled&&document.body.dataset.busy==='false',null,{timeout:60000});
+  await page.locator('.studio-steps a[data-mode=construction]').click();await page.locator('#prepare-placement').click();await page.waitForFunction(()=>!document.querySelector('#apply-placement').disabled&&document.body.dataset.busy==='false',null,{timeout:60000});
   await page.locator('#apply-placement').click();await page.waitForFunction(()=>{const j=document.querySelector('#placement-summary').dataset;return j.applied>0&&j.state==='applying';},null,{timeout:60000});
   await page.locator('#cancel-placement').click();await page.waitForFunction(()=>{const j=document.querySelector('#placement-summary').dataset;return j.state==='paused'&&document.body.dataset.busy==='false';});
   await page.waitForTimeout(500);await page.locator('#reconcile-placement').click();await page.waitForFunction(()=>!document.querySelector('#apply-placement').disabled&&document.body.dataset.busy==='false');

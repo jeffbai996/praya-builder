@@ -42,7 +42,7 @@ function workspaceApi({artifacts,port}){
    if(write&&req.headers.origin&&!origins.has(req.headers.origin)){send({error:'Origin not allowed'},403);return true;}
    if(write&&req.headers['x-builder-write']!=='1'){send({error:'X-Builder-Write header required'},403);return true;}
    const body=write?await readBody(req):null;
-   if(route==='context'&&req.method==='GET')send({schemaVersion:1,sites:store.list('sites').map(({blocks,...s})=>({...s,cells:blocks.length})),drafts:store.list('drafts').map(d=>({id:d.id,name:d.plan.name,version:d.version,valid:d.valid,candidateHash:d.candidate.hash,siteId:d.siteId})),revisions:store.list('revisions'),jobs:store.list('jobs').map(j=>({id:j.id,state:j.state,kind:j.kind,artifactHash:j.artifactHash,world:j.world,createdAt:j.createdAt})),limits:{buildCells:10000,surveyVolume:262144,queue:4},models:'External agent workflow; no provider calls'});
+   if(route==='context'&&req.method==='GET')send({schemaVersion:1,sites:store.list('sites').map(({blocks,...s})=>({...s,cells:blocks.length})),drafts:store.list('drafts').map(d=>({id:d.id,name:d.plan.name,version:d.version,valid:d.valid,candidateHash:d.candidate.hash,parentHash:d.parentHash,project:d.project,siteId:d.siteId})),revisions:store.list('revisions'),jobs:store.list('jobs').map(j=>({id:j.id,state:j.state,kind:j.kind,artifactHash:j.artifactHash,world:j.world,createdAt:j.createdAt})),limits:{buildCells:10000,surveyVolume:262144,queue:4},models:'External agent workflow; no provider calls'});
    else if(route==='integration'&&req.method==='GET'){const config=integrationConfig(),target=await captures.status();send({...config,capture:target.connected&&target.world===config.world&&target.capabilities?.survey===1?'paper-survey':'worldedit-schematic',selections:store.list('selections'),captures:store.list('captures').map(({selection,...job})=>job)});}
    else if(route==='capture/status'&&req.method==='GET')send(await captures.status());
    else if(route==='capture/selection'&&req.method==='POST'){
@@ -109,10 +109,14 @@ function workspaceApi({artifacts,port}){
     if(req.method==='GET'){
      const d=store.get('drafts',id);
      if(action==='context')send(service.context(id));
-     else if(action==='diff'){const baseline=d.baselineHash||d.parentHash||d.history[0].candidateHash;send(diff(d.candidate,store.getArtifact(baseline)));}
+     else if(action==='diff'){const requested=url.searchParams.get('baseline');if(requested&&!/^[a-f0-9]{64}$/.test(requested))throw Error('Baseline must be an artifact hash');const baseline=requested||d.baselineHash||d.parentHash||d.history[0].candidateHash;send(diff(d.candidate,store.getArtifact(baseline)));}
      else if(action==='mesh'){
       const ceiling=Number(url.searchParams.get('ceiling')??64);const a=d.candidate,turns=d.transform?.turns||0;
       const transformed={...a,dimensions:turns%2?{x:a.dimensions.z,y:a.dimensions.y,z:a.dimensions.x}:a.dimensions,blocks:transformCells(a,{origin:[0,0,0],turns})};
+      if(a.signs){
+       const cells=a.signs.map(sign=>{const [x,y,z]=sign.at;return {...a.blocks.find(c=>c.x===x&&c.y===y&&c.z===z),lines:sign.lines};});
+       transformed.signs=transformCells({...a,blocks:cells},{origin:[0,0,0],turns}).map(c=>({at:[c.x,c.y,c.z],lines:c.lines}));
+      }
       send(meshArtifact(transformed,ceiling));
      }else if(action==='schematic'){res.writeHead(200,{'Content-Type':'application/octet-stream','Content-Disposition':`attachment; filename="proposal-${id}.schem"`});res.end(exportSchematic(d.candidate));}
      else if(!action)send(d);else send({error:'Unknown operation'},404);

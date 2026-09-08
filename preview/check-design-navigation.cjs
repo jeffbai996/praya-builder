@@ -24,10 +24,14 @@ async function main(){
   const meshResponse=page.waitForResponse(r=>r.url().includes('/mesh?ceiling=6')&&r.status()===200);
   await page.selectOption('#studio-ceiling','6');await meshResponse;await page.waitForFunction(()=>document.body.dataset.busy==='false');
   await page.selectOption('#studio-ceiling','64');await page.waitForFunction(()=>document.body.dataset.busy==='false');
-  for(const section of ['site','revise','place','design']){
+  // Modes: the drawing stays put; Site and Construction swap the column beside it and remain reachable below the sticky bar.
+  for(const [section,mode] of [['site','site'],['place','construction'],['design','design']]){
    await page.locator('.studio-steps a[href="#'+section+'-workspace"]').click();
-   const bounds=await page.locator('#'+section+'-workspace').boundingBox();assert.ok(bounds.y>=55&&bounds.y<200,section+' is reachable below sticky navigation');
+   assert.equal(await page.getAttribute('#studio-main','data-mode'),mode);
+   await page.waitForFunction(id=>{const r=document.getElementById(id).getBoundingClientRect();return r.top>=55&&r.top+60<innerHeight;},section+'-workspace',{timeout:2000});
+   const bounds=await page.locator('#'+section+'-workspace').boundingBox();const viewport=page.viewportSize().height;assert.ok(bounds&&bounds.y>=55&&bounds.y+60<viewport,section+' is visible below sticky navigation');
   }
+  assert.equal(await page.locator('#revise-workspace').isVisible(),true,'adjust tools stay beside the model in design mode');
   await page.screenshot({path:path.join(out,'design-studio-mobile.png')});
   for(const width of [320,768,1440]){
    await page.setViewportSize({width,height:1000});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,'studio width '+width);

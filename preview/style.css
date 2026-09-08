@@ -56,7 +56,7 @@ canvas{display:block;width:100%;height:100%;touch-action:none}.views{display:fle
 .view-footer>div{display:flex;gap:8px;align-items:center}.view-footer>span{font-size:8px;letter-spacing:.7px;white-space:nowrap}
 .tag{font-size:9px;letter-spacing:.5px;background:var(--panel);border:1px solid var(--line);color:var(--text);padding:4px 7px;border-radius:2px}
 #identity{font-family:ui-monospace,Consolas,monospace;font-size:8px}.drawing-controls{display:grid;grid-template-columns:1fr 1fr;gap:20px;padding:17px 18px 12px}.drawing-controls select{background:var(--panel-soft)}
-.selection-line{display:flex;align-items:center;gap:8px;padding:0 18px 15px;color:var(--muted);font-size:10px;min-height:30px;overflow-wrap:anywhere}
+.selection-line{display:flex;align-items:center;gap:8px;padding:14px 18px 15px;color:var(--muted);font-size:10px;min-height:30px;overflow-wrap:anywhere}
 .selection-marker{width:6px;height:6px;flex-shrink:0;border:1px solid var(--muted)}.drawing-notice{display:flex;gap:8px;padding:11px 18px;background:var(--panel-soft);border-top:1px solid var(--line);color:var(--muted);font-size:9px;line-height:1.6}
 .drawing-notice p{margin:0}.inspector-heading{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid var(--line)}h2{font-size:13px;margin:0;font-weight:600}.inspector-heading .status-dot{margin:0}
 .inspector-tabs{display:flex;border-bottom:1px solid var(--line);padding:0 12px}.inspector-tabs button{flex:1;border:0;background:none;color:var(--muted);font-size:10px;padding:13px 4px;position:relative}
@@ -195,3 +195,9 @@ dialog{background:var(--panel);color:var(--text);border:1px solid var(--line);bo
 }
 
 body[data-panel=review] .page-heading{display:none}.drawing-actions{display:flex;gap:8px;padding:0 18px 16px;flex-wrap:wrap}.model-expanded .drawing-actions{display:none}
+
+/* Selection readout shared with the studio: human label first, raw state behind Details. */
+.selection-line{font-size:12px;line-height:1.5;align-items:flex-start;padding-bottom:8px}.selection-line b{color:var(--text);font-weight:600}.selection-marker{width:8px;height:8px;margin-top:6px}
+.selection-line details{display:inline;margin:0}.selection-line summary{display:inline;margin-left:8px;font-size:11px;cursor:pointer;text-decoration:underline;text-underline-offset:3px}.selection-line code{font:11px ui-monospace,Consolas,monospace;overflow-wrap:anywhere}
+.drawing-actions{align-items:center}.studio-link{display:inline-flex;align-items:center;text-decoration:none;margin-left:auto}
+.project-card-top .case-stamp{color:var(--muted);font-size:8px;letter-spacing:.5px}
