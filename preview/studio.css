@@ -123,3 +123,7 @@ body[data-busy=true][data-ready=true] .drawing-veil{display:flex}
 .studio-body .help-button{width:44px;height:44px;font-size:16px;font-weight:600}
 #help-dialog{width:min(480px,calc(100vw - 28px))}#help-dialog h2{font-size:22px;margin:8px 0 14px}#help-dialog p{font-size:12px;line-height:1.8;color:var(--muted)}
 @media(max-width:1023px){.view-tools{flex-wrap:wrap}.studio-body .compact-select{flex:1 1 100%}}
+
+/* Asset support and sign presets */
+.support-list{list-style:none;padding:0;margin:10px 0;font-size:12px;line-height:1.6}.support-list li{display:flex;flex-wrap:wrap;gap:4px 10px;padding:6px 0;border-top:1px solid var(--line)}.support-list li>strong{flex:1 1 100%;font-weight:600}.support-list .stage{color:var(--muted)}.support-list .stage[data-ok=true]:before{content:"✓ ";color:#4f8f66}.support-list .stage[data-ok=false]:before{content:"✗ ";color:var(--warning)}
+.sign-tools{margin-top:16px;padding-top:12px;border-top:1px solid var(--line)}.sign-fields label{margin-top:8px}.sign-preview{margin:12px 0 0;padding:10px 12px;border:1px solid var(--line);border-radius:4px;background:var(--panel-soft);font:12px/1.7 ui-monospace,Consolas,monospace;text-align:center;white-space:pre;min-height:calc(4 * 1.7em + 20px);overflow-x:auto}

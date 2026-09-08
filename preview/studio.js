@@ -1,8 +1,9 @@
 import {label,componentLabel,coordinates,setCoordinates,record,review,finishChoices,siteInterface} from './studio-interface.js';
 import {createScene} from './scene.js';
 import {readTheme,saveTheme,bindThemeToggle} from './review-state.js';
+import {presets,compose} from './sign-presets.js';
 const $=id=>document.getElementById(id);
-let scene,draft,site,index,projects=[],ticket=0,busy=false,changes=[],contextFloor=0,contextSurface=0,compareHash=null;
+let scene,draft,site,index,projects=[],ticket=0,busy=false,changes=[],contextFloor=0,contextSurface=0,compareHash=null,bridge=null;
 // Meshes are immutable per candidate hash, so floor switching after the first fetch needs no network round trip.
 const meshCache=new Map();
 async function draftMesh(d,ceiling){const key=d.candidate.hash+':'+ceiling;if(meshCache.has(key)){const mesh=meshCache.get(key);meshCache.delete(key);meshCache.set(key,mesh);return mesh;}const mesh=await api(`drafts/${d.id}/mesh?ceiling=${ceiling}`);meshCache.set(key,mesh);if(meshCache.size>8)meshCache.delete(meshCache.keys().next().value);return mesh;}
@@ -80,11 +81,40 @@ async function renderDraft(next,{frame=false}={}){
  materials();renderVersions();await loadChanges();
  $('candidate-state').textContent=draft.valid?'Ready to review':'Needs changes';$('candidate-state').dataset.state=draft.valid?'valid':'invalid';
  $('candidate-summary').textContent=`${draft.candidate.blocks.length.toLocaleString()} cells · ${changes.length.toLocaleString()} changes from the compared version · draft version ${draft.version} · ${draft.candidate.hash.slice(0,12)}`;
- review(draft);
+ review(draft);support();
  $('save-revision').disabled=!draft.valid;$('undo-draft').disabled=draft.cursor===0;$('redo-draft').disabled=draft.cursor===draft.history.length-1;
  draftControls(true);backLink();document.body.dataset.draft=draft.id;document.body.dataset.ready='true';
  const url=new URL(location.href);url.searchParams.set('draft',draft.id);url.searchParams.delete('catalogue');history.replaceState(null,'',url);
 }
+async function support(){
+ const rows=await api(`drafts/${draft.id}/support${bridge?.connected&&bridge.capabilities?.signData===1?'?signData=1':''}`);
+ $('asset-support').replaceChildren(...rows.map(row=>{const li=document.createElement('li'),name=document.createElement('strong');name.textContent=`${row.count.toLocaleString()} ${row.label}`;li.append(name);for(const [stage,ok,extra] of [['Preview',row.preview],['Schematic',row.schematic],['Bridge placement',row.placement,row.placementNote]]){const span=document.createElement('span');span.className='stage';span.dataset.ok=String(ok);span.textContent=stage+(extra&&!ok?' · '+extra:'');li.append(span);}return li;}));
+}
+// Signs owned by the selected component; plan and candidate share coordinates, so ownership comes from the compiled cells.
+function componentSigns(){
+ if(!draft?.plan.signs?.length)return [];const id=$('studio-component').value;
+ const owner=new Map(draft.candidate.blocks.map(c=>[`${c.x},${c.y},${c.z}`,c.component]));
+ return draft.plan.signs.map((sign,i)=>({...sign,index:i,component:owner.get(sign.at.join(','))})).filter(s=>!id||s.component===id);
+}
+function signTools(){
+ const signs=componentSigns();$('sign-tools').hidden=!signs.length;if(!signs.length)return;
+ const chosen=$('sign-select').value;$('sign-select').replaceChildren(...signs.map(s=>new Option(`${componentLabel(s.component)} · (${s.at.join(', ')}) · ${s.lines.find(l=>l.trim())||'blank'}`,String(s.index))));
+ $('sign-select').value=signs.some(s=>String(s.index)===chosen)?chosen:String(signs[0].index);
+ if(!$('sign-preset').options.length)$('sign-preset').replaceChildren(...presets.map(p=>new Option(p.name,p.id)));
+ signFields(true);
+}
+function signFields(fromSign){
+ const preset=presets.find(p=>p.id===$('sign-preset').value)||presets[0],sign=draft.plan.signs[Number($('sign-select').value)];
+ $('sign-hint').textContent=preset.hint||'Edit the four lines directly.';
+ const current=Object.fromEntries([...$('sign-fields').querySelectorAll('[data-key]')].map(e=>[e.dataset.key,e.value]));
+ $('sign-fields').replaceChildren(...preset.fields.map((f,i)=>{const label=document.createElement('label');label.textContent=f.label;const id='sign-field-'+f.key;label.htmlFor=id;let input;if(f.options){input=document.createElement('select');input.replaceChildren(...f.options.map(([v,n])=>new Option(n,v)));}else{input=document.createElement('input');input.maxLength=24;input.value=fromSign&&preset.id==='custom'?sign.lines[i]||'':current[f.key]||'';}input.id=id;input.dataset.key=f.key;input.addEventListener('input',signPreview);input.addEventListener('change',signPreview);return [label,input];}).flat());
+ signPreview();
+}
+function signComposition(){const fields=Object.fromEntries([...$('sign-fields').querySelectorAll('[data-key]')].map(e=>[e.dataset.key,e.value]));return compose($('sign-preset').value,fields);}
+function signPreview(){const {lines,empty}=signComposition();$('sign-preview').textContent=lines.map(l=>l||' ').join('\n');$('apply-sign').disabled=empty||!draft;}
+$('sign-select').onchange=()=>{$('sign-preset').value='custom';signFields(true);};
+$('sign-preset').onchange=()=>signFields(false);
+$('apply-sign').onclick=()=>action(async()=>{const d=requireDraft(),{lines,empty}=signComposition();if(empty)throw Error('Type the sign text first');const signs=d.plan.signs.map((s,i)=>i===Number($('sign-select').value)?{...s,lines}:s);status('Compiling sign text…');await renderDraft(await api(`drafts/${d.id}/edit`,{expectedVersion:d.version,plan:{...d.plan,signs}}));status('Sign text updated. Camera kept.');});
 function materials(){
  if(!draft)return;const id=$('studio-component').value,selected=$('material-role').value,roles=new Set();
  const collect=ops=>{for(const op of ops){if(op.material&&op.material!=='air')roles.add(op.material);if(op.operations)collect(op.operations);}};
@@ -93,10 +123,11 @@ function materials(){
  if(roles.has(selected))$('material-role').value=selected;
  $('material-state').value=draft.plan.palette[$('material-role').value]||'';finishChoices($('material-state').value);
  $('roof-variant-controls').hidden=!/^study-(bar|staggered|court)$/.test(draft.plan.plan_id)||!/^wing-[01]-roof$/.test(id);
+ signTools();
 }
 const requireDraft=()=>{if(!draft)throw Error('Open a design first');return draft;};
 function placement(){const origin=coordinates('origin');return {siteId:site?.id,transform:{origin,turns:Number($('turns').value)},brief:$('brief').value};}
-async function chooseSite(id){await selectSite(id);draft=null;$('draft-select').value='';delete document.body.dataset.draft;document.body.dataset.ready='false';scene.hide();draftControls(false);$('candidate-state').textContent='No design';delete $('candidate-state').dataset.state;$('candidate-summary').textContent='';$('review-metrics').replaceChildren();$('diagnostics').replaceChildren();$('draft-title').textContent=site?'Choose a design for this site':'No design open';$('rename-design').hidden=true;$('rename-form').hidden=true;$('save-state').hidden=true;$('version-list').replaceChildren();$('compare-summary').textContent='';selection();backLink();const url=new URL(location.href);url.searchParams.delete('draft');if(id)url.searchParams.set('site',id);else url.searchParams.delete('site');history.replaceState(null,'',url);}
+async function chooseSite(id){await selectSite(id);draft=null;$('draft-select').value='';delete document.body.dataset.draft;document.body.dataset.ready='false';scene.hide();draftControls(false);$('candidate-state').textContent='No design';delete $('candidate-state').dataset.state;$('candidate-summary').textContent='';$('asset-support').replaceChildren();$('sign-tools').hidden=true;$('review-metrics').replaceChildren();$('diagnostics').replaceChildren();$('draft-title').textContent=site?'Choose a design for this site':'No design open';$('rename-design').hidden=true;$('rename-form').hidden=true;$('save-state').hidden=true;$('version-list').replaceChildren();$('compare-summary').textContent='';selection();backLink();const url=new URL(location.href);url.searchParams.delete('draft');if(id)url.searchParams.set('site',id);else url.searchParams.delete('site');history.replaceState(null,'',url);}
 async function continueRevision(r){const d=await api('drafts',{plan:r.plan,parentHash:r.artifactHash,siteId:r.siteId,transform:r.transform,brief:r.brief});await refresh();await renderDraft(d,{frame:true});mode('design');status('New draft opened from the saved version; the saved version is unchanged.');}
 $('rename-design').onclick=()=>{$('rename-input').value=draft.plan.name;$('rename-form').hidden=false;$('rename-design').hidden=true;$('rename-input').focus();$('rename-input').select();};
 $('rename-cancel').onclick=()=>{$('rename-form').hidden=true;$('rename-design').hidden=!draft;};
@@ -131,7 +162,7 @@ const viewKeys=['perspective','front','side','rear','roof','street'];
 document.addEventListener('keydown',e=>{if(e.altKey||e.ctrlKey||e.metaKey||['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName)||document.querySelector('dialog[open]'))return;const view=viewKeys[Number(e.key)-1];if(view){scene.view(view);cameraSelection(view);}else if(e.key==='f'||e.key==='F')$('studio-fit').click();else if(e.key==='e'||e.key==='E')$('studio-expand').click();else if(e.key==='?')$('help-dialog').showModal();else return;e.preventDefault();});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.body.classList.contains('model-expanded'))expand(false);});
 async function openCatalogue(reference){const [projectId,revisionId]=reference.split('/'),project=projects.find(p=>p.id===projectId),revision=project?.revisions.find(r=>r.id===revisionId);if(!revision)throw Error('Unknown catalogue design');const existing=index.drafts.find(d=>d.parentHash===revision.hash);if(existing)return renderDraft(await api('drafts/'+existing.id),{frame:true});const d=await api('drafts',{catalogue:reference,transform:{origin:[0,0,0],turns:0},brief:''});await refresh();await renderDraft(d,{frame:true});status('Opened '+project.name+' in the studio as a new draft.');}
-async function bridgeStatus(){let bridge;try{bridge=await api('construction/status');}catch(error){bridge={connected:false,message:error.message};}$('bridge-status').textContent=bridge.connected?'Construction server connected · '+bridge.world:'Construction server not connected. Design, versions and exports still work.';$('bridge-details').hidden=bridge.connected;$('bridge-detail').textContent=bridge.message||'';}
+async function bridgeStatus(){try{bridge=await api('construction/status');}catch(error){bridge={connected:false,message:error.message};}if(draft)support();$('bridge-status').textContent=bridge.connected?'Construction server connected · '+bridge.world:'Construction server not connected. Design, versions and exports still work.';$('bridge-details').hidden=bridge.connected;$('bridge-detail').textContent=bridge.message||'';}
 async function start(){await refresh();const query=new URL(location.href).searchParams;const id=query.get('draft')||(!query.has('map')&&!query.has('catalogue')?index.drafts[0]?.id:null);
  // Nothing to design yet: open on the site tools so the first action is obvious. Decide before site tools run so a map error still lands in site mode.
  mode(query.has('map')||(!id&&!query.has('catalogue')&&!query.has('site')&&!location.hash)?'site':modeFromHash(location.hash));

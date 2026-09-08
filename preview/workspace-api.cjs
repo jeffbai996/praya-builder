@@ -11,6 +11,7 @@ const {ConstructionService,PaperBridge}=require('./construction-service.cjs');
 const {claimWorkspace}=require('./workspace-lock.cjs');
 const {CaptureService}=require('./capture-service.cjs');
 const {siteView}=require('./site-view.cjs');
+const {assetSupport}=require('./asset-support.cjs');
 const {integrationConfig,parseMapLocation,selectionMetadata,captureGuide,placementPackage}=require('./map-integration.cjs');
 function readBody(req){return new Promise((resolve,reject)=>{
  let size=0,parts=[],failed=false;
@@ -109,6 +110,7 @@ function workspaceApi({artifacts,port}){
     if(req.method==='GET'){
      const d=store.get('drafts',id);
      if(action==='context')send(service.context(id));
+     else if(action==='support')send(assetSupport(d.candidate,url.searchParams.get('signData')==='1'?{connected:true,capabilities:{signData:1}}:{connected:false}));
      else if(action==='diff'){const requested=url.searchParams.get('baseline');if(requested&&!/^[a-f0-9]{64}$/.test(requested))throw Error('Baseline must be an artifact hash');const baseline=requested||d.baselineHash||d.parentHash||d.history[0].candidateHash;send(diff(d.candidate,store.getArtifact(baseline)));}
      else if(action==='mesh'){
       const ceiling=Number(url.searchParams.get('ceiling')??64);const a=d.candidate,turns=d.transform?.turns||0;

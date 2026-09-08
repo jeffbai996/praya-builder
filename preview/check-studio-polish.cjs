@@ -7,7 +7,9 @@ const assert=require('node:assert/strict'),path=require('node:path');
 const close=(a,b)=>a.length===b.length&&a.every((v,i)=>Math.abs(v-b[i])<1e-3);
 async function main(){
  const base=process.env.PREVIEW_TEST_URL||'http://127.0.0.1:8091',out=process.env.BUILDER_EVIDENCE_DIR||'/tmp';
- const index=await(await fetch(base+'/api/workspace/context')).json();
+ let index=await(await fetch(base+'/api/workspace/context')).json();
+ // Sign presets need a signed draft; on a scratch workspace with the write flag, compile one from the corner-stores plan.
+ if(process.env.BUILDER_POLISH_WRITE==='1'&&!index.drafts.some(d=>/Corner Stores · R2/.test(d.name))){const plan=JSON.parse(require('node:fs').readFileSync(path.join(__dirname,'old-town-corner-stores-r2.plan.json'),'utf8'));const made=await fetch(base+'/api/workspace/drafts',{method:'POST',headers:{'Content-Type':'application/json','X-Builder-Write':'1'},body:JSON.stringify({plan,transform:{origin:[0,0,0],turns:0},brief:''})});assert.equal(made.status,201);index=await(await fetch(base+'/api/workspace/context')).json();}
  const withVersions=index.drafts.find(d=>index.revisions.filter(r=>r.project===d.project).length>=2)||index.drafts[0];assert.ok(withVersions,'a draft exists');
  const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH,headless:true,args:['--no-sandbox','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
  try{
@@ -44,6 +46,28 @@ async function main(){
   if(process.env.BUILDER_POLISH_WRITE==='1'){const versionsBefore=await page.locator('#version-list li').count();await page.locator('#rename-design').click();await page.fill('#rename-input',(await page.locator('#rename-input').inputValue())+' ✓');await page.locator('#rename-form button[type=submit]').click();await settled();
   assert.match(await page.locator('#draft-title').textContent(),/✓$/);assert.equal(await page.locator('#version-list li').count(),versionsBefore);
   await page.locator('#rename-design').click();await page.fill('#rename-input',(await page.locator('#rename-input').inputValue()).replace(/ ✓$/,''));await page.locator('#rename-form button[type=submit]').click();await settled();assert.doesNotMatch(await page.locator('#draft-title').textContent(),/✓$/);}
+  // Asset support states and sign presets on a signed draft: honest stage badges, layouts that never invent words.
+  const signed=index.drafts.find(d=>/Corner Stores · R2/.test(d.name));
+  if(signed){
+   await page.selectOption('#draft-select',signed.id);await settled();
+   const support=await page.locator('#asset-support li').allTextContents();assert.ok(support.some(t=>/wall signs with text/.test(t)&&/✓?\s*Preview/.test(t)),'support rows: '+support);
+   assert.ok(!support.some(t=>/custom heads/.test(t)&&/Bridge placement(?! ·)/.test(t)&&!/✗/.test(t)));
+   assert.equal(await page.locator('#sign-tools').isVisible(),true);
+   const signCount=await page.locator('#sign-select option').count();assert.ok(signCount>=1);
+   await page.selectOption('#sign-preset','centered');assert.equal(await page.locator('#apply-sign').isDisabled(),true,'blank preset cannot compile placeholder text');
+   assert.match(await page.locator('#sign-preview').textContent(),/^\s*$/);
+   if(process.env.BUILDER_POLISH_WRITE==='1'){
+    const versionBefore=(await(await fetch(base+'/api/workspace/drafts/'+signed.id)).json()).version;
+    await page.fill('#sign-field-a','Please wait');await page.fill('#sign-field-b','to be seated');assert.equal(await page.locator('#apply-sign').isDisabled(),false);
+    assert.deepEqual((await page.locator('#sign-preview').textContent()).split('\n'),[' ','Please wait','to be seated',' ']);
+    await page.locator('#apply-sign').click();await settled();
+    const after=await(await fetch(base+'/api/workspace/drafts/'+signed.id)).json();assert.equal(after.version,versionBefore+1);
+    const at=after.plan.signs[Number(await page.locator('#sign-select').inputValue())];assert.deepEqual(at.lines,['','Please wait','to be seated','']);
+    assert.deepEqual(after.candidate.signs.find(s=>s.at.join()===at.at.join()).lines,at.lines,'compiled artifact carries the text');
+    await page.locator('#undo-draft').click();await settled();assert.equal((await(await fetch(base+'/api/workspace/drafts/'+signed.id)).json()).version,versionBefore+2);
+   }
+   await page.selectOption('#draft-select',withVersions.id);await settled();
+  }
   // Camera parity and keyboard: six cameras, lighting, grid, shortcuts.
   assert.equal(await page.locator('[data-studio-view]').count(),6);await page.locator('#studio-model').focus();await page.keyboard.press('6');assert.equal(await page.locator('[data-studio-view=street]').getAttribute('aria-pressed'),'true');
   await page.selectOption('#studio-lighting','warm');await page.locator('#studio-grid').uncheck();await page.locator('#studio-grid').check();await page.selectOption('#studio-lighting','studio');
