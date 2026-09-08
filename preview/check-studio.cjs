@@ -18,7 +18,7 @@ async function main(){
  try{
   await page.goto(base+'/studio');await page.locator('#studio-main').waitFor({state:'visible'});
   const initialDrafts=await page.locator('#draft-select option').count();
-  await page.locator('#fixture-slope').click();await page.waitForFunction(()=>document.querySelector('#site-select').value&&document.body.dataset.busy==='false');
+  await page.locator('.studio-steps a[data-mode=site]').click();if(!await page.locator('#fixture-panel').evaluate(e=>e.open))await page.locator('#fixture-panel summary').click();await page.locator('#fixture-slope').click();await page.waitForFunction(()=>document.querySelector('#site-select').value&&document.body.dataset.busy==='false');
   await page.locator('#new-proposals').click();await page.waitForFunction(()=>document.body.dataset.ready==='true'&&document.body.dataset.busy==='false',null,{timeout:90000});
   assert.equal(await page.locator('#draft-select option').count(),initialDrafts+3);assert.match(await page.locator('#candidate-state').textContent(),/Ready to review/);
   const draftId=await page.getAttribute('body','data-draft');
