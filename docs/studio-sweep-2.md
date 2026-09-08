@@ -37,3 +37,21 @@ Prepared 2026-09-08 after commit b223fac (drawing-first modes, versions, calmer 
 ## Suggested run order
 
 H1 → S1 → S2 → S3 → S4 → S5, then M1 and M2 if the sign-text prerequisite holds; M3 and M4 as stretch. Validate each at 320, 390, 768, 1024, 1440 in light/dark/OLED; run check-studio-polish, check-design-navigation, check-header-controls, check-browser, check-export-tools on the live server and check-studio, check-studio-release, check-studio-map on a scratch workspace with BUILDER_MAP_URL set.
+
+## Status — 2026-09-08, sweep 2 implemented
+
+H1 committed as three pieces (signs f2c3b59, plans 3e29d6e, canon 80aa4ed); docs/reference-images (73 MB of screenshots) intentionally left out of git pending a decision on binary assets. S1–S5 landed in bdf54e9 and a5fe66f; M1 in a5fe66f; M3 in 2772867; M4 and M2 in 859e655 / a08a27f (the studio.js hunks for both landed in the first of those two).
+
+- S1 mesh cache: `draftMesh()` keeps eight meshes by candidate hash + ceiling; a "Working…" veil sits over the previous model while compiles run.
+- S2 floors: `floorOptions()` merges space levels with slab rows found by block density, cut two blocks above each level. Studies still yield 6/11/16; the corner stores read Ground / First / Second / Roof level.
+- S3 rename: `plan.name` only, through the edit route. Versions, parent hash and compare baselines unchanged.
+- S4 parity: Street camera, Studio/Warm light, Grid chip, keys 1–6 / F / E / ?, help sheet.
+- S5 support: `preview/asset-support.cjs` + `GET drafts/{id}/support`; badges under Details, bridge placement only claimed with a sign-capable bridge.
+- M1 sign presets: `preview/sign-presets.js` (custom, centered, framed, identity, plaque, bilingual street); blank fields cannot compile; edits go through the edit route so undo/redo and versions apply.
+- M2 references: `POST/GET drafts/{id}/references`, `GET references/{draft}/{file}`, PNG/JPEG ≤ 8 MiB, 24 per draft, magic-byte checked; the revision request lists them by sha256 and path.
+- M3 thumbnails: `GET artifacts/{hash}/mesh`, `GET/POST revisions/{id}/thumbnail`; the browser renders a missing one once and stores it.
+- M4 site steps: 1 · Choose a plot / 2 · Capture surroundings / 3 · Propose a building; test plots behind a disclosure that opens only when no site exists.
+
+Checks: check-asset-support, check-sign-presets (node:test); check-studio-polish (read-only on live, `BUILDER_POLISH_WRITE=1` on a scratch server adds rename, sign edit and references); check-studio, check-studio-map, check-design-navigation, check-header-controls pass.
+
+Next candidates: commit or LFS the reference images; a per-component "Signs" summary in the catalogue; a small Site-mode empty state on phones; render thumbnails for catalogue projects through the same route so the register and Studio share one pipeline.
