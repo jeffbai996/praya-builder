@@ -159,3 +159,7 @@ Defaults are 48 × 64 × 48 and **10,000 block entries**. Existing configs witho
 `tools/preview.py` is the original standalone Gemini/Matplotlib experiment. It has its own prompt/client and renders approximate colored voxels, not Minecraft block models. It is not the authoritative validation or visual-feedback path. `--file` avoids a paid generation request. See `tools/requirements.txt` for its optional dependencies.
 
 Implemented stages and the remaining agent architecture are in [docs/agent-roadmap.md](docs/agent-roadmap.md). Isolated-server checks are described in [docs/verification.md](docs/verification.md).
+
+## Praya canon and design context
+
+Start with [the maintained Praya index](docs/praya/README.md) for canon, building style, signage, reference images and source provenance.

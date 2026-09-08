@@ -82,3 +82,60 @@ floor, not just a flattering perspective.
 
 The first application is Rosedale R2 and Frame House R1. The remaining catalogue
 still needs the same staged all-elevations/interior review.
+
+## User canon and reference session — 2026-09-08
+
+See [the canon and reference record](praya-canon-notes-2026-09-08.md) for user-confirmed geography, screenshot evidence, corrections and unresolved details. The Museum of Immigration is on Taiping Island, a separate municipality in Braemar County; it is not in Trinity Square.
+
+- Continue the user’s preference for lanterns, trapdoors and inventive block-shape combinations.
+- Follow the established street-number/address sign format. Confirm exact text, spacing, abbreviations and bilingual wording from clear references rather than inventing them. The recorded screenshot transcription is provisional.
+- Preserve the existing clinic-specific signage exception above. Written signs need actual block-entity/export support, not browser-only labels.
+- Current priority is design experimentation and studio usability; the real-plot placement milestone is temporarily set aside.
+
+Canon, terminology and provenance start at [Praya canon and design](praya/README.md). This file remains the sole owner of building style rules.
+
+- User direction, 2026-09-08: combine ordinary-block props with custom player-head objects. Reuse the existing City Hall head collection or source suitable new heads once supported. See [asset-library requirements](praya/asset-library.md); custom-head rendering/export is a capability request, not a currently validated feature.
+
+## Positive school reference — 2026-09-08
+
+The user identified Braemar Hills Elementary School and said it closely resembles the builder's earlier school attempt. Retain this as positive architectural-fit feedback; the exact comparison revision was not specified. See the [reference image and observations](praya-canon-notes-2026-09-08.md). The yellow banner represents the county, and the P symbols are custom heads. Use verified identity assets rather than approximating them from colour alone.
+
+## BCPL identity — user direction, 2026-09-08
+
+Future Braemar County Public Library (BCPL) branches must carry the BCPL logo identified in [the Northgate branch reference](reference-images/2026-09-08_03.45.19.png). This requirement is conditional on BCPL affiliation. Non-BCPL libraries do not need this logo; do not automatically brand the existing Civic Reading Room or any generic library as BCPL.
+
+Preserve the referenced mark's geometry and colours. Capture/verify its exact block construction before claiming faithful reproduction, and include it in compiled/exported geometry. Branch architecture may vary; the user mandated shared identity, not replication of the Northgate building.
+
+## Existing-building fit-out — future capability, 2026-09-08
+
+Empty reference interiors often reflect limited labour/time, as explicitly explained by the user. They are not a style target. Future builder work should support furnishing selected existing buildings while respecting their shell, use and retained details. See [fit-out requirements](praya/interior-fitout.md); implementation and live acceptance remain pending.
+
+## Architectural eras and Old Town Oakville — user direction, 2026-09-08
+
+Builder must support older-looking buildings, brownstone-style attempts and architecture from different eras as well as modern designs. [Old Town Oakville](reference-images/2026-09-08_03.48.37.png) is the supplied dense, less polished reference. Do not treat the earlier modern catalogue as a universal Praya template.
+
+- Choose district, building type and intended era before applying palette, window, facade and roof defaults. Modern glazing preferences remain defaults to interpret in context, not a mandate to replace period-appropriate details.
+- Preserve existing architectural character during fit-out or revision; modernisation requires a brief that calls for it.
+- Brownstone/older masonry proposals may explore narrow frontages, masonry depth, sills/lintels, cornices, stoops and compact rear/service spaces. These are proposed design techniques, not user-confirmed details or mandatory features of every older building.
+- Keep mixed eras and varying levels of polish available. Do not infer dilapidation, deprivation or invented historical events from older construction or the user's critique of build quality.
+- Functional interiors, clear routes, deliberate all-elevation design and applicable institutional/signage identity rules continue to matter across eras.
+
+## Old Town study feedback — 2026-09-08
+
+User rejected Corner Stores R0 as feeling half-finished and explicitly redirected the work from copying the generated image to learning from the supplied Praya screenshots. The generated image is a proposal, not a Praya style authority. Future studies should derive the whole building and its public edges from the user's references, with equal attention to every elevation. R1 explores continuous pavement lighting/wood edging, deep masonry framing, trapdoor screens, planted accessible loggias, a rear service court and a shared roof garden. These are design choices for this proposal, not newly established canon.
+
+## Roof plant and finishing — user direction, 2026-09-08
+
+Praya roofs commonly carry AC units or chimneys. User examples include wall-block stacks and four white blocks in a 2x2 square with four curved rail pieces on top to form a circular fan motif; original variations are welcome. Apply this as a rooftop-detail preference, keeping access and shared garden uses clear. The user also requested actual bed blocks and a further wall/interior finishing sweep, then explicitly requested signage.
+
+Implementation update: Corner Stores R2 adds actual paired blue bed states and 12 authored wall signs. The Java plan compiler now accepts bounded `signs` records; text is hashed into artifacts and exported as Sponge v3 sign block entities. Studio has simplified bed and wall-sign models and renders the same authored text. This supersedes earlier statements that wall signs are invisible or that all written signs lack export support. Custom heads and live bridge sign-text placement remain unsupported; the bridge now rejects signed drafts rather than dropping their text. Exact address formatting remains unassigned until a site/address is known.
+
+## Sign composition and roof linkage — user correction, 2026-09-08
+
+Always compose signage centrally, both horizontally and vertically. Avoid casually filling the first three lines and leaving the fourth blank. Prefer two concise lines in the middle two rows with blank rows above and below, or an intentionally balanced four-line layout. Reword rather than leave uneven filler. This applies to the actual Minecraft sign text as well as Studio rendering.
+
+For the paired AC units in Corner Stores, the user specified one quartz slab connecting the two housings. User clarified they meant entity beds; leave the present bed implementation alone for now, as requested. Do not treat approval of the overall result as confirmation that the simplified bed preview matches the desired entity-rendered appearance.
+
+## Bridge implementation update — 2026-09-08
+
+The sign bridge now supports bounded wall-sign placement, readback, text-only edits, both-side metadata preservation and conflict-aware undo. It passed a real disposable Paper test. This supersedes the earlier blanket statement that bridge sign-text support is unimplemented; the live Praya deployment remains unchanged. See ../docs/sign-bridge.md and sign-formats.md for implementation evidence and catalogue-grounded formatting.
