@@ -3,6 +3,20 @@ import {createScene} from './scene.js';
 import {readTheme,saveTheme,bindThemeToggle} from './review-state.js';
 const $=id=>document.getElementById(id);
 let scene,draft,site,index,projects=[],ticket=0,busy=false,changes=[],contextFloor=0,contextSurface=0,compareHash=null;
+// Meshes are immutable per candidate hash, so floor switching after the first fetch needs no network round trip.
+const meshCache=new Map();
+async function draftMesh(d,ceiling){const key=d.candidate.hash+':'+ceiling;if(meshCache.has(key)){const mesh=meshCache.get(key);meshCache.delete(key);meshCache.set(key,mesh);return mesh;}const mesh=await api(`drafts/${d.id}/mesh?ceiling=${ceiling}`);meshCache.set(key,mesh);if(meshCache.size>8)meshCache.delete(meshCache.keys().next().value);return mesh;}
+// Floors: walkable levels from spaces plus slab rows found by block density, cut two blocks above each level like the studies.
+function floorOptions(candidate){
+ const rows=new Map();for(const c of candidate.blocks)if(c.block!=='minecraft:air')rows.set(c.y,(rows.get(c.y)||0)+1);
+ const count=y=>rows.get(y)||0,slabs=[];
+ for(const y of [...rows.keys()].sort((a,b)=>a-b)){const near=[y-2,y-1,y+1,y+2].filter(v=>rows.has(v)).map(count);if(count(y)>=100&&near.length&&count(y)>=2*Math.min(...near))slabs.push(y);}
+ const levels=new Set((candidate.spaces||[]).map(s=>s.min[1]));
+ for(let i=0;i<slabs.length;i++){if(slabs[i+1]===slabs[i]+1)continue;levels.add(slabs[i]+1);}
+ const sorted=[...levels].filter(y=>y>=0&&y<candidate.dimensions.y-2).sort((a,b)=>a-b).filter((y,i,all)=>i===0||y-all[i-1]>2);
+ const names=['Ground floor','First floor','Second floor','Third floor','Fourth floor','Fifth floor','Sixth floor','Seventh floor'];
+ return sorted.map((y,i)=>({value:y+2,label:i===sorted.length-1&&i>0&&y>=candidate.dimensions.y-8?'Roof level':names[i]||`Level ${i}`}));
+}
 const status=message=>{$('studio-status').textContent=message;};
 const preferred=readTheme(),theme=['light','dark','oled'].includes(preferred)?preferred:'light';document.documentElement.dataset.theme=theme;
 try{scene=createScene($('studio-model'));scene.theme(theme);}catch(error){status(error.message);}
@@ -53,14 +67,15 @@ $('compare-select').onchange=()=>action(loadChanges);
 function selection(text,material,raw){const box=$('studio-selection');box.replaceChildren();if(!text){box.textContent='Click a block to see which component it belongs to.';return;}const name=document.createElement('b');name.textContent=text;box.append(name);if(material)box.append(' · '+material);if(raw){const details=document.createElement('details');const summary=document.createElement('summary');summary.textContent='Details';const code=document.createElement('code');code.textContent=raw;details.append(summary,' ',code);box.append(details);}}
 function backLink(){const parent=projects.flatMap(p=>p.revisions.map(r=>({project:p,revision:r}))).find(x=>x.revision.hash===draft?.parentHash);const link=$('back-link');if(parent){link.href=`/?project=${parent.project.id}&revision=${parent.revision.id}`;link.title=link.ariaLabel='Back to '+parent.project.name;}else{link.href='/?panel=register';link.title=link.ariaLabel='Project register';}}
 async function renderDraft(next,{frame=false}={}){
- const token=++ticket;const mesh=await api(`drafts/${next.id}/mesh?ceiling=${$('studio-ceiling').value}`);if(token!==ticket)return;
+ const token=++ticket;
+ const ceiling=$('studio-ceiling');const wanted=ceiling.value,floors=floorOptions(next.candidate);ceiling.replaceChildren(new Option('Whole building','64'),...floors.map(f=>new Option(f.label,String(f.value))));ceiling.value=[...ceiling.options].some(o=>o.value===wanted)?wanted:'64';
+ const mesh=await draftMesh(next,ceiling.value);if(token!==ticket)return;
  if(next.siteId!==site?.id){await selectSite(next.siteId);frame=true;}if(token!==ticket)return;
  if(!draft||draft.candidate.dimensions.x!==next.candidate.dimensions.x||draft.candidate.dimensions.z!==next.candidate.dimensions.z)frame=true;
  draft=next;await scene.load(mesh);if(token!==ticket)return;
  scene.position(site?draft.transform.origin.map((v,i)=>v-site.origin[i]):[0,0,0]);scene.show();
  if(frame)scene.frame(site?.dimensions||draft.candidate.dimensions,site?contextSurface:0);
- $('draft-select').value=draft.id;$('draft-title').textContent=draft.plan.name;
- for(const option of $('studio-ceiling').options)option.hidden=option.value!=='64'&&Number(option.value)>draft.candidate.dimensions.y;
+ $('draft-select').value=draft.id;$('draft-title').textContent=draft.plan.name;$('rename-design').hidden=false;$('rename-form').hidden=true;
  const selected=$('studio-component').value;$('studio-component').replaceChildren(new Option('Whole building',''),...draft.plan.components.map(c=>new Option(componentLabel(c.id),c.id)));$('studio-component').value=selected;
  materials();renderVersions();await loadChanges();
  $('candidate-state').textContent=draft.valid?'Ready to review':'Needs changes';$('candidate-state').dataset.state=draft.valid?'valid':'invalid';
@@ -81,8 +96,11 @@ function materials(){
 }
 const requireDraft=()=>{if(!draft)throw Error('Open a design first');return draft;};
 function placement(){const origin=coordinates('origin');return {siteId:site?.id,transform:{origin,turns:Number($('turns').value)},brief:$('brief').value};}
-async function chooseSite(id){await selectSite(id);draft=null;$('draft-select').value='';delete document.body.dataset.draft;document.body.dataset.ready='false';scene.hide();draftControls(false);$('candidate-state').textContent='No design';delete $('candidate-state').dataset.state;$('candidate-summary').textContent='';$('review-metrics').replaceChildren();$('diagnostics').replaceChildren();$('draft-title').textContent=site?'Choose a design for this site':'No design open';$('save-state').hidden=true;$('version-list').replaceChildren();$('compare-summary').textContent='';selection();backLink();const url=new URL(location.href);url.searchParams.delete('draft');if(id)url.searchParams.set('site',id);else url.searchParams.delete('site');history.replaceState(null,'',url);}
+async function chooseSite(id){await selectSite(id);draft=null;$('draft-select').value='';delete document.body.dataset.draft;document.body.dataset.ready='false';scene.hide();draftControls(false);$('candidate-state').textContent='No design';delete $('candidate-state').dataset.state;$('candidate-summary').textContent='';$('review-metrics').replaceChildren();$('diagnostics').replaceChildren();$('draft-title').textContent=site?'Choose a design for this site':'No design open';$('rename-design').hidden=true;$('rename-form').hidden=true;$('save-state').hidden=true;$('version-list').replaceChildren();$('compare-summary').textContent='';selection();backLink();const url=new URL(location.href);url.searchParams.delete('draft');if(id)url.searchParams.set('site',id);else url.searchParams.delete('site');history.replaceState(null,'',url);}
 async function continueRevision(r){const d=await api('drafts',{plan:r.plan,parentHash:r.artifactHash,siteId:r.siteId,transform:r.transform,brief:r.brief});await refresh();await renderDraft(d,{frame:true});mode('design');status('New draft opened from the saved version; the saved version is unchanged.');}
+$('rename-design').onclick=()=>{$('rename-input').value=draft.plan.name;$('rename-form').hidden=false;$('rename-design').hidden=true;$('rename-input').focus();$('rename-input').select();};
+$('rename-cancel').onclick=()=>{$('rename-form').hidden=true;$('rename-design').hidden=!draft;};
+$('rename-form').onsubmit=e=>{e.preventDefault();action(async()=>{const d=requireDraft(),name=$('rename-input').value.trim();if(!name)throw Error('Enter a name');if(name===d.plan.name){$('rename-cancel').onclick();return;}status('Renaming…');await renderDraft(await api(`drafts/${d.id}/edit`,{expectedVersion:d.version,plan:{...d.plan,name}}));await refresh();$('rename-form').hidden=true;$('rename-design').hidden=false;status('Renamed to '+name+'. Versions and identity unchanged.');});};
 $('site-select').onchange=()=>action(()=>chooseSite($('site-select').value));
 $('draft-select').onchange=()=>action(async()=>{if($('draft-select').value)await renderDraft(await api('drafts/'+$('draft-select').value));});
 for(const kind of ['flat','slope'])$('fixture-'+kind).onclick=()=>action(async()=>{const saved=await api('fixtures',{kind});await refresh();await chooseSite(saved.id);status('Synthetic '+kind+' test plot ready.');});
@@ -106,6 +124,11 @@ for(const b of document.querySelectorAll('[data-studio-view]'))b.onclick=()=>{sc
 $('studio-fit').onclick=()=>{cameraSelection(null);if(draft)scene.fit(localCells(draft.candidate.blocks));else if(site)scene.fit(site.blocks.filter(c=>c.y>=contextFloor));};
 function expand(value){document.body.classList.toggle('model-expanded',value);$('studio-expand').setAttribute('aria-pressed',String(value));$('studio-expand').textContent=value?'Exit':'Expand';$('studio-expand').focus();}
 $('studio-expand').onclick=()=>expand(!document.body.classList.contains('model-expanded'));
+$('studio-lighting').onchange=()=>scene.lighting($('studio-lighting').value);$('studio-grid').onchange=()=>scene.gridVisible($('studio-grid').checked);
+$('studio-help').onclick=()=>$('help-dialog').showModal();
+// Keyboard: cameras 1–6, F fit, E expand, ? help. Ignored while typing.
+const viewKeys=['perspective','front','side','rear','roof','street'];
+document.addEventListener('keydown',e=>{if(e.altKey||e.ctrlKey||e.metaKey||['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName)||document.querySelector('dialog[open]'))return;const view=viewKeys[Number(e.key)-1];if(view){scene.view(view);cameraSelection(view);}else if(e.key==='f'||e.key==='F')$('studio-fit').click();else if(e.key==='e'||e.key==='E')$('studio-expand').click();else if(e.key==='?')$('help-dialog').showModal();else return;e.preventDefault();});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.body.classList.contains('model-expanded'))expand(false);});
 async function openCatalogue(reference){const [projectId,revisionId]=reference.split('/'),project=projects.find(p=>p.id===projectId),revision=project?.revisions.find(r=>r.id===revisionId);if(!revision)throw Error('Unknown catalogue design');const existing=index.drafts.find(d=>d.parentHash===revision.hash);if(existing)return renderDraft(await api('drafts/'+existing.id),{frame:true});const d=await api('drafts',{catalogue:reference,transform:{origin:[0,0,0],turns:0},brief:''});await refresh();await renderDraft(d,{frame:true});status('Opened '+project.name+' in the studio as a new draft.');}
 async function bridgeStatus(){let bridge;try{bridge=await api('construction/status');}catch(error){bridge={connected:false,message:error.message};}$('bridge-status').textContent=bridge.connected?'Construction server connected · '+bridge.world:'Construction server not connected. Design, versions and exports still work.';$('bridge-details').hidden=bridge.connected;$('bridge-detail').textContent=bridge.message||'';}
