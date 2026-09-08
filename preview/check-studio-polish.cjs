@@ -71,6 +71,22 @@ async function main(){
    }
    await page.selectOption('#draft-select',withVersions.id);await settled();
   }
+  // References: bounded images with notes, listed by hash in the revision request. Opt-in: it writes files.
+  if(process.env.BUILDER_POLISH_WRITE==='1'){
+   const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==','base64');
+   await page.locator('#reference-files').setInputFiles([{name:'north elevation.png',mimeType:'image/png',buffer:png}]);await page.fill('#reference-note','Keep the cornice line');await page.locator('#add-references').click();await settled();
+   assert.equal(await page.locator('#reference-list figure').count(),1);
+   const bad=await fetch(`${base}/api/workspace/drafts/${withVersions.id}/references`,{method:'POST',headers:{'Content-Type':'application/json','X-Builder-Write':'1'},body:JSON.stringify({name:'x.gif',type:'image/gif',data:png.toString('base64')})});assert.equal(bad.status,400);
+   const forged=await fetch(`${base}/api/workspace/drafts/${withVersions.id}/references`,{method:'POST',headers:{'Content-Type':'application/json','X-Builder-Write':'1'},body:JSON.stringify({name:'x.png',type:'image/png',data:Buffer.from('not a png at all').toString('base64')})});assert.equal(forged.status,400);
+   await page.fill('#revision-instruction','Test request');const requestDownload=page.waitForEvent('download');await page.locator('#prepare-request').click();const file=await requestDownload;const request=JSON.parse(require('node:fs').readFileSync(await file.path(),'utf8'));
+   assert.equal(request.references.length,1);assert.match(request.references[0].sha256,/^[a-f0-9]{64}$/);assert.equal(request.references[0].note,'Keep the cornice line');
+   await page.locator('#reference-list .reference-open').first().click();assert.equal(await page.locator('#reference-dialog').evaluate(d=>d.open),true);await page.locator('#reference-close').click();
+   await page.locator('#reference-list .reference-remove').first().click();await settled();assert.equal(await page.locator('#reference-list figure').count(),0);
+  }
+  // Site mode reads as three steps and the test plots stay behind a disclosure once a site exists.
+  await page.locator('.studio-steps a[data-mode=site]').click();assert.equal(await page.locator('#site-workspace .step-title').count(),2);assert.equal(await page.locator('#proposal-workspace .step-title').count(),1);
+  if(index.sites.length)assert.equal(await page.locator('#fixture-panel').evaluate(e=>e.open),false);
+  await page.locator('.studio-steps a[data-mode=design]').click();
   // Camera parity and keyboard: six cameras, lighting, grid, shortcuts.
   assert.equal(await page.locator('[data-studio-view]').count(),6);await page.locator('#studio-model').focus();await page.keyboard.press('6');assert.equal(await page.locator('[data-studio-view=street]').getAttribute('aria-pressed'),'true');
   await page.selectOption('#studio-lighting','warm');await page.locator('#studio-grid').uncheck();await page.locator('#studio-grid').check();await page.selectOption('#studio-lighting','studio');

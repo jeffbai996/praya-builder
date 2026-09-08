@@ -82,6 +82,31 @@ function workspaceApi({artifacts,port}){
     if(req.method==='GET'){let bytes;try{bytes=fs.readFileSync(file);}catch(error){if(error.code!=='ENOENT')throw error;send({error:'No thumbnail yet'},404);return true;}res.writeHead(200,{'Content-Type':'image/jpeg','Cache-Control':'private, max-age=31536000, immutable'});res.end(bytes);}
     else{const match=/^data:image\/jpeg;base64,([A-Za-z0-9+/]+=*)$/.exec(body.image||'');if(!match)throw Error('Expected a JPEG data URL');const bytes=Buffer.from(match[1],'base64');if(bytes.length<4||bytes.length>96*1024||bytes.readUIntBE(0,3)!==0xffd8ff)throw Error('Thumbnail must be a JPEG under 96 KiB');fs.mkdirSync(path.dirname(file),{recursive:true,mode:0o700});const temp=file+'.'+process.pid+'.tmp';fs.writeFileSync(temp,bytes,{mode:0o600});fs.renameSync(temp,file);send({stored:true,bytes:bytes.length},201);}
    }
+   // Reference images and notes per draft: bounded PNG/JPEG files kept beside the workspace records.
+   else if(/^drafts\/[a-z0-9-]+\/references(?:\/[a-f0-9-]+\/remove)?$/.test(route)){
+    const [,draftId,,fileId]=route.split('/');store.get('drafts',draftId);
+    const dir=path.join(store.root,'references',draftId),indexFile=path.join(dir,'index.json');
+    const readIndex=()=>{try{return JSON.parse(fs.readFileSync(indexFile,'utf8'));}catch(error){if(error.code==='ENOENT')return [];throw error;}};
+    const writeIndex=list=>{fs.mkdirSync(dir,{recursive:true,mode:0o700});const temp=indexFile+'.'+process.pid+'.tmp';fs.writeFileSync(temp,JSON.stringify(list),{mode:0o600});fs.renameSync(temp,indexFile);};
+    if(req.method==='GET')send(readIndex());
+    else if(fileId){const list=readIndex(),entry=list.find(e=>e.id===fileId);if(!entry)throw Error('Unknown reference');try{fs.unlinkSync(path.join(dir,entry.file));}catch(error){if(error.code!=='ENOENT')throw error;}writeIndex(list.filter(e=>e.id!==fileId));send({removed:fileId});}
+    else{
+     const type={'image/png':'png','image/jpeg':'jpg'}[body.type];if(!type)throw Error('References must be PNG or JPEG images');
+     if(typeof body.data!=='string'||body.data.length>11*1024*1024)throw Error('Reference exceeds 8 MiB');
+     const bytes=Buffer.from(body.data,'base64');if(bytes.length>8*1024*1024||bytes.length<8)throw Error('Reference exceeds 8 MiB');
+     const magic=bytes.subarray(0,8).toString('hex');if(!(type==='png'&&magic==='89504e470d0a1a0a')&&!(type==='jpg'&&magic.startsWith('ffd8ff')))throw Error('File content does not match its type');
+     const name=String(body.name||'reference').replace(/[^\w .()-]/g,'').slice(0,80)||'reference',note=String(body.note||'').slice(0,2000);
+     const list=readIndex();if(list.length>=24)throw Error('At most 24 references per draft');
+     const {createHash,randomUUID}=require('node:crypto'),id=randomUUID(),file=id+'.'+type,sha256=createHash('sha256').update(bytes).digest('hex');
+     fs.mkdirSync(dir,{recursive:true,mode:0o700});fs.writeFileSync(path.join(dir,file),bytes,{mode:0o600});
+     const entry={id,file,name,type:body.type,bytes:bytes.length,sha256,note,createdAt:new Date().toISOString()};list.push(entry);writeIndex(list);send(entry,201);
+    }
+   }
+   else if(/^references\/[a-z0-9-]+\/[a-f0-9-]+$/.test(route)&&req.method==='GET'){
+    const [,draftId,fileId]=route.split('/');const entry=(()=>{try{return JSON.parse(fs.readFileSync(path.join(store.root,'references',draftId,'index.json'),'utf8')).find(e=>e.id===fileId);}catch{return null;}})();
+    if(!entry){send({error:'Unknown reference'},404);return true;}
+    res.writeHead(200,{'Content-Type':entry.type,'Cache-Control':'private, max-age=31536000, immutable','Content-Disposition':'inline'});res.end(fs.readFileSync(path.join(store.root,'references',draftId,entry.file)));
+   }
    else if(/^artifacts\/[a-f0-9]{64}\/mesh$/.test(route)&&req.method==='GET'){
     const a=store.getArtifact(route.split('/')[1]),ceiling=Number(url.searchParams.get('ceiling')??64);if(!Number.isInteger(ceiling)||ceiling<1||ceiling>64)throw Error('Invalid ceiling');
     send(meshArtifact(a,ceiling));
