@@ -16,7 +16,7 @@ async function main(){
    await page.reload();await page.waitForFunction(()=>document.querySelector('#theme-toggle')?.dataset.theme==='oled');
    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
    if(route==='/')assert.equal(await page.locator('.navigation nav .nav-icon').count(),4);
-   else{const link=page.getByRole('link',{name:'Project register',exact:true});assert.equal(await link.locator('svg').count(),1);assert.equal(await link.evaluate(e=>getComputedStyle(e).textDecorationLine),'none');assert.equal(await link.getAttribute('href'),'/?panel=register');}
+   else{const link=page.getByRole('link',{name:'Design library',exact:true});assert.equal(await link.locator('svg').count(),1);assert.equal(await link.evaluate(e=>getComputedStyle(e).textDecorationLine),'none');assert.equal(await link.getAttribute('href'),'/?panel=register');}
    await page.screenshot({path:path.join(out,route==='/'?'review-header-mobile.png':'studio-header-mobile.png')});
   }
   await page.setViewportSize({width:1440,height:1000});await page.screenshot({path:path.join(out,'studio-header-desktop.png')});

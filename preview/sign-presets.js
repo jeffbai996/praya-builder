@@ -6,8 +6,8 @@ const rule=(...texts)=>'-'.repeat(Math.min(LINE_LIMIT,Math.max(4,...texts.map(t=
 export const presets=[
  {id:'custom',name:'Custom lines',fields:[{key:'l1',label:'Line 1'},{key:'l2',label:'Line 2'},{key:'l3',label:'Line 3'},{key:'l4',label:'Line 4'}],
   compose:f=>[f.l1,f.l2,f.l3,f.l4]},
- {id:'centered',name:'Centered notice',hint:'Two lines in the middle rows, blank rows above and below.',fields:[{key:'a',label:'First line'},{key:'b',label:'Second line'}],
-  compose:f=>['',f.a,f.b,'']},
+ {id:'centered',name:'Centered notice · ruled',hint:'Two centered content rows with matching rules above and below.',fields:[{key:'a',label:'First line'},{key:'b',label:'Second line'}],
+  compose:f=>{const r=rule(f.a,f.b);return [r,f.a,f.b,r];}},
  {id:'framed',name:'Framed notice',hint:'Two lines between matching rules, like “Please wait / to be seated”.',fields:[{key:'a',label:'First line'},{key:'b',label:'Second line'}],
   compose:f=>{const r=rule(f.a,f.b);return [r,f.a,f.b,r];}},
  {id:'identity',name:'Identity with note',hint:'Name on two rows, a rule, then one useful line such as an entrance or address.',fields:[{key:'a',label:'Name line 1'},{key:'b',label:'Name line 2'},{key:'c',label:'Note'}],
@@ -21,5 +21,6 @@ export function compose(presetId,fields){
  const preset=presets.find(p=>p.id===presetId)||presets[0];
  const values=Object.fromEntries(preset.fields.map(f=>[f.key,clean(fields[f.key])]));
  const lines=preset.compose(values).map(clean);
- return {lines,empty:preset.fields.filter(f=>!f.options).every(f=>!values[f.key].trim())};
+ const empty=preset.fields.filter(f=>!f.options).every(f=>!values[f.key].trim());
+ return {lines:empty?['','','','']:lines,empty};
 }

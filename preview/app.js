@@ -51,7 +51,7 @@ function highlight(){
 function showPanel(panel){
   document.body.dataset.panel=panel;
   $('register-panel').hidden=panel!=='register';$('review-panel').hidden=panel==='register';
-  $('page-title').textContent=panel==='register'?'Project register':'Design review';
+  $('page-title').textContent=panel==='register'?'Design library':'Design preview';
   $('breadcrumb-view').textContent=$('page-title').textContent;
   for(const button of document.querySelectorAll('[data-panel]')){button.classList.toggle('active',button.dataset.panel===panel);button.setAttribute('aria-pressed',String(button.dataset.panel===panel));}
   const url=new URL(location.href);url.searchParams.set('panel',panel);history.replaceState(null,'',url);
@@ -136,6 +136,7 @@ async function load(){
 }
 function renderRegister(){
   const search=$('search').value.trim().toLowerCase(),use=$('register-use').value,sort=$('register-sort').value;let visible=0;
+  for(const link of $('working-design-list').children)link.hidden=!link.textContent.toLowerCase().includes(search);
   const cards=[...$('project-cards').children];
   cards.sort((a,b)=>{
     const one=projects.find(p=>p.id===a.dataset.id),two=projects.find(p=>p.id===b.dataset.id);
@@ -159,9 +160,9 @@ function createCards(){
     const body=element('div','project-card-body'),meta=element('div','project-card-meta');
     const dimensions=current.revisions.find(r=>r.id===current.latest).dimensions;
     meta.append(element('span','',`${dimensions.x} × ${dimensions.z} site`),element('span','',current.floors+' floors'),element('span','',current.units),element('span','',current.revisions.length+' revision'+(current.revisions.length===1?'':'s')));
-    const button=element('button','secondary-button','Open design');button.dataset.openProject=current.id;
+    const button=element('button','secondary-button','Preview');button.dataset.openProject=current.id;
     button.addEventListener('click',()=>{if(!leaveDraft())return;configureProject(current.id,current.latest);showPanel('review');load();});
-    body.append(element('div','eyebrow',current.type.toUpperCase()),element('h3','',current.name),element('p','',current.summary),meta,button);card.append(top,body);return card;
+    body.append(element('div','eyebrow',current.type.toUpperCase()),element('h3','',current.name),element('p','',current.summary),meta,button);const edit=element('a','secondary-button workspace-start','Use in workspace');edit.href='/studio?catalogue='+current.id+'/'+current.latest;body.append(edit);card.append(top,body);return card;
   }));renderRegister();
 }
 function leaveDraft(){return !dirty||confirm('This revision has unsaved local notes. Leave without saving them?');}
@@ -229,6 +230,17 @@ $('model').addEventListener('pointerup',event=>{
   if(block){$('component').value=block.component;selection(block.component.replaceAll('-',' '),block.block.replace('minecraft:','').split('[')[0].replaceAll('_',' '),`${block.block} · (${block.x}, ${block.y}, ${block.z})`);highlight();}
 });
 window.previewStatus=()=>({ready,project:project?.id,revision:artifact?.revision,hash:artifact?.hash,camera:scene?.camera(),metrics:scene?.metrics(),presentation:scene?.presentation(),changes:changed.length});
+async function workingDesigns(){
+ try{
+  const workspace=await json('/api/workspace/context'),seen=new Set(),saved=[...workspace.revisions].sort((a,b)=>b.createdAt.localeCompare(a.createdAt)),byId=new Map(workspace.drafts.map(d=>[d.id,d]));
+  const ordered=[...saved.map(r=>byId.get(r.draftId)).filter(Boolean),...workspace.drafts];
+  const drafts=ordered.filter(d=>{if(!d.valid||seen.has(d.project))return false;seen.add(d.project);return true;});
+  $('working-design-list').replaceChildren(...drafts.map(d=>{const link=element('a','working-design-link');link.href='/studio?draft='+d.id+'#design-workspace';link.append(element('strong','',d.name),element('span','', 'Continue →'));return link;}));
+  $('working-design-status').textContent=drafts.length?'Latest saved design in each project, plus working studies.':'Choose a starting design below, or open the workspace to set up a site.';
+  if(drafts[0]){$('continue-design-name').textContent=drafts[0].name;$('continue-design-link').href='/studio?draft='+drafts[0].id+'#design-workspace';$('continue-design').hidden=false;}
+  renderRegister();
+ }catch{$('working-design-status').textContent='Workspace unavailable. You can still preview starting designs below.';}
+}
 async function init(){
   try{
     projects=await json('/api/projects');$('project').replaceChildren(...projects.map(p=>new Option(p.name,p.id)));
@@ -237,4 +249,5 @@ async function init(){
     const params=new URLSearchParams(location.search);showPanel(params.get('panel')==='register'?'register':'review');configureProject(params.get('project'),params.get('revision'));await load();
   }catch(error){$('loading').className='error';$('loading').textContent=error.message+' Reload to retry.';}
 }
+workingDesigns();
 init();

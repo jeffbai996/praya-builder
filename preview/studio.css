@@ -159,3 +159,9 @@ body[data-busy=true][data-ready=true] .drawing-veil{display:flex}
 .free-camera-steps{display:flex;flex-wrap:wrap;gap:4px;}
 .free-camera-steps button{padding:6px 9px;min-height:32px;}
 @media(max-width:600px){.free-camera-tools>span{font-size:11px;}.free-camera-steps button{min-height:40px;}.studio-views .view-tools{flex-wrap:wrap;}}
+
+.studio-steps a[aria-current="page"]{color:var(--accent);border-bottom-color:var(--accent);}
+.studio-body .studio-views button[aria-pressed="true"],.layer-chip input:checked+span{color:var(--accent);border-color:var(--accent);background:var(--accent-soft);}
+.studio-body .register-link{width:auto;display:inline-flex;gap:7px;padding:8px 10px;white-space:nowrap;}
+.studio-heading .eyebrow{color:var(--accent);}.studio-heading h1{font-size:18px;}
+@media(max-width:600px){.studio-body .register-link span{display:none;}}

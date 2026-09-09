@@ -62,7 +62,7 @@ async function main(){
    if(process.env.BUILDER_POLISH_WRITE==='1'){
     const versionBefore=(await(await fetch(base+'/api/workspace/drafts/'+signed.id)).json()).version;
     await page.fill('#sign-field-a','Please wait');await page.fill('#sign-field-b','to be seated');assert.equal(await page.locator('#apply-sign').isDisabled(),false);
-    assert.deepEqual((await page.locator('#sign-preview').textContent()).split('\n'),[' ','Please wait','to be seated',' ']);
+    assert.deepEqual((await page.locator('#sign-preview').textContent()).split('\n'),['------------','Please wait','to be seated','------------']);
     await page.locator('#apply-sign').click();await settled();
     const after=await(await fetch(base+'/api/workspace/drafts/'+signed.id)).json();assert.equal(after.version,versionBefore+1);
     const at=after.plan.signs[Number(await page.locator('#sign-select').inputValue())];assert.deepEqual(at.lines,['','Please wait','to be seated','']);

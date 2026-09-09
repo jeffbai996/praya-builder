@@ -37,7 +37,7 @@ async function main(){
    await page.setViewportSize({width,height:1000});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,'studio width '+width);
   }
   await page.evaluate(()=>scrollTo(0,0));await page.screenshot({path:path.join(out,'design-studio-desktop.png')});
-  await page.getByRole('link',{name:'Project register',exact:true}).click();await page.waitForFunction(()=>window.previewStatus?.().ready);
+  await page.getByRole('link',{name:'Design library',exact:true}).click();await page.waitForFunction(()=>window.previewStatus?.().ready);
   assert.equal(await page.locator('#register-panel').isVisible(),true);assert.equal(await page.locator('#review-panel').isVisible(),false);
   await page.reload();await page.waitForFunction(()=>window.previewStatus?.().ready);assert.equal(await page.locator('#register-panel').isVisible(),true);
   await page.locator('.project-card-body>button').first().click();await page.waitForFunction(()=>window.previewStatus?.().ready);assert.equal(await page.locator('#review-panel').isVisible(),true);
