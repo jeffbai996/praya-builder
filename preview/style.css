@@ -224,3 +224,6 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 
 :root{--success:#286b46;--success-soft:#e5f1e8;--danger:#ae3636}
 :root[data-theme="dark"],:root[data-theme="oled"]{--success:#91cba5;--success-soft:#25382b;--danger:#f09791}
+
+:root{--export:#285e9e;--export-soft:#e7eff9}
+:root[data-theme="dark"],:root[data-theme="oled"]{--export:#93bff0;--export-soft:#223247}

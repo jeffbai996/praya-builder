@@ -3,7 +3,7 @@
 .studio-head{display:flex;align-items:center;gap:32px;padding:14px 28px;border-bottom:1px solid var(--line);background:var(--panel)}
 .studio-head .department-brand{width:210px;flex-shrink:0}.studio-head .department-brand strong{font-size:28px;letter-spacing:-1.2px}.studio-head .department-brand span span{display:block;font-size:10px}
 .studio-head .department-brand .build-number{font-size:8px;letter-spacing:.06em;color:var(--muted);margin-top:4px}
-.studio-heading{margin-right:auto}.studio-head h1{font-size:24px;margin:2px 0;letter-spacing:.03em;white-space:nowrap}.studio-head .eyebrow{white-space:nowrap}
+.studio-heading{margin-right:auto;padding-left:6px}.studio-head h1{font-size:24px;margin:2px 0;letter-spacing:.03em;white-space:nowrap}.studio-head .eyebrow{white-space:nowrap}
 .studio-header-actions{display:flex;align-items:center;gap:8px;flex:none}
 .studio-header-actions .icon-button{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;box-sizing:border-box;padding:10px;border:1px solid var(--line);border-radius:50%;color:var(--text);background:var(--panel);text-decoration:none}
 .icon-button svg{width:22px;height:22px}.icon-button:hover{background:var(--panel-soft)}.icon-button:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
@@ -175,3 +175,9 @@ body[data-busy=true][data-ready=true] .drawing-veil{display:flex}
 .version-tag{color:var(--success);background:var(--success-soft)}
 .studio-body .reference-remove:hover{color:var(--danger);border-color:var(--danger)}
 @media(max-width:600px){.studio-head{gap:8px}.studio-head .department-brand strong{font-size:24px}.studio-head .department-brand span span{font-size:9px}.studio-header-actions{gap:4px}.studio-heading h1{font-size:18px}}
+
+/* Distinguish export and additive actions without competing with the orange primary action. */
+.studio-body .export-action{color:var(--export);background:var(--export-soft);border-color:var(--export)}
+.studio-body .create-action{color:var(--success);background:var(--success-soft);border-color:var(--success)}
+.studio-body .export-action:hover:not(:disabled){box-shadow:inset 0 0 0 1px var(--export)}
+.studio-body .create-action:hover:not(:disabled){box-shadow:inset 0 0 0 1px var(--success)}
