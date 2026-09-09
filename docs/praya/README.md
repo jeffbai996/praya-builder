@@ -41,3 +41,7 @@ Consult [GOV.PRAYA](https://www.govpraya.org/) for existing institutions, local 
 ## Sign catalogue and formats
 
 [Saved-world sign-format guide](sign-formats.md) records the full extracted scope, exact address/bilingual specimens, observed composition patterns and the current centering rule.
+
+## Latest design finishing pass
+
+[September 9 detail-pass record](proposals/praya-detail-pass-2026-09-09.md) links 13 saved successors and their validation. These are proposed designs applying the existing style rules, not new canon.
