@@ -14,6 +14,7 @@ async function main(){
  const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH,headless:true,args:['--no-sandbox','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
  try{
   const page=await browser.newPage({viewport:{width:1440,height:1000}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
+  const chooseDraft=async id=>{if(!(await page.locator('#draft-select option').evaluateAll((opts,id)=>opts.some(o=>o.value===id),id)))await page.locator('#draft-history').click();await page.selectOption('#draft-select',id);};
   const settled=()=>page.waitForFunction(()=>document.body.dataset.ready==='true'&&document.body.dataset.busy==='false');
   await page.goto(base+'/studio?draft='+withVersions.id);await settled();
   // Default is design mode with the model, one design selector and a saved/unsaved indicator; the process lives in explicit modes.
@@ -52,7 +53,7 @@ async function main(){
   // Asset support states and sign presets on a signed draft: honest stage badges, layouts that never invent words.
   const signed=index.drafts.find(d=>/Corner Stores · R2/.test(d.name));
   if(signed){
-   await page.selectOption('#draft-select',signed.id);await settled();
+   await chooseDraft(signed.id);await settled();
    const support=await page.locator('#asset-support li').allTextContents();assert.ok(support.some(t=>/wall signs with text/.test(t)&&/✓?\s*Preview/.test(t)),'support rows: '+support);
    assert.ok(!support.some(t=>/custom heads/.test(t)&&/Bridge placement(?! ·)/.test(t)&&!/✗/.test(t)));
    assert.equal(await page.locator('#sign-tools').isVisible(),true);
@@ -69,7 +70,7 @@ async function main(){
     assert.deepEqual(after.candidate.signs.find(s=>s.at.join()===at.at.join()).lines,at.lines,'compiled artifact carries the text');
     await page.locator('#undo-draft').click();await settled();assert.equal((await(await fetch(base+'/api/workspace/drafts/'+signed.id)).json()).version,versionBefore+2);
    }
-   await page.selectOption('#draft-select',withVersions.id);await settled();
+   await chooseDraft(withVersions.id);await settled();
   }
   // References: bounded images with notes, listed by hash in the revision request. Opt-in: it writes files.
   if(process.env.BUILDER_POLISH_WRITE==='1'){
@@ -103,7 +104,7 @@ async function main(){
   await page.keyboard.press('Escape');assert.equal(await page.evaluate(()=>document.body.classList.contains('model-expanded')),false);
   // Switching designs keeps the camera when the site and footprint are unchanged.
   const sibling=index.drafts.find(d=>d.id!==withVersions.id&&d.siteId===withVersions.siteId);
-  if(sibling){const before=await page.evaluate(()=>studioStatus().camera);await page.selectOption('#draft-select',sibling.id);await settled();const after=await page.evaluate(()=>studioStatus().camera);const a=await(await fetch(base+'/api/workspace/drafts/'+withVersions.id)).json(),b=await(await fetch(base+'/api/workspace/drafts/'+sibling.id)).json();if(a.candidate.dimensions.x===b.candidate.dimensions.x&&a.candidate.dimensions.z===b.candidate.dimensions.z)assert.ok(close(after,before),'camera retained across designs');}
+  if(sibling){const before=await page.evaluate(()=>studioStatus().camera);await chooseDraft(sibling.id);await settled();const after=await page.evaluate(()=>studioStatus().camera);const a=await(await fetch(base+'/api/workspace/drafts/'+withVersions.id)).json(),b=await(await fetch(base+'/api/workspace/drafts/'+sibling.id)).json();if(a.candidate.dimensions.x===b.candidate.dimensions.x&&a.candidate.dimensions.z===b.candidate.dimensions.z)assert.ok(close(after,before),'camera retained across designs');}
   // Idle rendering: with nothing moving, the loop should draw almost nothing.
   await page.waitForTimeout(800);const first=await page.evaluate(()=>studioStatus().metrics.frames);await page.waitForTimeout(2000);const idle=await page.evaluate(()=>studioStatus().metrics.frames)-first;
   assert.ok(idle<=6,'idle frames in 2s: '+idle);
@@ -118,7 +119,7 @@ async function main(){
   await page.setViewportSize({width:1440,height:1000});await page.goto(base+'/');await page.waitForFunction(()=>window.previewStatus?.().ready);
   const link=page.locator('#edit-in-studio');assert.equal(await link.isVisible(),true);assert.match(await link.getAttribute('href'),/^\/studio\?catalogue=[a-z0-9-]+\/r\d+$/);
   const projects=await(await fetch(base+'/api/projects')).json();const derived=index.drafts.find(d=>projects.some(p=>p.revisions.some(r=>r.hash===d.parentHash)));
-  if(derived){const source=projects.flatMap(p=>p.revisions.map(r=>({p,r}))).find(x=>x.r.hash===derived.parentHash);await page.goto(`${base}/studio?catalogue=${source.p.id}/${source.r.id}`);await settled();assert.equal(await page.getAttribute('body','data-draft'),derived.id,'existing draft reused');assert.equal(new URL(page.url()).searchParams.has('catalogue'),false);assert.match(await page.locator('#back-link').getAttribute('href'),/^\/\?project=/);}
+  if(derived){const source=projects.flatMap(p=>p.revisions.map(r=>({p,r}))).find(x=>x.r.hash===derived.parentHash);await page.goto(`${base}/studio?catalogue=${source.p.id}/${source.r.id}`);await settled();assert.equal(await page.getAttribute('body','data-draft'),derived.id,'existing draft reused');assert.equal(new URL(page.url()).searchParams.has('catalogue'),false);assert.match(await page.locator('#back-link').getAttribute('href'),/^\/\?panel=register$/);}
   assert.deepEqual(errors,[]);console.log('STUDIO_POLISH_PASS design-first modes, version compare with retained camera, selection details, expand, idle rendering, 320 modes, catalogue hand-off');
  }finally{await browser.close();}
 }

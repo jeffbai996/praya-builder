@@ -181,3 +181,22 @@ body[data-busy=true][data-ready=true] .drawing-veil{display:flex}
 .studio-body .create-action{color:var(--success);background:var(--success-soft);border-color:var(--success)}
 .studio-body .export-action:hover:not(:disabled){box-shadow:inset 0 0 0 1px var(--export)}
 .studio-body .create-action:hover:not(:disabled){box-shadow:inset 0 0 0 1px var(--success)}
+
+/* Preview is exploratory; save is the clear commit action. */
+.studio-body .preview-action{color:var(--accent);background:var(--accent-soft);border-color:var(--accent)}
+.studio-body .save-action{color:var(--save-text);background:var(--save);border-color:var(--save)}
+.studio-body .preview-action:hover:not(:disabled){box-shadow:inset 0 0 0 1px var(--accent)}
+.studio-body .save-action:hover:not(:disabled){filter:brightness(.94);background:var(--save);border-color:var(--save)}
+.studio-controls section{padding:20px;margin-bottom:16px}
+.studio-controls section h2{margin-bottom:16px}
+.studio-controls section>label:first-of-type{margin-top:0}
+.studio-body .technical-details summary{min-height:28px;display:list-item;align-content:center}
+.studio-body #draft-history{margin-top:4px;padding-left:0;padding-right:0;min-height:28px;font-size:11px}
+.version-list li[data-current=true]{background:var(--success-soft);border-color:var(--success)}
+.version-list .version-tag{background:var(--success-soft);color:var(--success)}
+.studio-outcomes .outcome-row{padding:8px 0;gap:14px}
+.studio-outcomes .outcome-details{border-top:1px solid var(--line);padding-top:4px}
+@media(min-width:380px) and (max-width:1023px){
+ .studio-body .view-tools .compact-select{flex:1 1 42%;min-width:0;width:0}
+ .studio-body .view-tools button{flex:1 1 42%}
+}
