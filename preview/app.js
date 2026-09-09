@@ -136,7 +136,7 @@ async function load(){
 }
 function renderRegister(){
   const search=$('search').value.trim().toLowerCase(),use=$('register-use').value,sort=$('register-sort').value;let visible=0;
-  for(const link of $('working-design-list').children)link.hidden=!link.textContent.toLowerCase().includes(search);
+  renderWorkingDesigns();
   const cards=[...$('project-cards').children];
   cards.sort((a,b)=>{
     const one=projects.find(p=>p.id===a.dataset.id),two=projects.find(p=>p.id===b.dataset.id);
@@ -230,14 +230,32 @@ $('model').addEventListener('pointerup',event=>{
   if(block){$('component').value=block.component;selection(block.component.replaceAll('-',' '),block.block.replace('minecraft:','').split('[')[0].replaceAll('_',' '),`${block.block} · (${block.x}, ${block.y}, ${block.z})`);highlight();}
 });
 window.previewStatus=()=>({ready,project:project?.id,revision:artifact?.revision,hash:artifact?.hash,camera:scene?.camera(),metrics:scene?.metrics(),presentation:scene?.presentation(),changes:changed.length});
+let workingProjects=[],workingPage=0;
+const cleanDesignName=name=>name.replace(/ · (?:R\d+|Praya detail pass)$/,'');
+function renderWorkingDesigns(){
+ const query=[$('search').value,$('working-search').value].map(s=>s.trim().toLowerCase()).filter(Boolean),sort=$('working-sort').value;
+ const matches=workingProjects.filter(d=>query.every(q=>d.name.toLowerCase().includes(q))).sort((a,b)=>sort==='name'?a.name.localeCompare(b.name):b.savedAt.localeCompare(a.savedAt)||a.name.localeCompare(b.name));
+ const size=6,pages=Math.max(1,Math.ceil(matches.length/size));workingPage=Math.min(workingPage,pages-1);
+ $('working-design-count').textContent=workingProjects.length+' projects';
+ $('working-design-list').replaceChildren(...matches.slice(workingPage*size,(workingPage+1)*size).map(d=>{
+  const link=element('a','working-design-link');link.href='/studio?draft='+d.id+'#design-workspace';
+  const thumb=element('span','working-thumb');if(d.revision){const img=document.createElement('img');img.src='/api/workspace/revisions/'+d.revision.id+'/thumbnail';img.alt='';img.loading='lazy';img.onerror=()=>{img.remove();thumb.textContent='No preview';};thumb.append(img);}else thumb.textContent='Draft';
+  const text=element('div','working-card-text');text.append(element('strong','',d.name),element('span','working-meta',d.revision?d.versions+' saved version'+(d.versions===1?'':'s')+' · '+new Date(d.savedAt).toLocaleDateString(undefined,{month:'short',day:'numeric'}):'Working draft'));
+  const arrow=element('span','working-open','→');arrow.setAttribute('aria-hidden','true');link.append(thumb,text,arrow);return link;
+ }));
+ $('working-design-status').textContent=matches.length?`${workingPage*size+1}–${Math.min((workingPage+1)*size,matches.length)} of ${matches.length} projects`:'No projects match. Try another name.';
+ $('working-prev').disabled=workingPage===0;$('working-next').disabled=workingPage>=pages-1;document.querySelector('.library-pagination').hidden=pages<=1;
+}
+$('working-search').addEventListener('input',()=>{workingPage=0;renderWorkingDesigns();});
+$('working-sort').addEventListener('change',()=>{workingPage=0;renderWorkingDesigns();});
+$('working-prev').onclick=()=>{workingPage--;renderWorkingDesigns();};$('working-next').onclick=()=>{workingPage++;renderWorkingDesigns();};
 async function workingDesigns(){
  try{
   const workspace=await json('/api/workspace/context'),seen=new Set(),saved=[...workspace.revisions].sort((a,b)=>b.createdAt.localeCompare(a.createdAt)),byId=new Map(workspace.drafts.map(d=>[d.id,d]));
   const ordered=[...saved.map(r=>byId.get(r.draftId)).filter(Boolean),...workspace.drafts];
   const drafts=ordered.filter(d=>{if(!d.valid||seen.has(d.project))return false;seen.add(d.project);return true;});
-  $('working-design-list').replaceChildren(...drafts.map(d=>{const link=element('a','working-design-link');link.href='/studio?draft='+d.id+'#design-workspace';link.append(element('strong','',d.name),element('span','', 'Continue →'));return link;}));
-  $('working-design-status').textContent=drafts.length?'Latest saved design in each project, plus working studies.':'Choose a starting design below, or open the workspace to set up a site.';
-  if(drafts[0]){$('continue-design-name').textContent=drafts[0].name;$('continue-design-link').href='/studio?draft='+drafts[0].id+'#design-workspace';$('continue-design').hidden=false;}
+  workingProjects=drafts.map(d=>{const versions=saved.filter(r=>r.project===d.project),revision=versions.find(r=>r.draftId===d.id);return {...d,name:cleanDesignName(d.name),revision,versions:versions.length,savedAt:revision?.createdAt||''};});
+  if(drafts[0]){$('continue-design-name').textContent=cleanDesignName(drafts[0].name);$('continue-design-link').href='/studio?draft='+drafts[0].id+'#design-workspace';$('continue-design').hidden=false;}
   renderRegister();
  }catch{$('working-design-status').textContent='Workspace unavailable. You can still preview starting designs below.';}
 }
