@@ -13,6 +13,56 @@ export function createScene(canvas) {
   const camera=new THREE.PerspectiveCamera(40,1,.1,300);
   const controls=new OrbitControls(camera,canvas);controls.enableDamping=true;controls.dampingFactor=.09;
   controls.minDistance=2;controls.maxDistance=240;controls.maxPolarAngle=Math.PI*.49;
+  let navigationMode='orbit',lookDrag=null,lastTick=performance.now();
+  const held=new Set(),motionKeys=new Set(['KeyW','KeyA','KeyS','KeyD','KeyQ','KeyE','ShiftLeft','ShiftRight']);
+  const forward=new THREE.Vector3(),rightward=new THREE.Vector3(),delta=new THREE.Vector3();
+  canvas.style.userSelect='none';canvas.style.webkitUserSelect='none';
+  function syncFreeTarget(){camera.getWorldDirection(forward);controls.target.copy(camera.position).addScaledVector(forward,10);}
+  function navigation(mode){
+    if(!['orbit','pan','free'].includes(mode))return;
+    // Flush the last orbit gesture before handing the camera to free movement.
+    const damping=controls.enableDamping;controls.enableDamping=false;
+    if(navigationMode!=='free')controls.update();
+    held.clear();lookDrag=null;navigationMode=mode;controls.enabled=mode!=='free';controls.enableDamping=damping;
+    controls.mouseButtons.LEFT=mode==='pan'?THREE.MOUSE.PAN:THREE.MOUSE.ROTATE;
+    controls.touches.ONE=mode==='pan'?THREE.TOUCH.PAN:THREE.TOUCH.ROTATE;
+    if(mode==='free')syncFreeTarget();
+    canvas.dataset.navigation=mode;canvas.dispatchEvent(new CustomEvent('navigationchange',{detail:mode}));invalidate();
+  }
+  function travel(x,y,z,distance=2){
+    camera.getWorldDirection(forward);rightward.crossVectors(forward,camera.up).normalize();
+    delta.set(0,y,0).addScaledVector(rightward,x).addScaledVector(forward,z);
+    if(delta.lengthSq())delta.normalize().multiplyScalar(distance);
+    camera.position.add(delta);controls.target.add(delta);invalidate();
+  }
+  canvas.addEventListener('pointerdown',e=>{
+    if(e.button!==0&&e.button!==2)return;
+    e.preventDefault();canvas.focus({preventScroll:true});window.getSelection()?.removeAllRanges();
+    if(navigationMode==='free'){canvas.setPointerCapture(e.pointerId);lookDrag={id:e.pointerId,x:e.clientX,y:e.clientY};}
+  });
+  canvas.addEventListener('pointermove',e=>{
+    if(!lookDrag||lookDrag.id!==e.pointerId)return;
+    const angle=new THREE.Euler().setFromQuaternion(camera.quaternion,'YXZ');
+    angle.y-=(e.clientX-lookDrag.x)*.004;angle.x=THREE.MathUtils.clamp(angle.x-(e.clientY-lookDrag.y)*.004,-Math.PI/2+.02,Math.PI/2-.02);
+    camera.quaternion.setFromEuler(angle);lookDrag.x=e.clientX;lookDrag.y=e.clientY;syncFreeTarget();invalidate();
+  });
+  const stopLook=()=>{lookDrag=null;};
+  canvas.addEventListener('pointerup',stopLook);canvas.addEventListener('pointercancel',stopLook);canvas.addEventListener('lostpointercapture',stopLook);
+  const stopMotion=()=>{held.clear();stopLook();};canvas.addEventListener('blur',stopMotion);window.addEventListener('blur',stopMotion);
+  document.addEventListener('visibilitychange',()=>{if(document.hidden)stopMotion();});
+  canvas.addEventListener('keydown',e=>{
+    if(navigationMode!=='free'||e.altKey||e.ctrlKey||e.metaKey)return;
+    if(e.key==='Escape'){e.preventDefault();e.stopPropagation();navigation('orbit');return;}
+    if(motionKeys.has(e.code)){e.preventDefault();e.stopPropagation();held.add(e.code);}
+  });
+  window.addEventListener('keyup',e=>held.delete(e.code));
+  canvas.addEventListener('wheel',e=>{if(navigationMode==='free'){e.preventDefault();travel(0,0,-Math.sign(e.deltaY),e.shiftKey?4:1);}}, {passive:false});
+  function freeTick(now){
+    const dt=Math.min((now-lastTick)/1000,.05);lastTick=now;
+    if(navigationMode!=='free'||document.activeElement!==canvas||document.hidden)return;
+    const x=Number(held.has('KeyD'))-Number(held.has('KeyA')),y=Number(held.has('KeyE'))-Number(held.has('KeyQ')),z=Number(held.has('KeyW'))-Number(held.has('KeyS'));
+    if(x||y||z)travel(x,y,z,dt*(held.has('ShiftLeft')||held.has('ShiftRight')?24:7));
+  }
   const hemisphere=new THREE.HemisphereLight(0xe8f2ff,0x8c8b73,.8);scene.add(hemisphere);
   const sun=new THREE.DirectionalLight(0xffefd9,1.05);sun.position.set(-25,55,-15);sun.castShadow=true;
   sun.shadow.mapSize.set(2048,2048);Object.assign(sun.shadow.camera,{left:-38,right:38,top:38,bottom:-38,near:1,far:150});sun.shadow.bias=-.001;
@@ -41,7 +91,7 @@ export function createScene(canvas) {
   const presets={perspective:[53,34,-33],front:[16,17,-47],side:[65,23,16],rear:[16,20,76],roof:[16,76,16.01],street:[31,6,-17]};
   let center=[16,16],viewScale=1,currentView='perspective',baseY=0;
   function view(name) {
-    currentView=name;const [x,y,z]=presets[name],targetY=name==='street'?7:8;
+    navigation('orbit');currentView=name;const [x,y,z]=presets[name],targetY=name==='street'?7:8;
     camera.position.set(center[0]+(x-16)*viewScale,baseY+targetY+(y-targetY)*viewScale,center[1]+(z-16)*viewScale);
     controls.target.set(center[0],baseY+targetY,center[1]);controls.update();invalidate();
   }
@@ -49,6 +99,7 @@ export function createScene(canvas) {
   function frame(dimensions,groundY=0){center=[dimensions.x/2,dimensions.z/2];baseY=groundY;viewScale=Math.max(1,dimensions.x/32,dimensions.z/32);view(currentView);}
   function fit(cells) {
     if(!cells.length)return;
+    navigation('orbit');
     const bounds=new THREE.Box3();
     for(const p of cells){bounds.expandByPoint(new THREE.Vector3(p.x,p.y,p.z));bounds.expandByPoint(new THREE.Vector3(p.x+1,p.y+1,p.z+1));}
     const target=bounds.getCenter(new THREE.Vector3());
@@ -81,7 +132,8 @@ export function createScene(canvas) {
   controls.addEventListener('change',invalidate);
   document.addEventListener('visibilitychange',invalidate);
   function draw(){
-    if(!document.hidden){const moved=controls.update();if(moved||needsRender){needsRender=false;renderer.render(scene,camera);frames++;}}
+    freeTick(performance.now());
+    if(!document.hidden){const moved=navigationMode==='free'?false:controls.update();if(moved||needsRender){needsRender=false;renderer.render(scene,camera);frames++;}}
     requestAnimationFrame(draw);
   }draw();
   function clear(group=building){for(const child of [...group.children]){group.remove(child);child.geometry.dispose();if(child.userData.sign){child.material.map.dispose();child.material.dispose();}}}
@@ -134,6 +186,7 @@ export function createScene(canvas) {
   function snapshot(width,height){renderer.render(scene,camera);const output=document.createElement('canvas');output.width=width;output.height=height;const ctx=output.getContext('2d');const scale=Math.max(width/canvas.width,height/canvas.height),w=canvas.width*scale,h=canvas.height*scale;ctx.drawImage(canvas,(width-w)/2,(height-h)/2,w,h);return output.toDataURL('image/jpeg',.7);}
   function png(label){renderer.render(scene,camera);const output=document.createElement('canvas');output.width=canvas.width;output.height=canvas.height+64;const ctx=output.getContext('2d');ctx.drawImage(canvas,0,0);ctx.fillStyle='#f7f8f3';ctx.fillRect(0,canvas.height,output.width,64);ctx.fillStyle='#29493e';ctx.font='16px sans-serif';ctx.fillText(label,24,canvas.height+38);return output;}
   canvas.addEventListener('keydown',event=>{
+    if(event.defaultPrevented||navigationMode==='free')return;
     const offsets={ArrowLeft:-.12,ArrowRight:.12};
     if(event.key in offsets){const v=camera.position.clone().sub(controls.target);v.applyAxisAngle(new THREE.Vector3(0,1,0),offsets[event.key]);camera.position.copy(controls.target).add(v);}
     else if(['+','=','-'].includes(event.key)){camera.position.sub(controls.target).multiplyScalar(event.key==='-'?1.1:.9).add(controls.target);}
@@ -147,6 +200,6 @@ export function createScene(canvas) {
     floor.visible=!oled;
     grid.material.opacity=oled?.055:dark?.13:.3;invalidate();
   }
-  return {load,siteBounds,loadContext:mesh=>load(mesh,context),contextVisible:value=>{context.visible=value;siteLines.visible=value;invalidate();},position:offset=>{building.position.fromArray(offset);invalidate();},view,frame,fit,lighting,gridVisible:value=>{grid.visible=value;invalidate();},presentation:()=>({lighting:lightingMode,grid:grid.visible}),select,differences,pick,png,snapshot,theme,hide:()=>{building.visible=false;invalidate();},show:()=>{building.visible=true;invalidate();},
+  return {navigation,navigationMode:()=>navigationMode,travel,load,siteBounds,loadContext:mesh=>load(mesh,context),contextVisible:value=>{context.visible=value;siteLines.visible=value;invalidate();},position:offset=>{building.position.fromArray(offset);invalidate();},view,frame,fit,lighting,gridVisible:value=>{grid.visible=value;invalidate();},presentation:()=>({lighting:lightingMode,grid:grid.visible}),select,differences,pick,png,snapshot,theme,hide:()=>{building.visible=false;invalidate();},show:()=>{building.visible=true;invalidate();},
     camera:()=>[...camera.position.toArray(),...controls.target.toArray()],metrics:()=>({frames,elapsed:performance.now()-started,triangles:renderer.info.render.triangles})};
 }

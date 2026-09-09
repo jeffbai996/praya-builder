@@ -147,3 +147,15 @@ body[data-busy=true][data-ready=true] .drawing-veil{display:flex}
  body[data-ready=false] .studio-display-controls,body[data-ready=false] .studio-views,body[data-ready=false] .selection-line{display:none}
  body[data-ready=false] .studio-viewport{border-top:1px solid var(--line)}
 }
+
+/* Keep drag navigation within the preview, without selecting surrounding text. */
+.studio-viewport{user-select:none;-webkit-user-select:none;}
+#studio-model{user-select:none;-webkit-user-select:none;touch-action:none;}
+#studio-model[data-navigation="pan"]{cursor:move;}
+#studio-model[data-navigation="free"]{cursor:grab;}
+#studio-model[data-navigation="free"]:active{cursor:grabbing;}
+.free-camera-tools{position:absolute;bottom:12px;left:12px;right:12px;display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:8px 10px;background:var(--bg,#fafafa);border:1px solid var(--line,#aaa);border-radius:6px;font-size:12px;z-index:2;}
+.free-camera-tools[hidden]{display:none;}
+.free-camera-steps{display:flex;flex-wrap:wrap;gap:4px;}
+.free-camera-steps button{padding:6px 9px;min-height:32px;}
+@media(max-width:600px){.free-camera-tools>span{font-size:11px;}.free-camera-steps button{min-height:40px;}.studio-views .view-tools{flex-wrap:wrap;}}

@@ -167,6 +167,9 @@ $('apply-variant').onclick=()=>action(async()=>{const d=requireDraft();await ren
 $('material-role').onchange=()=>{$('material-state').value=draft.plan.palette[$('material-role').value];finishChoices($('material-state').value);};
 $('studio-component').onchange=()=>{if(draft){materials();highlight();const id=$('studio-component').value;selection(id?componentLabel(id):null);}};$('diff-visible').onchange=()=>{if(draft)highlight();};$('impact-visible').onchange=()=>{if(draft)highlight();};$('context-visible').onchange=()=>scene.contextVisible($('context-visible').checked);
 $('studio-ceiling').onchange=()=>action(async()=>{if(draft)await renderDraft(draft);});
+$('studio-navigation').onchange=()=>{scene.navigation($('studio-navigation').value);$('studio-model').focus({preventScroll:true});};
+$('studio-model').addEventListener('navigationchange',e=>{$('studio-navigation').value=e.detail;$('free-camera-tools').hidden=e.detail!=='free';});
+for(const b of document.querySelectorAll('[data-camera-move]'))b.onclick=()=>{scene.travel(...b.dataset.cameraMove.split(',').map(Number));};
 function cameraSelection(view){for(const b of document.querySelectorAll('[data-studio-view]'))b.setAttribute('aria-pressed',String(b.dataset.studioView===view));}
 for(const b of document.querySelectorAll('[data-studio-view]'))b.onclick=()=>{scene.view(b.dataset.studioView);cameraSelection(b.dataset.studioView);};
 $('studio-fit').onclick=()=>{cameraSelection(null);if(draft)scene.fit(localCells(draft.candidate.blocks));else if(site)scene.fit(site.blocks.filter(c=>c.y>=contextFloor));};
@@ -176,7 +179,7 @@ $('studio-lighting').onchange=()=>scene.lighting($('studio-lighting').value);$('
 $('studio-help').onclick=()=>$('help-dialog').showModal();
 // Keyboard: cameras 1–6, F fit, E expand, ? help. Ignored while typing.
 const viewKeys=['perspective','front','side','rear','roof','street'];
-document.addEventListener('keydown',e=>{if(e.altKey||e.ctrlKey||e.metaKey||['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName)||document.querySelector('dialog[open]'))return;const view=viewKeys[Number(e.key)-1];if(view){scene.view(view);cameraSelection(view);}else if(e.key==='f'||e.key==='F')$('studio-fit').click();else if(e.key==='e'||e.key==='E')$('studio-expand').click();else if(e.key==='?')$('help-dialog').showModal();else return;e.preventDefault();});
+document.addEventListener('keydown',e=>{if(e.defaultPrevented)return;if(e.altKey||e.ctrlKey||e.metaKey||['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName)||document.querySelector('dialog[open]'))return;const view=viewKeys[Number(e.key)-1];if(view){scene.view(view);cameraSelection(view);}else if(e.key==='f'||e.key==='F')$('studio-fit').click();else if(e.key==='e'||e.key==='E')$('studio-expand').click();else if(e.key==='?')$('help-dialog').showModal();else return;e.preventDefault();});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.body.classList.contains('model-expanded'))expand(false);});
 async function openCatalogue(reference){const [projectId,revisionId]=reference.split('/'),project=projects.find(p=>p.id===projectId),revision=project?.revisions.find(r=>r.id===revisionId);if(!revision)throw Error('Unknown catalogue design');const existing=index.drafts.find(d=>d.parentHash===revision.hash);if(existing)return renderDraft(await api('drafts/'+existing.id),{frame:true});const d=await api('drafts',{catalogue:reference,transform:{origin:[0,0,0],turns:0},brief:''});await refresh();await renderDraft(d,{frame:true});status('Opened '+project.name+' in the studio as a new draft.');}
 async function bridgeStatus(){try{bridge=await api('construction/status');}catch(error){bridge={connected:false,message:error.message};}if(draft)support();$('bridge-status').textContent=bridge.connected?'Construction server connected · '+bridge.world:'Construction server not connected. Design, versions and exports still work.';$('bridge-details').hidden=bridge.connected;$('bridge-detail').textContent=bridge.message||'';}
@@ -187,7 +190,7 @@ async function start(){await refresh();const query=new URL(location.href).search
 let pointerStart;
 $('studio-model').addEventListener('pointerdown',e=>{pointerStart=[e.clientX,e.clientY];});
 $('studio-model').addEventListener('click',e=>{
- if(!draft||!pointerStart||Math.hypot(e.clientX-pointerStart[0],e.clientY-pointerStart[1])>5)return;
+ if(scene.navigationMode()==='free'||scene.navigationMode()==='pan'||!draft||!pointerStart||Math.hypot(e.clientX-pointerStart[0],e.clientY-pointerStart[1])>5)return;
  const hit=scene.pick(e);if(!hit)return;const point=hit.point.clone().addScaledVector(hit.face.normal,-.01);
  const cell=localCells(draft.candidate.blocks).find(c=>c.x===Math.floor(point.x)&&c.y===Math.floor(point.y)&&c.z===Math.floor(point.z));
  if(cell){$('studio-component').value=cell.component;materials();highlight();selection(componentLabel(cell.component),label(cell.block),`${cell.block} · (${cell.x}, ${cell.y}, ${cell.z})`);}
