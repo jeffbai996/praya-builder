@@ -64,7 +64,7 @@ to be seated
 ---------
 ```
 
-This is a strong Praya option for short text: two centered content rows and balanced framing above and below. Blank outer rows are another suitable restrained option.
+This is a strong Praya option for short text: two centered content rows and balanced framing above and below. The latest user correction supersedes the earlier blank-outer-row option: use matching rules above and below short notices; do not leave rows 1 and 4 empty.
 
 ### Identity / divider / useful secondary information
 

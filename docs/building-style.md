@@ -132,10 +132,28 @@ Implementation update: Corner Stores R2 adds actual paired blue bed states and 1
 
 ## Sign composition and roof linkage — user correction, 2026-09-08
 
-Always compose signage centrally, both horizontally and vertically. Avoid casually filling the first three lines and leaving the fourth blank. Prefer two concise lines in the middle two rows with blank rows above and below, or an intentionally balanced four-line layout. Reword rather than leave uneven filler. This applies to the actual Minecraft sign text as well as Studio rendering.
+Always compose signage centrally, both horizontally and vertically. Avoid casually filling the first three lines and leaving the fourth blank. Prefer two concise lines in the middle two rows with matching divider rules above and below, or an intentionally balanced four-line layout. The later user correction supersedes the earlier blank-outer-row preference. Reword rather than leave uneven filler. This applies to the actual Minecraft sign text as well as Studio rendering.
 
 For the paired AC units in Corner Stores, the user specified one quartz slab connecting the two housings. User clarified they meant entity beds; leave the present bed implementation alone for now, as requested. Do not treat approval of the overall result as confirmation that the simplified bed preview matches the desired entity-rendered appearance.
 
 ## Bridge implementation update — 2026-09-08
 
 The sign bridge now supports bounded wall-sign placement, readback, text-only edits, both-side metadata preservation and conflict-aware undo. It passed a real disposable Paper test. This supersedes the earlier blanket statement that bridge sign-text support is unimplemented; the live Praya deployment remains unchanged. See ../docs/sign-bridge.md and sign-formats.md for implementation evidence and catalogue-grounded formatting.
+
+## Temperate climate and highrise variety — user direction, 2026-09-08
+
+Praya has a Vancouver-like climate, not a tropical Singapore-like setting. Use temperate planting and climate cues. The user rejected three overly similar towers in the generated art and requested stronger architectural variety and Minecraft-style cars around the streets. These are design directions; the generated skyline and its geography remain proposals.
+
+## Tower-study rejection — user correction, 2026-09-08
+
+The user rejected Terraced Brick Residences R0: its repeated brick-and-pale-grid treatment is not how they use brick, and it did not resemble any of the generated towers. Do not reuse that facade as a Praya precedent. This is not a general ban on brick. Preserve the selected reference's massing, framing scale, recesses and material hierarchy when adapting it to blocks and plot constraints. R1 is a proposed response, not yet user-approved.
+
+## Depth and tower refinement — user direction, 2026-09-08
+
+User endorsed Terraced Residences R1 as a good direction and requested a slightly taller, more detailed successor with better interiors. Architectural depth is a standing preference: recessed glass panes, projecting slab and stair details, layered surrounds and other inventive block geometry. Preserve the large-frame and stepped-volume direction while refining it; do not treat R2 as user-approved until reviewed.
+
+## Framed signs and explicit connections — user correction, 2026-09-08
+
+Do not leave sign rows 1 and 4 empty by default. Frame short notices with balanced dash rules, grounded in the saved-world Microsoft and Please-wait specimens. Preserve actual address/bilingual formats rather than applying framing indiscriminately to historical signs.
+
+Pane and iron-bar corners must be authored with the correct directional connection states, not only visually patched in Studio. Resolve neighboring arms before compiling and verify the same states in schematic exports. Terraced Residences R3 uses the thin-block connection authoring utility; earlier immutable designs are not retroactively modified.
