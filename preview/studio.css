@@ -103,7 +103,7 @@ body[data-busy=true][data-ready=true] .drawing-veil{display:flex}
 @media(max-width:1100px){.studio-toolbar{grid-template-columns:1fr}.proposal-switcher{max-width:440px}}
 /* Below 1024px the column stacks under the model; side by side is a desktop layout only. */
 @media(max-width:1023px){.studio-head{padding:12px;gap:12px}.studio-head .department-brand{width:auto}.studio-head .eyebrow{display:none}.studio-head h1{font-size:18px}
- .studio-head{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px 12px}.studio-head .department-brand{grid-column:1;grid-row:1;min-width:0;flex:1}.studio-heading{grid-column:1/-1;grid-row:2}.studio-header-actions{grid-column:2;grid-row:1;align-self:start}.studio-head h1{margin:0;font-size:18px}
+ .studio-head{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px 12px}.studio-head .department-brand{grid-column:1;grid-row:1;min-width:0;flex:1}.studio-heading{grid-column:2;grid-row:1}.studio-header-actions{grid-column:3;grid-row:1;align-self:center}.studio-head h1{margin:0;font-size:18px}
  .studio-steps{padding:6px 10px;gap:2px;flex-wrap:wrap}.studio-steps a{flex:1;justify-content:center;padding:8px 4px;font-size:12px}#studio-status{flex-basis:100%;text-align:left;font-size:10px;margin:4px 4px 0}
  .studio-grid{display:flex;flex-direction:column;align-items:stretch;padding:10px}.studio-controls{position:static;max-height:none;overflow:visible;padding-right:0}
  .studio-toolbar{padding:18px 14px 12px;gap:14px}.studio-body #draft-title{font-size:28px}.proposal-heading .eyebrow{font-size:8px}
@@ -139,7 +139,7 @@ body[data-busy=true][data-ready=true] .drawing-veil{display:flex}
 .drawing-empty p[data-for]{display:none}.studio-grid[data-mode=design] .drawing-empty p[data-for=design],.studio-grid[data-mode=site] .drawing-empty p[data-for=site],.studio-grid[data-mode=construction] .drawing-empty p[data-for=construction]{display:block}
 .studio-grid:not([data-mode=design]) #empty-site{display:none}
 @media(max-width:1023px){body[data-ready=false] .studio-grid:not([data-mode=design]) .studio-viewport{height:28vh;min-height:180px}}
-@media(max-width:760px){.studio-heading{display:none}.studio-head{grid-template-rows:auto}}
+@media(max-width:380px){.studio-header-actions{grid-column:1/-1;grid-row:2;justify-self:end}}
 
 /* Phones: in Site and Construction modes the tools come first; the model chrome waits until a design is open. */
 @media(max-width:1023px){
@@ -162,6 +162,16 @@ body[data-busy=true][data-ready=true] .drawing-veil{display:flex}
 
 .studio-steps a[aria-current="page"]{color:var(--accent);border-bottom-color:var(--accent);}
 .studio-body .studio-views button[aria-pressed="true"],.layer-chip input:checked+span{color:var(--accent);border-color:var(--accent);background:var(--accent-soft);}
-.studio-body .register-link{width:auto;display:inline-flex;gap:7px;padding:8px 10px;white-space:nowrap;}
+.studio-body .register-link{width:auto;display:inline-flex;gap:7px;padding:8px 10px;border-radius:6px;white-space:nowrap;}
 .studio-heading .eyebrow{color:var(--accent);}.studio-heading h1{font-size:18px;}
 @media(max-width:600px){.studio-body .register-link span{display:none;}}
+
+/* Functional color stays paired with status text and control labels. */
+.save-state[data-state=saved],#candidate-state[data-state=valid]{color:var(--success)}
+.save-state[data-state=saved]:before{background:var(--success)}
+.save-state[data-state=unsaved]{color:var(--warning)}
+#candidate-state[data-state=invalid],#studio-status[data-tone=error]{color:var(--danger)}
+#studio-status[data-tone=warning]{color:var(--warning)}
+.version-tag{color:var(--success);background:var(--success-soft)}
+.studio-body .reference-remove:hover{color:var(--danger);border-color:var(--danger)}
+@media(max-width:600px){.studio-head{gap:8px}.studio-head .department-brand strong{font-size:24px}.studio-head .department-brand span span{font-size:9px}.studio-header-actions{gap:4px}.studio-heading h1{font-size:18px}}

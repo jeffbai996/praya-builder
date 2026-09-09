@@ -221,3 +221,6 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 @media(max-width:600px){.continue-design{align-items:flex-start;flex-direction:column;}.project-card-body>a.workspace-start{margin:8px 0 0;}}
 
 .workspace-start{color:var(--accent);}.workspace-start:hover{border-color:var(--accent);background:var(--accent-soft);}
+
+:root{--success:#286b46;--success-soft:#e5f1e8;--danger:#ae3636}
+:root[data-theme="dark"],:root[data-theme="oled"]{--success:#91cba5;--success-soft:#25382b;--danger:#f09791}
