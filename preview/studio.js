@@ -43,7 +43,26 @@ const modeFromHash=hash=>({'#site-workspace':'site','#proposal-workspace':'site'
 for(const link of document.querySelectorAll('.studio-steps a'))link.addEventListener('click',event=>{event.preventDefault();history.replaceState(null,'',link.getAttribute('href'));mode(link.dataset.mode,{scroll:true});});
 window.addEventListener('hashchange',()=>mode(modeFromHash(location.hash)));
 $('empty-site').onclick=()=>{mode('site',{scroll:innerWidth<1024});$('site-select').focus();};
-async function refresh(){index=await api('context');$('studio-main').hidden=false;if(!index.sites.length)$('fixture-panel').open=true;const sid=$('site-select').value,did=$('draft-select').value;$('site-select').replaceChildren(new Option('No site selected',''),...index.sites.map(s=>new Option(s.name,s.id)));$('site-select').value=sid;$('draft-select').replaceChildren(new Option('Choose a design',''),...index.drafts.map(d=>new Option(d.name+(d.valid?'':' · needs changes'),d.id)));$('draft-select').value=did;$('saved-revision').replaceChildren(...index.revisions.map(r=>new Option(r.plan.name+' · '+when(r.createdAt),r.id)));$('continue-revision').disabled=!index.revisions.length;$('job-select').replaceChildren(new Option('Choose a construction job',''),...(index.jobs||[]).map(j=>new Option(label(j.kind)+' · '+label(j.state)+' · '+when(j.createdAt),j.id)));status(`${index.sites.length} sites · ${index.drafts.length} designs · ${index.revisions.length} saved versions`);}
+const designName=name=>name.replace(/ · (?:R\d+|Praya detail pass)$/,'');
+let showAllDrafts=false;
+function designChoices(){
+ const byId=new Map(index.drafts.map(d=>[d.id,d])),seen=new Set();
+ const ordered=[...[...index.revisions].sort((a,b)=>b.createdAt.localeCompare(a.createdAt)).map(r=>byId.get(r.draftId)).filter(Boolean),...index.drafts];
+ return ordered.filter(d=>{if(seen.has(d.project))return false;seen.add(d.project);return true;}).sort((a,b)=>designName(a.name).localeCompare(designName(b.name)));
+}
+function renderDesignChoices(current=$('draft-select').value){
+ const select=$('draft-select'),latest=designChoices();select.replaceChildren(new Option('Choose a design',''));
+ for(const d of latest)select.add(new Option(designName(d.name)+(d.valid?'':' · needs changes'),d.id));
+ const rest=index.drafts.filter(d=>!latest.some(n=>n.id===d.id));
+ if(showAllDrafts){const group=document.createElement('optgroup');group.label='Earlier versions and working drafts';
+  for(const d of rest.sort((a,b)=>a.name.localeCompare(b.name)))group.append(new Option(d.name+(d.valid?'':' · needs changes'),d.id));select.append(group);
+ }else if(current&&!latest.some(d=>d.id===current)){
+  const d=index.drafts.find(d=>d.id===current);if(d)select.add(new Option(d.name+' · currently open',d.id));
+ }
+ select.value=current;$('draft-history').hidden=!rest.length;$('draft-history').textContent=showAllDrafts?'Show current designs':'Show all drafts';$('draft-history').setAttribute('aria-expanded',String(showAllDrafts));
+}
+$('draft-history').onclick=()=>{showAllDrafts=!showAllDrafts;renderDesignChoices();};
+async function refresh(){index=await api('context');$('studio-main').hidden=false;if(!index.sites.length)$('fixture-panel').open=true;const sid=$('site-select').value,did=$('draft-select').value;$('site-select').replaceChildren(new Option('No site selected',''),...index.sites.map(s=>new Option(s.name,s.id)));$('site-select').value=sid;renderDesignChoices(did);$('saved-revision').replaceChildren(...index.revisions.map(r=>new Option(r.plan.name+' · '+when(r.createdAt),r.id)));$('continue-revision').disabled=!index.revisions.length;$('job-select').replaceChildren(new Option('Choose a construction job',''),...(index.jobs||[]).map(j=>new Option(label(j.kind)+' · '+label(j.state)+' · '+when(j.createdAt),j.id)));status(`${index.sites.length} sites · ${designChoices().length} designs · ${index.revisions.length} saved versions`);}
 async function selectSite(id){site=id?await api('sites/'+id):null;$('site-select').value=id||'';scene.siteBounds(site);const templateFits=Boolean(site&&site.plot.max[0]-site.plot.min[0]>=32&&site.plot.max[2]-site.plot.min[2]>=32);$('new-proposals').disabled=!templateFits;$('study-site-note').hidden=!site||templateFits;for(const id of ['context-visible','context-depth','impact-visible']){$(id).disabled=!site;$(id).closest('.layer-chip').title=site?'':'Needs a surveyed site';}if(site){await loadSiteView();setCoordinates('origin',site.plot.min);$('site-summary').textContent=`${site.plot.max[0]-site.plot.min[0]} × ${site.plot.max[2]-site.plot.min[2]} plot · ${site.world} · captured ${when(site.capturedAt)}${site.protected.length?' · '+site.protected.length+' protected areas':''}`;}else{await scene.loadContext({sections:[]});$('site-summary').textContent='No site. Designs still work without one; construction needs a survey.';}}
 async function loadSiteView(){if(!site)return;const mesh=await api(`sites/${site.id}/mesh?depth=${$('context-depth').checked?'full':'surface'}`);contextFloor=mesh.floor;contextSurface=mesh.surfaceY;scene.siteBounds({...site,plot:$('context-depth').checked?site.plot:{min:[site.plot.min[0],site.frontage[1]+.05,site.plot.min[2]],max:[site.plot.max[0],site.frontage[1]+.15,site.plot.max[2]]}});await scene.loadContext(mesh);scene.frame(site.dimensions,contextSurface);scene.fit(site.blocks.filter(c=>c.y>=contextFloor));cameraSelection(null);}
 $('context-depth').onchange=()=>action(loadSiteView);
@@ -84,7 +103,7 @@ async function renderDraft(next,{frame=false}={}){
  draft=next;await scene.load(mesh);if(token!==ticket)return;
  scene.position(site?draft.transform.origin.map((v,i)=>v-site.origin[i]):[0,0,0]);scene.show();
  if(frame)scene.frame(site?.dimensions||draft.candidate.dimensions,site?contextSurface:0);
- $('draft-select').value=draft.id;$('draft-title').textContent=draft.plan.name;$('rename-design').hidden=false;$('rename-form').hidden=true;
+ renderDesignChoices(draft.id);$('draft-title').textContent=designName(draft.plan.name);$('rename-design').hidden=false;$('rename-form').hidden=true;
  const selected=$('studio-component').value;$('studio-component').replaceChildren(new Option('Whole building',''),...draft.plan.components.map(c=>new Option(componentLabel(c.id),c.id)));$('studio-component').value=selected;
  materials();renderVersions();await loadChanges();
  $('candidate-state').textContent=draft.valid?'Ready to review':'Needs changes';$('candidate-state').dataset.state=draft.valid?'valid':'invalid';
