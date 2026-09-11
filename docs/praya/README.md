@@ -45,3 +45,7 @@ Consult [GOV.PRAYA](https://www.govpraya.org/) for existing institutions, local 
 ## Latest design finishing pass
 
 [September 9 detail-pass record](proposals/praya-detail-pass-2026-09-09.md) links 13 saved successors and their validation. These are proposed designs applying the existing style rules, not new canon.
+
+## Transport workspace direction
+
+[Transport Builder handoff](../transport-builder-handoff-2026-09-11.md) records the user-requested transport-infrastructure workspace and proposed implementation. Existing street-address coverage is confirmed in the canon register; detailed transport schemas, dimensions and product labels remain proposals.

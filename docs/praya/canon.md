@@ -113,3 +113,7 @@ Many Praya buildings have empty interiors due to limited building labour/time. D
 The user identifies the area in 2026-09-08_03.48.37.png as Old Town Oakville, describes it as denser with rougher/less polished architecture, and points to older-looking buildings, brownstone attempts and work from older eras. Exact periods, dates and individual-building histories are not specified. Do not convert the user's assessment of building quality into fictional poverty, neglect, abandonment or disrepair.
 
 Explicit builder scope: older architectural styles and buildings from different eras are in scope; builder is not restricted to modern architecture. See building-style.md for the maintained design rule.
+
+## Existing street addresses — user confirmation, 2026-09-11
+
+The user confirmed that Praya already has street addresses for the most part. The proposed land/building register should ingest and verify existing addresses, preserving street names, numbers and local formatting. This confirms broad coverage, not a complete authoritative address dataset or the accuracy of every extracted sign. Do not automatically renumber streets or invent missing addresses. Source: direct user statement in this task on September 11.
