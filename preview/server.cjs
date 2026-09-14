@@ -31,6 +31,7 @@ const iconNames=new Set([...artifacts.values()].flatMap(artifact=>artifact.block
 const icons=new Map();
 const workspace=workspaceApi({artifacts,port});
 const files = new Map([
+  ['/placement-readiness.js',['placement-readiness.js','text/javascript']],
   ['/plot-editor.js',['plot-editor.js','text/javascript']], ['/capture-controls.js',['capture-controls.js','text/javascript']],
   ['/studio-interface.js',['studio-interface.js','text/javascript']], ['/sign-presets.js',['sign-presets.js','text/javascript']], ['/version-thumbs.js',['version-thumbs.js','text/javascript']], ['/support-list.js',['support-list.js','text/javascript']],
   ['/studio',['studio.html','text/html']], ['/studio.js',['studio.js','text/javascript']], ['/studio.css',['studio.css','text/css']],

@@ -1,0 +1,16 @@
+[Unit]
+Description=Praya Builder Studio
+After=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/repos/praya-builder/preview
+ExecStart=/usr/bin/python3 %h/repos/praya-builder/ops/run-studio.py
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=30
+MemoryHigh=2G
+MemoryMax=3G
+
+[Install]
+WantedBy=default.target

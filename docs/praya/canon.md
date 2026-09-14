@@ -98,6 +98,12 @@ The user identifies the area in 2026-09-08_03.43.42.png and 2026-09-08_03.43.54.
 - Future BCPL buildings must carry this logo. Libraries outside BCPL do not need it; do not infer BCPL membership merely from a library programme or location. The maintained architectural rule is in building-style.md.
 - Exact logo block layout, materials, dimensions and placement specification have not yet been extracted. The original screenshot is the reference; an approximate invented mark is not a verified reproduction.
 
+## Braemar County Public Library, Oakville branch — CONFIRMED (S10, 2026-09-11)
+
+- The user confirms that the scene in `2026-09-11_03.45.03.png` is in Oakville and that the foreground building is BCPL's Oakville branch.
+- The user explicitly reiterates remembering the BCPL logo. This is an additional source for the shared BCPL identity already required for future BCPL buildings, not a new branch-specific substitute mark.
+- See the [original screenshot and reference record](reference-oakville-bcpl-2026-09-11.md) for logo placement, architectural observations and evidence limits. Address and coordinates remain unassigned.
+
 ## Oakville City Hall visual identification — CONFIRMED (S1, 2026-09-08)
 
 The user identifies the building in 2026-09-08_03.46.45.png as Oakville City Hall and explicitly identifies the displayed rainbow flags as Pride flags. This is the City Hall previously identified as holding the custom-head collection. The screenshot does not locate the collection inside the building.

@@ -10,6 +10,10 @@
 | S6 | cc-context/memory/praya-builder/MEMORY.md in the sibling repository | Located but not read/imported; historical memory is a discovery lead, not authority |
 | S7 | jeffbai996/praya-web; govpraya.org; older Praya Wiki; Praya task scrape (6a78608a-6384-83e8-b530-507337fc027b) | Known related sources, not reconciled in this pass. Website institutions/lore and archived temporal layers need a separate source review |
 
+## S10 — Oakville / BCPL Oakville branch, 2026-09-11
+
+Direct user statement in Codex task `01a09007-7d10-7531-ad2f-384826f2a605`: “this is part of oakville. that in front is BCPL oakville branch. remember the logo for sure”. Original image: `C:/Users/baila/AppData/Roaming/.minecraft/screenshots/2026-09-11_03.45.03.png`, preserved as [reference evidence](../reference-images/2026-09-11_03.45.03.png). The [dated reference record](reference-oakville-bcpl-2026-09-11.md) separates user-confirmed identity, visual observations and unresolved block-level logo geometry.
+
 ## Next consolidation work
 
 Retrieve the actual transport manual and vector masters before claiming its precise dimensions/fonts are implemented. Reconcile website/wiki/older institutional lore with dated sources and explicit user decisions, preserving historical versions. Keep speculative gp-ai requirements separate from fictional-world facts. Do not silently expand this initial register into an exhaustive national canon.

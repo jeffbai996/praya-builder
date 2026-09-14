@@ -106,6 +106,12 @@ Future Braemar County Public Library (BCPL) branches must carry the BCPL logo id
 
 Preserve the referenced mark's geometry and colours. Capture/verify its exact block construction before claiming faithful reproduction, and include it in compiled/exported geometry. Branch architecture may vary; the user mandated shared identity, not replication of the Northgate building.
 
+## BCPL Oakville reference — user direction, 2026-09-11
+
+The user identifies the foreground building in [the Oakville screenshot](reference-images/2026-09-11_03.45.03.png) as BCPL's Oakville branch and explicitly reiterates remembering its logo. Use this alongside the Northgate reference under the existing BCPL identity rule. Preserve the mark's stepped block geometry and orange, dark, pale-white and red arrangement; do not substitute generated civic banners, plain lettering or an invented emblem. See the [dated source record](praya/reference-oakville-bcpl-2026-09-11.md) for visual evidence and exact-reconstruction limits.
+
+The broad low-rise frontage, tall glazing with warm vertical detail, strong roof edge and planted changes in ground level expand the available branch design references. They are observed techniques for this building, not requirements that every BCPL branch reproduce the same facade.
+
 ## Existing-building fit-out — future capability, 2026-09-08
 
 Empty reference interiors often reflect limited labour/time, as explicitly explained by the user. They are not a style target. Future builder work should support furnishing selected existing buildings while respecting their shell, use and retained details. See [fit-out requirements](praya/interior-fitout.md); implementation and live acceptance remain pending.

@@ -4,6 +4,8 @@ Maintained from 2026-09-08 at the user's request. This directory is the single e
 
 ## Read first
 
+- [Oakville / BCPL Oakville branch reference, September 11](reference-oakville-bcpl-2026-09-11.md): user-confirmed branch identification, original screenshot, BCPL logo evidence and architectural observations.
+
 - [Canon register](canon.md): confirmed names, geography, terminology and explicit transport decisions, with provenance.
 - [Building style rules](../building-style.md): the authoritative building-design rules, including project-specific exceptions. This existing file remains the rule owner; do not duplicate it here.
 - [September 8 source record](../praya-canon-notes-2026-09-08.md): user statements, corrections, provisional image readings and original screenshot evidence.

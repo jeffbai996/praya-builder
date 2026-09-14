@@ -1,5 +1,6 @@
 /* Studio layout: the model first, one contextual column beside it. Shares tokens, buttons and chips with style.css. */
-.studio-body{display:block;min-width:320px}
+.studio-body{display:block;min-width:320px;--danger:#ad3434;--success:#346b48}
+:root[data-theme=dark] .studio-body,:root[data-theme=oled] .studio-body{--danger:#f09292;--success:#91c6a2}
 .studio-head{display:flex;align-items:center;gap:32px;padding:14px 28px;border-bottom:1px solid var(--line);background:var(--panel)}
 .studio-head .department-brand{width:210px;flex-shrink:0}.studio-head .department-brand strong{font-size:28px;letter-spacing:-1.2px}.studio-head .department-brand span span{display:block;font-size:10px}
 .studio-head .department-brand .build-number{font-size:8px;letter-spacing:.06em;color:var(--muted);margin-top:4px}
@@ -200,3 +201,18 @@ body[data-busy=true][data-ready=true] .drawing-veil{display:flex}
  .studio-body .view-tools .compact-select{flex:1 1 42%;min-width:0;width:0}
  .studio-body .view-tools button{flex:1 1 42%}
 }
+
+/* Placement is a visible next action, with blockers beside the controls. */
+#studio-status{margin:0;padding:8px 24px;text-align:left;font-size:11px;min-height:30px}
+#studio-alert{position:sticky;top:58px;z-index:7;display:flex;gap:16px;align-items:center;justify-content:space-between;margin:0 24px 12px;padding:16px 18px;border:1px solid var(--danger);border-left:4px solid var(--danger);border-radius:6px;background:var(--panel);box-shadow:0 4px 18px #0002;color:var(--text)}
+#studio-alert strong{color:var(--danger);font-size:15px}#studio-alert p{margin:5px 0 0;font-size:13px;line-height:1.5;overflow-wrap:anywhere}#studio-alert button{flex:none}
+.placement-entry{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:0 22px 18px;padding:14px 16px;border:1px solid var(--line);border-radius:6px;background:var(--panel-soft)}
+.placement-entry strong{font-size:13px}.placement-entry p{font-size:12px;color:var(--muted);margin:5px 0 0;line-height:1.5}.placement-entry button{flex:none}
+.placement-readiness{padding:14px;border:1px solid var(--warning);border-left:4px solid var(--warning);border-radius:5px;background:var(--panel-soft);margin-bottom:14px}
+.placement-readiness strong{font-size:15px}.placement-readiness p{font-size:12px;line-height:1.6;margin:6px 0 0}
+.placement-readiness[data-state=ready]{border-color:var(--success)}.placement-readiness[data-state=offline],.placement-readiness[data-state=invalid],.placement-readiness[data-state=preview-blocked]{border-color:var(--danger)}
+.placement-target{display:grid;gap:5px;margin:12px 0;font-size:12px}.placement-target dt{color:var(--muted);font-size:11px}.placement-target dd{margin:0 0 8px;overflow-wrap:anywhere}
+#placement-copy-form{border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:16px 0;margin:12px 0}#placement-copy-form h3{font-size:16px;margin:0 0 12px}
+#placement-fit[data-state=blocked]{color:var(--warning)}#placement-fit[data-state=fits]{color:var(--success)}
+.studio-body #create-placement-copy,.studio-body #prepare-placement,.studio-body #placement-save{width:100%}
+@media(max-width:1023px){#studio-status{padding:8px 14px}#studio-alert{margin:0 10px 10px;padding:12px;align-items:flex-start}#studio-alert p{font-size:13px}.placement-entry{margin:0 14px 14px;padding:12px;flex-wrap:wrap}.placement-entry button{width:100%}.studio-steps a{padding:8px 12px}#studio-status{flex-basis:auto}}

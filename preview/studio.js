@@ -1,3 +1,4 @@
+import {placementReadiness,compatibleSites,placementFit,placementErrorMessage} from './placement-readiness.js';
 import {label,componentLabel,coordinates,setCoordinates,record,review,finishChoices,siteInterface} from './studio-interface.js';
 import {createScene} from './scene.js';
 import {readTheme,saveTheme,bindThemeToggle} from './review-state.js';
@@ -20,14 +21,15 @@ function floorOptions(candidate){
  const names=['Ground floor','First floor','Second floor','Third floor','Fourth floor','Fifth floor','Sixth floor','Seventh floor'];
  return sorted.map((y,i)=>({value:y+2,label:i===sorted.length-1&&i>0&&y>=candidate.dimensions.y-8?'Roof level':names[i]||`Level ${i}`}));
 }
-const status=(message,tone='neutral')=>{$('studio-status').textContent=message;$('studio-status').dataset.tone=tone;};
+const status=(message,tone='neutral')=>{$('studio-status').textContent=message;$('studio-status').dataset.tone=tone;if(tone==='error'||tone==='warning'){$('studio-alert-message').textContent=message;$('studio-alert-title').textContent=tone==='error'?'Action could not finish':'Action needs attention';$('studio-alert').hidden=false;requestAnimationFrame(()=>$('studio-alert').focus({preventScroll:true}));}};
+$('dismiss-alert').onclick=()=>{$('studio-alert').hidden=true;};
 const preferred=readTheme(),theme=['light','dark','oled'].includes(preferred)?preferred:'light';document.documentElement.dataset.theme=theme;
 try{scene=createScene($('studio-model'));scene.theme(theme);}catch(error){status(error.message,'error');}
 bindThemeToggle($('theme-toggle'),theme,value=>{document.documentElement.dataset.theme=value;saveTheme(value);scene?.theme(value);});
 async function api(route,body){const response=await fetch('/api/workspace/'+route,{method:body===undefined?'GET':'POST',headers:body===undefined?{}:{'Content-Type':'application/json','X-Builder-Write':'1'},body:body===undefined?undefined:JSON.stringify(body)});let data;try{data=await response.json();}catch{data={error:response.ok?'Unexpected response':'Connection failed ('+response.status+')'};}if(!response.ok){const error=Error(data.error||'Workspace request failed');error.status=response.status;throw error;}return data;}
-async function action(work){if(busy)return;busy=true;document.body.dataset.busy='true';try{await work();}catch(error){if(error.status===409&&draft)conflict(error);else status(error.message,'error');}finally{busy=false;document.body.dataset.busy='false';}}
+async function action(work){if(busy)return;busy=true;document.body.dataset.busy='true';updatePlacement();try{await work();}catch(error){if(error.status===409&&draft)conflict(error);else status(placementErrorMessage(error.message),'error');}finally{busy=false;document.body.dataset.busy='false';updatePlacement();}}
 // A 409 means the draft moved under us. Keep the camera and cutaway; let the user reload the draft on their terms.
-function conflict(error){const box=$('studio-status');box.dataset.tone='warning';box.textContent='This design changed elsewhere; your view is kept. ';const actions=document.createElement('span');actions.className='conflict-actions';const reload=document.createElement('button');reload.type='button';reload.textContent='Reload design';reload.onclick=()=>action(async()=>{await refresh();await renderDraft(await api('drafts/'+draft.id));status('Design reloaded.');});const detail=document.createElement('button');detail.type='button';detail.textContent='Details';detail.onclick=()=>{status(error.message,'error');};actions.append(reload,detail);box.append(actions);}
+function conflict(error){status('This action conflicts with a newer saved version. Your current design is kept. '+error.message,'warning');const box=$('studio-status');box.dataset.tone='warning';box.textContent='This design changed elsewhere; your view is kept. ';const actions=document.createElement('span');actions.className='conflict-actions';const reload=document.createElement('button');reload.type='button';reload.textContent='Reload design';reload.onclick=()=>action(async()=>{await refresh();await renderDraft(await api('drafts/'+draft.id));status('Design reloaded.');});const detail=document.createElement('button');detail.type='button';detail.textContent='Details';detail.onclick=()=>{status(error.message,'error');};actions.append(reload,detail);box.append(actions);}
 function download(value,name){const a=document.createElement('a'),url=URL.createObjectURL(new Blob([JSON.stringify(value,null,2)],{type:'application/json'}));a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
 const when=iso=>new Date(iso).toLocaleString([],{dateStyle:'medium',timeStyle:'short'});
 // Modes: Design is the default; Site and Construction reveal their own column beside the same model.
@@ -100,7 +102,7 @@ async function renderDraft(next,{frame=false}={}){
  const mesh=await draftMesh(next,ceiling.value);if(token!==ticket)return;
  if(next.siteId!==site?.id){await selectSite(next.siteId);frame=true;}if(token!==ticket)return;
  if(!draft||draft.candidate.dimensions.x!==next.candidate.dimensions.x||draft.candidate.dimensions.z!==next.candidate.dimensions.z)frame=true;
- draft=next;await scene.load(mesh);if(token!==ticket)return;
+ if(draft&&(draft.id!==next.id||draft.candidate.hash!==next.candidate.hash))clearPlacementJob();draft=next;await scene.load(mesh);if(token!==ticket)return;
  scene.position(site?draft.transform.origin.map((v,i)=>v-site.origin[i]):[0,0,0]);scene.show();
  if(frame)scene.frame(site?.dimensions||draft.candidate.dimensions,site?contextSurface:0);
  renderDesignChoices(draft.id);$('draft-title').textContent=designName(draft.plan.name);$('rename-design').hidden=false;$('rename-form').hidden=true;
@@ -163,7 +165,7 @@ function materials(){
 }
 const requireDraft=()=>{if(!draft)throw Error('Open a design first');return draft;};
 function placement(){const origin=coordinates('origin');return {siteId:site?.id,transform:{origin,turns:Number($('turns').value)},brief:$('brief').value};}
-async function chooseSite(id){await selectSite(id);draft=null;$('draft-select').value='';delete document.body.dataset.draft;document.body.dataset.ready='false';scene.hide();draftControls(false);$('candidate-state').textContent='No design';delete $('candidate-state').dataset.state;$('candidate-summary').textContent='';$('asset-support').replaceChildren();$('sign-tools').hidden=true;$('reference-list').replaceChildren();$('add-references').disabled=true;$('review-metrics').replaceChildren();$('diagnostics').replaceChildren();$('draft-title').textContent=site?'Choose a design for this site':'No design open';$('rename-design').hidden=true;$('rename-form').hidden=true;$('save-state').hidden=true;$('version-list').replaceChildren();$('compare-summary').textContent='';selection();backLink();const url=new URL(location.href);url.searchParams.delete('draft');if(id)url.searchParams.set('site',id);else url.searchParams.delete('site');history.replaceState(null,'',url);}
+async function chooseSite(id){await selectSite(id);clearPlacementJob();draft=null;$('draft-select').value='';delete document.body.dataset.draft;document.body.dataset.ready='false';scene.hide();draftControls(false);$('candidate-state').textContent='No design';delete $('candidate-state').dataset.state;$('candidate-summary').textContent='';$('asset-support').replaceChildren();$('sign-tools').hidden=true;$('reference-list').replaceChildren();$('add-references').disabled=true;$('review-metrics').replaceChildren();$('diagnostics').replaceChildren();$('draft-title').textContent=site?'Choose a design for this site':'No design open';$('rename-design').hidden=true;$('rename-form').hidden=true;$('save-state').hidden=true;$('version-list').replaceChildren();$('compare-summary').textContent='';selection();backLink();const url=new URL(location.href);url.searchParams.delete('draft');if(id)url.searchParams.set('site',id);else url.searchParams.delete('site');history.replaceState(null,'',url);}
 async function continueRevision(r){const d=await api('drafts',{plan:r.plan,parentHash:r.artifactHash,siteId:r.siteId,transform:r.transform,brief:r.brief});await refresh();await renderDraft(d,{frame:true});mode('design');status('New draft opened from the saved version; the saved version is unchanged.');}
 $('rename-design').onclick=()=>{$('rename-input').value=draft.plan.name;$('rename-form').hidden=false;$('rename-design').hidden=true;$('rename-input').focus();$('rename-input').select();};
 $('rename-cancel').onclick=()=>{$('rename-form').hidden=true;$('rename-design').hidden=!draft;};
@@ -201,11 +203,11 @@ const viewKeys=['perspective','front','side','rear','roof','street'];
 document.addEventListener('keydown',e=>{if(e.defaultPrevented)return;if(e.altKey||e.ctrlKey||e.metaKey||['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName)||document.querySelector('dialog[open]'))return;const view=viewKeys[Number(e.key)-1];if(view){scene.view(view);cameraSelection(view);}else if(e.key==='f'||e.key==='F')$('studio-fit').click();else if(e.key==='e'||e.key==='E')$('studio-expand').click();else if(e.key==='?')$('help-dialog').showModal();else return;e.preventDefault();});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.body.classList.contains('model-expanded'))expand(false);});
 async function openCatalogue(reference){const [projectId,revisionId]=reference.split('/'),project=projects.find(p=>p.id===projectId),revision=project?.revisions.find(r=>r.id===revisionId);if(!revision)throw Error('Unknown catalogue design');const existing=index.drafts.find(d=>d.parentHash===revision.hash);if(existing)return renderDraft(await api('drafts/'+existing.id),{frame:true});const d=await api('drafts',{catalogue:reference,transform:{origin:[0,0,0],turns:0},brief:''});await refresh();await renderDraft(d,{frame:true});status('Opened '+project.name+' in the studio as a new draft.');}
-async function bridgeStatus(){try{bridge=await api('construction/status');}catch(error){bridge={connected:false,message:error.message};}if(draft)support();$('bridge-status').textContent=bridge.connected?'Construction server connected · '+bridge.world:'Construction server not connected. Design, versions and exports still work.';$('bridge-details').hidden=bridge.connected;$('bridge-detail').textContent=bridge.message||'';}
+async function bridgeStatus(){try{bridge=await api('construction/status');}catch(error){bridge={connected:false,message:error.message};}if(draft)support();$('bridge-status').textContent=bridge.connected?'Construction server connected · '+bridge.world:'Construction server not connected. Design, versions and exports still work.';$('bridge-details').hidden=bridge.connected;$('bridge-detail').textContent=bridge.message||'';updatePlacement();}
 async function start(){await refresh();const query=new URL(location.href).searchParams;const id=query.get('draft')||(!query.has('map')&&!query.has('catalogue')?index.drafts[0]?.id:null);
  // Nothing to design yet: open on the site tools so the first action is obvious. Decide before site tools run so a map error still lands in site mode.
  mode(query.has('map')||(!id&&!query.has('catalogue')&&!query.has('site')&&!location.hash)?'site':modeFromHash(location.hash));
- await siteControls.start();projects=await(await fetch('/api/projects')).json();$('catalogue-select').replaceChildren(...projects.flatMap(p=>p.revisions.map(r=>new Option(p.name+' / '+r.label,p.id+'/'+r.id))));if(query.has('catalogue'))await openCatalogue(query.get('catalogue'));else if(query.has('site')&&!query.has('draft'))await chooseSite(query.get('site'));else if(id)await renderDraft(await api('drafts/'+id),{frame:true});const jobId=new URL(location.href).searchParams.get('job');if(jobId){showJob(await api('construction/jobs/'+jobId));mode('construction');}bridgeStatus();}
+ await siteControls.start();projects=await(await fetch('/api/projects')).json();$('catalogue-select').replaceChildren(...projects.flatMap(p=>p.revisions.map(r=>new Option(p.name+' / '+r.label,p.id+'/'+r.id))));if(query.has('catalogue'))await openCatalogue(query.get('catalogue'));else if(query.has('site')&&!query.has('draft'))await chooseSite(query.get('site'));else if(id)await renderDraft(await api('drafts/'+id),{frame:true});const jobId=new URL(location.href).searchParams.get('job');if(jobId){showJob(await api('construction/jobs/'+jobId));mode('construction');}await bridgeStatus();}
 let pointerStart;
 $('studio-model').addEventListener('pointerdown',e=>{pointerStart=[e.clientX,e.clientY];});
 $('studio-model').addEventListener('click',e=>{
@@ -214,10 +216,10 @@ $('studio-model').addEventListener('click',e=>{
  const cell=localCells(draft.candidate.blocks).find(c=>c.x===Math.floor(point.x)&&c.y===Math.floor(point.y)&&c.z===Math.floor(point.z));
  if(cell){$('studio-component').value=cell.component;materials();highlight();selection(componentLabel(cell.component),label(cell.block),`${cell.block} · (${cell.x}, ${cell.y}, ${cell.z})`);}
 });
-let job,pollTimer;
-function showJob(next){job=next;if(![...$('job-select').options].some(o=>o.value===job.id))$('job-select').add(new Option(label(job.kind)+' · '+when(job.createdAt),job.id));$('job-select').value=job.id;const url=new URL(location.href);url.searchParams.set('job',job.id);history.replaceState(null,'',url);$('placement-outcome').textContent=job.state.charAt(0).toUpperCase()+job.state.slice(1)+' · '+job.cursor.toLocaleString()+' / '+job.changes.length.toLocaleString()+' blocks · '+job.world+(job.conflicts.length?' · '+job.conflicts.length+' later edits preserved':'')+(job.message?' · '+job.message:'');$('placement-progress').max=Math.max(1,job.changes.length);$('placement-progress').value=job.cursor;record($('placement-summary'),[['World',job.world],['Operation',job.kind==='rollback'?'Undo placement':'Place building'],['Progress',job.cursor.toLocaleString()+' of '+job.changes.length.toLocaleString()+' blocks'],['Later edits preserved',job.conflicts.length],['Readback',job.verifiedAt?when(job.verifiedAt):'Awaiting verification']]);$('placement-summary').dataset.state=job.state;$('placement-summary').dataset.applied=job.cursor;$('placement-summary').dataset.cells=job.changes.length;$('placement-summary').dataset.kind=job.kind;$('download-placement').disabled=false;$('apply-placement').disabled=job.state!=='prepared';$('apply-placement').textContent=job.kind==='rollback'?'Apply reviewed rollback':'Place reviewed changes';$('cancel-placement').disabled=job.state!=='applying';$('reconcile-placement').disabled=Boolean(job.active)||!['paused','conflict'].includes(job.state);$('rollback-placement').disabled=!job.cursor||Boolean(job.pending)||['applying','verifying'].includes(job.state);clearTimeout(pollTimer);if(job.active||['applying','verifying'].includes(job.state))pollTimer=setTimeout(async()=>{try{showJob(await api('construction/jobs/'+job.id));}catch(error){status(error.message,'error');}},1000);}
+let job,pollTimer,placementIssue;
+function showJob(next){job=next;if(![...$('job-select').options].some(o=>o.value===job.id))$('job-select').add(new Option(label(job.kind)+' · '+when(job.createdAt),job.id));$('job-select').value=job.id;const url=new URL(location.href);url.searchParams.set('job',job.id);history.replaceState(null,'',url);$('placement-outcome').textContent=job.state.charAt(0).toUpperCase()+job.state.slice(1)+' · '+job.cursor.toLocaleString()+' / '+job.changes.length.toLocaleString()+' blocks · '+job.world+(job.conflicts.length?' · '+job.conflicts.length+' later edits preserved':'')+(job.message?' · '+job.message:'');$('placement-progress').max=Math.max(1,job.changes.length);$('placement-progress').value=job.cursor;record($('placement-summary'),[['World',job.world],['Operation',job.kind==='rollback'?'Undo placement':'Place building'],['Progress',job.cursor.toLocaleString()+' of '+job.changes.length.toLocaleString()+' blocks'],['Later edits preserved',job.conflicts.length],['Readback',job.verifiedAt?when(job.verifiedAt):'Awaiting verification']]);$('placement-summary').dataset.state=job.state;$('placement-summary').dataset.applied=job.cursor;$('placement-summary').dataset.cells=job.changes.length;$('placement-summary').dataset.kind=job.kind;$('download-placement').disabled=false;$('apply-placement').disabled=job.state!=='prepared';$('apply-placement').textContent=job.kind==='rollback'?'Apply reviewed rollback':'Place reviewed changes';$('cancel-placement').disabled=job.state!=='applying';$('reconcile-placement').disabled=Boolean(job.active)||!['paused','conflict'].includes(job.state);$('rollback-placement').disabled=!job.cursor||Boolean(job.pending)||['applying','verifying'].includes(job.state);clearTimeout(pollTimer);if(job.active||['applying','verifying'].includes(job.state))pollTimer=setTimeout(async()=>{try{showJob(await api('construction/jobs/'+job.id));}catch(error){status(error.message,'error');}},1000);updatePlacement();}
 $('job-select').onchange=()=>action(async()=>{if($('job-select').value)showJob(await api('construction/jobs/'+$('job-select').value));});
-$('prepare-placement').onclick=()=>action(async()=>{const d=requireDraft();showJob(await api('construction/prepare',{draftId:d.id,artifactHash:d.candidate.hash,idempotencyKey:'place-'+crypto.randomUUID()}));status('Review the target world and block changes before placing.');});
+$('prepare-placement').onclick=()=>action(async()=>{await bridgeStatus();const d=requireDraft(),state=placementReadiness(d,site,bridge,index.revisions);if(!state.ready)throw Error(state.message);clearPlacementJob();try{showJob(await api('construction/prepare',{draftId:d.id,artifactHash:d.candidate.hash,idempotencyKey:'place-'+crypto.randomUUID()}));}catch(error){placementIssue={draftId:d.id,hash:d.candidate.hash,worldId:bridge.worldId,message:placementErrorMessage(error.message)};throw error;}status('Review the target world and block changes before placing.');});
 $('apply-placement').onclick=()=>action(async()=>{showJob(await api(`construction/jobs/${job.id}/apply`,{changeHash:job.changeHash}));});
 $('cancel-placement').onclick=()=>action(async()=>{showJob(await api(`construction/jobs/${job.id}/pause`,{}));});
 $('reconcile-placement').onclick=()=>action(async()=>{showJob(await api(`construction/jobs/${job.id}/reconcile`,{}));});
@@ -226,9 +228,54 @@ $('material-choice').onchange=()=>{$('material-state').value=$('material-choice'
 $('download-review').onclick=()=>action(async()=>{const d=requireDraft();download({diagnostics:d.diagnostics,assessment:d.assessment,access:d.access,surveyHash:d.surveyHash,artifactHash:d.candidate.hash},'design-review.json');});
 $('download-placement').onclick=()=>{if(job)download(job,'placement-record.json');};
 $('download-handoff').onclick=()=>action(async()=>{const d=requireDraft();await refresh();const revision=index.revisions.find(r=>r.draftId===d.id&&r.artifactHash===d.candidate.hash&&r.surveyHash===d.surveyHash);if(!revision)throw Error('Save this version before exporting a placement package');download(await api('revisions/'+revision.id+'/handoff'),'placement-package.json');status('Saved version and exact survey packaged for placement review.');});
+function openConstruction(){history.replaceState(null,'','#place-workspace');mode('construction',{scroll:true});bridgeStatus();}
+$('open-construction').onclick=openConstruction;
+$('refresh-placement').onclick=()=>action(bridgeStatus);
+$('placement-save').onclick=()=>$('save-revision').click();
+let copyKey='';
+function copyPosition(){return {origin:['placement-x','placement-y','placement-z'].map(id=>$(id).value.trim()===''?NaN:Number($(id).value)),turns:Number($('placement-turns').value)};}
+function setCopyPosition(){
+ const target=index?.sites.find(s=>s.id===$('placement-site').value);if(!target||!draft)return;
+ const samePlot=site&&JSON.stringify(site.plot)===JSON.stringify(target.plot);
+ const origin=samePlot&&draft.transform?draft.transform.origin:[target.plot.min[0],Math.max(target.plot.min[1],target.frontage[1]-1),target.plot.min[2]];
+ ['placement-x','placement-y','placement-z'].forEach((id,i)=>$(id).value=origin[i]);$('placement-turns').value=samePlot&&draft.transform?draft.transform.turns:0;copyFit();
+}
+function copyFit(){
+ const target=index?.sites.find(s=>s.id===$('placement-site').value),fit=draft?placementFit(draft.candidate,target,copyPosition()):{fits:false,message:'Choose a design.'};
+ $('placement-fit').textContent=target?fit.message:'No matching survey yet. Capture a site from the connected server in Site.';
+ $('placement-fit').dataset.state=fit.fits?'fits':'blocked';$('create-placement-copy').disabled=!fit.fits||!bridge?.connected||bridge.capabilities?.placement===0||busy;
+}
+function updatePlacement(){
+ const state=placementReadiness(draft,site,bridge,index?.revisions||[]);
+ if(state.ready&&placementIssue?.draftId===draft.id&&placementIssue.hash===draft.candidate.hash&&placementIssue.worldId===bridge.worldId){state.kind='preview-blocked';state.title='Placement preview is blocked';state.message=placementIssue.message;}
+ $('placement-readiness').dataset.state=state.kind;$('placement-readiness-title').textContent=state.title;$('placement-readiness-message').textContent=state.message;
+ $('placement-teaser-title').textContent=state.kind==='ready'?'Ready for placement review':'Place this design';
+ $('placement-teaser').textContent=state.kind==='world-mismatch'?`Uses ${site.world} · connected to ${bridge.world}. Prepare a copy to continue.`:state.title;
+ $('placement-world').textContent=bridge?.connected?bridge.world:'Not connected';$('placement-source').textContent=site?`${site.name} · ${site.world}`:'No site attached';
+ $('prepare-placement').disabled=!state.ready||busy;$('placement-save').hidden=state.kind!=='unsaved';$('placement-save').disabled=busy;
+ $('placement-copy-form').hidden=!draft||!['no-site','world-mismatch','identity-mismatch'].includes(state.kind);
+ const choices=compatibleSites(index?.sites||[],bridge),key=draft?.id+':'+choices.map(s=>s.id).join(',');
+ if(key!==copyKey){copyKey=key;$('placement-site').replaceChildren(...(choices.length?choices.map(s=>new Option(s.name,s.id)):[new Option('No matching surveyed site','')]));setCopyPosition();}copyFit();
+ if(job&&job.state==='prepared')$('apply-placement').disabled=!bridge?.connected||job.worldId!==bridge.worldId||busy;
+}
+$('placement-site').onchange=setCopyPosition;
+for(const id of ['placement-x','placement-y','placement-z','placement-turns'])$(id).addEventListener('input',copyFit);
+$('placement-copy-form').onsubmit=event=>{event.preventDefault();action(async()=>{
+ const source=requireDraft(),target=index.sites.find(s=>s.id===$('placement-site').value),transform=copyPosition();
+ await bridgeStatus();if(!compatibleSites([target].filter(Boolean),bridge).length)throw Error('The selected site no longer matches the connected server. Refresh and choose a matching survey.');
+ const fit=placementFit(source.candidate,target,transform);if(!fit.fits)throw Error(fit.message);
+ const current=await api('drafts/'+source.id);if(current.version!==source.version||current.candidate.hash!==source.candidate.hash)throw Error('The original design changed. Reload it before preparing a copy.');
+ status('Preparing placement copy…');
+ // Continue this design's version history on the target site, while leaving the source draft intact.
+ const latest=await api('context'),targetRevision=latest.revisions.filter(r=>r.project===source.plan.plan_id+':'+target.id).sort((a,b)=>b.createdAt.localeCompare(a.createdAt))[0];
+ const copy=await api('drafts',{plan:{...source.plan,name:source.plan.name.slice(0,100)+' · Placement copy'},parentHash:targetRevision?.artifactHash||source.candidate.hash,siteId:target.id,transform,brief:source.brief});
+ await refresh();await renderDraft(copy,{frame:true});mode('construction');
+ status(copy.valid?'Placement copy ready. Save this version, then preview placement.':'Placement copy needs changes. Review the findings before saving.',copy.valid?'neutral':'warning');
+ });};
+function clearPlacementJob(){job=null;placementIssue=null;clearTimeout(pollTimer);$('job-select').value='';$('placement-summary').replaceChildren();$('placement-progress').value=0;$('placement-outcome').textContent='Preview the saved design to prepare a new placement.';for(const id of ['apply-placement','cancel-placement','reconcile-placement','rollback-placement','download-placement'])$(id).disabled=true;const url=new URL(location.href);url.searchParams.delete('job');history.replaceState(null,'',url);}
 function draftControls(enabled){
  for(const id of ['apply-material','apply-variant','prepare-request','submit-revision','download-plan','download-schematic','download-review','download-handoff','prepare-placement'])$(id).disabled=!enabled;
- $('save-revision').disabled=!enabled||!draft?.valid;
+ $('save-revision').disabled=!enabled||!draft?.valid;updatePlacement();
  if(!enabled){$('undo-draft').disabled=true;$('redo-draft').disabled=true;}
  $('drawing-empty').hidden=enabled||Boolean(site);
 }
