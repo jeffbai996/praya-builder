@@ -80,6 +80,14 @@ Source: https://www.govpraya.org/city/oakville
 
 These are attributed website facts, distinct from direct user statements. Website notices and displayed statistics have not been independently validated.
 
+## Transport Department and Oakville location — CONFIRMED (S11, 2026-09-16)
+
+- The institution's published name is **Transport Department**. The rendered GOV.PRAYA department page identifies driver licensing, vehicle registration, permits, public transit and national highways within its remit.
+- The user identifies the building in `2026-09-16_11.59.08.png` as the Transport Department's Oakville location and states that it is effectively a DMV.
+- The user confirms that this Oakville location contains a substantial stored collection of custom player heads representing road signs. The collection's individual assets, texture/profile identifiers and storage arrangement remain to be inventoried.
+- “Effectively a DMV” records the local office's practical driver-and-vehicle-service role. It does not establish a separate DMV institution or authorize the expansion “Department of Motor Vehicles” as Praya's formal agency name.
+- See the [original screenshot and dated reference record](reference-oakville-transport-department-2026-09-16.md) for facade observations and evidence limits. Exact address, coordinates, formal office title, service coverage and headquarters status remain unresolved.
+
 ## Braemar Hills Elementary School — CONFIRMED (S1, 2026-09-08)
 
 - The user identifies the building in 2026-09-08_03.42.17.png as Braemar Hills Elementary School. Exact municipality/address are not established by this identification.

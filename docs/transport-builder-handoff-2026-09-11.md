@@ -6,7 +6,7 @@ Date: 2026-09-11. Audience: the next agent/designer implementing a transport-dep
 
 The user wants a transport-department version of Builder for transport infrastructure, including subways and freeways. They also endorsed the direction of an address/parcel/building register and confirmed that Praya already has street addresses for the most part. Deliver a transport workspace that works with those shared place records and existing infrastructure.
 
-“Transport Builder” and “Transport Department” are working product labels here, not newly confirmed institutional names. This handoff defines a proposed implementation, not an implemented product or permission to place infrastructure into the live world. Current real-plot placement remains paused. Begin with design, surveys and review; any later live construction needs an explicitly authorized bounded operation.
+“Transport Builder” is a working product label, not a confirmed institutional name. **Transport Department** is now confirmed as the published Praya institution name through GOV.PRAYA and the user-confirmed Oakville office reference (S11). This handoff still defines a proposed implementation, not permission to place infrastructure into the live world. Current real-plot placement remains paused. Begin with design, surveys and review; any later live construction needs an explicitly authorized bounded operation.
 
 Authority order:
 1. Direct user instructions and corrections.
@@ -106,10 +106,11 @@ Acceptance criteria:
 2. Generate two bounded segments with unique cell ownership and matching seams; changing an endpoint deterministically updates affected geometry.
 3. Inspect route plan, a basic vertical profile, sections and the exact 3D blocks, including the shared seam.
 4. Include a deliberate Praya streetscape with verified sign composition, layered kerbs/edges, appropriate lighting and clear pedestrian connections. Do not invent a real street name or civic number.
-5. Save/reopen the route assembly without changing child hashes; export exact segment schematics and an assembly manifest with origins.
-6. Validate in an isolated test world if authorized for that milestone: drive/walk the joins using the intended mechanics and inspect signs. Browser screenshots alone do not establish traversal.
-7. Show why an intentional gap, wrong elevation, conflicting segment write or unknown survey segment fails review.
-8. Report compile time, peak memory, cell/air count, survey volume, mesh size and idle/render responsiveness using measured figures. Keep performance claims bounded to the tested workload.
+5. Inventory the existing road-sign custom-head collection stored inside the Transport Department's Oakville location before generating or fetching replacement sign assets. Preserve asset provenance, meaning and mounting orientation; the collection is confirmed, but its individual contents are not yet catalogued.
+6. Save/reopen the route assembly without changing child hashes; export exact segment schematics and an assembly manifest with origins.
+7. Validate in an isolated test world if authorized for that milestone: drive/walk the joins using the intended mechanics and inspect signs. Browser screenshots alone do not establish traversal.
+8. Show why an intentional gap, wrong elevation, conflicting segment write or unknown survey segment fails review.
+9. Report compile time, peak memory, cell/air count, survey volume, mesh size and idle/render responsiveness using measured figures. Keep performance claims bounded to the tested workload.
 
 Then add a small two-track tunnel/portal study, followed by a compact station and its entrances. Confirm the server's actual train/minecart/plugin mechanics before choosing gauge, slopes, curve behavior, platform clearance or signals. Later phases cover freeway sections, ramps/interchanges, bridge spans and multi-level junctions. Do not start by attempting a complete subway line or cloverleaf.
 

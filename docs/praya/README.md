@@ -4,6 +4,7 @@ Maintained from 2026-09-08 at the user's request. This directory is the single e
 
 ## Read first
 
+- [Transport Department Oakville location, September 16](reference-oakville-transport-department-2026-09-16.md): user-confirmed local Transport Department/DMV function, original screenshot, facade observations and evidence limits.
 - [Oakville / BCPL Oakville branch reference, September 11](reference-oakville-bcpl-2026-09-11.md): user-confirmed branch identification, original screenshot, BCPL logo evidence and architectural observations.
 
 - [Canon register](canon.md): confirmed names, geography, terminology and explicit transport decisions, with provenance.

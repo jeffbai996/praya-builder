@@ -14,6 +14,14 @@
 
 Direct user statement in Codex task `01a09007-7d10-7531-ad2f-384826f2a605`: “this is part of oakville. that in front is BCPL oakville branch. remember the logo for sure”. Original image: `C:/Users/baila/AppData/Roaming/.minecraft/screenshots/2026-09-11_03.45.03.png`, preserved as [reference evidence](../reference-images/2026-09-11_03.45.03.png). The [dated reference record](reference-oakville-bcpl-2026-09-11.md) separates user-confirmed identity, visual observations and unresolved block-level logo geometry.
 
+## S11 — Transport Department Oakville location, 2026-09-16
+
+Direct user statement in the Transport Builder Codex task: “this is the Transport Department Oakville location which is effectively a DMV”. Original image: `C:/Users/baila/AppData/Roaming/.minecraft/screenshots/2026-09-16_11.59.08.png`, preserved as [reference evidence](../reference-images/2026-09-16_11.59.08.png). The [dated reference record](reference-oakville-transport-department-2026-09-16.md) separates the user-confirmed building identity and function, visual observations and unresolved address/service details.
+
+The rendered [GOV.PRAYA Transport Department page](https://www.govpraya.org/transport) was inspected on 2026-09-16. It establishes the published institution name and lists driver licensing, vehicle registration, permits, public transit and national highways. It does not identify the Oakville building; that identification comes from the user and screenshot.
+
+Direct user follow-up in the same task: “inside here ive stored a lot of heads which represent road signs”. “Here” refers to the Transport Department Oakville location just identified. Six follow-up screenshots from `2026-09-16_12.00.47.png` through `2026-09-16_12.00.59.png` are preserved under their original filenames in `docs/reference-images/` and documented in the dated reference record. The images visibly establish a labelled Road Signage Storage room, numerous wall- and stand-displayed sign heads, and storage chests. They support a preliminary visual grouping, but not exact sign meanings, source/profile IDs or texture data.
+
 ## Next consolidation work
 
 Retrieve the actual transport manual and vector masters before claiming its precise dimensions/fonts are implemented. Reconcile website/wiki/older institutional lore with dated sources and explicit user decisions, preserving historical versions. Keep speculative gp-ai requirements separate from fictional-world facts. Do not silently expand this initial register into an exhaustive national canon.
