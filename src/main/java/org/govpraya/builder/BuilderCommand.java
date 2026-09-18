@@ -86,7 +86,7 @@ public class BuilderCommand implements CommandExecutor {
 
         BlockGenerator generator = plugin.getGenerator();
         if (generator == null) {
-            sendError(player, "Gemini API key not configured.");
+            sendError(player, "AI generation is not configured on this server.");
             return true;
         }
 

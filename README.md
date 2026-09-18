@@ -112,7 +112,7 @@ This refresh has not been deployed to a live world. Complete the [remaining inte
 
 ## Configuration and use
 
-Set `GEMINI_API_KEY` in the server process environment, or retain the existing `gemini.api-key` configuration. The environment takes precedence. The Java plugin does not load `.env` files itself. Keep credentials out of version control.
+Set `GEMINI_API_KEY` in the server process environment, or point `GEMINI_API_KEY_FILE` (environment) or `gemini.api-key-file` (config.yml) at a file that contains only the key. The inline `gemini.api-key` setting still works but is deprecated and logs a warning at startup. `ai.provider` selects `gemini` or `none`. The Java plugin does not load `.env` files itself. Keep credentials out of the repository and out of committed configuration.
 
 The model remains configurable through `gemini.model`; existing configurations are not overwritten. The bundled default is `gemini-2.5-flash`. Changing to a different provider requires an implementation of `BlockGenerator`, not just a model-name edit.
 

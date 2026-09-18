@@ -1,7 +1,16 @@
 # Praya Builder Configuration
 
-# GEMINI_API_KEY in the server environment takes precedence over api-key.
+# Provider selection. Supported: gemini, none.
+ai:
+  provider: "gemini"
+
+# Credentials are resolved in this order and the key itself is never logged:
+#   1. GEMINI_API_KEY in the server process environment (recommended)
+#   2. GEMINI_API_KEY_FILE in the environment (path to a file containing only the key)
+#   3. gemini.api-key-file below (relative paths resolve against this plugin's data folder)
+#   4. gemini.api-key inline below (deprecated; logs a warning)
 gemini:
+  api-key-file: ""
   api-key: "YOUR_API_KEY_HERE"
   model: "gemini-2.5-flash"
 

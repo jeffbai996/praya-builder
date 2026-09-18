@@ -95,11 +95,10 @@ def call_gemini(description: str, api_key: str) -> dict:
             "responseMimeType": "application/json",
         },
     }
-    url = GEMINI_URL % GEMINI_MODEL + "?key=" + api_key
     req = urllib.request.Request(
-        url,
+        GEMINI_URL % GEMINI_MODEL,
         data=json.dumps(body).encode(),
-        headers={"Content-Type": "application/json"},
+        headers={"Content-Type": "application/json", "x-goog-api-key": api_key},
         method="POST",
     )
     ctx = ssl.create_default_context()
