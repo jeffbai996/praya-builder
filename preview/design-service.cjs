@@ -27,6 +27,13 @@ async function compilePlan(plan){
  catch(error){throw Error((error.stderr||error.message).slice(0,3000));}
  finally{fs.unlinkSync(file);fs.rmdirSync(dir);}
 }
+// Provenance: which agent produced a plan, with which model, at what effort. Free text, bounded, never trusted for authorization.
+function authorOf(input){
+ if(input==null)return null;if(typeof input!=='object'||Array.isArray(input))throw Error('author must be an object');
+ const out={};for(const key of ['agent','model','effort','note']){const v=input[key];if(v==null||v==='')continue;if(typeof v!=='string'||v.length>120)throw Error(`author.${key} must be text up to 120 characters`);out[key]=v.trim();}
+ for(const key of Object.keys(input))if(!['agent','model','effort','note'].includes(key))throw Error('Unknown author field: '+key);
+ return Object.keys(out).length?out:null;
+}
 class DesignService{
  constructor(store,{compile=compilePlan}={}){this.store=store;this.compiler=compile;this.tail=Promise.resolve();this.pending=0;}
  async serialized(work){if(this.pending>=4){const e=Error('Compile queue is full; retry after current work finishes');e.status=429;throw e;}this.pending++;const task=this.tail.then(work);this.tail=task.catch(()=>{});try{return await task;}finally{this.pending--;}}
@@ -39,13 +46,14 @@ class DesignService{
   return {candidate:artifact,valid:!diagnostics.length,diagnostics,assessment,access};
  }
  createDraft(input){return this.serialized(async()=>{
+  const author=authorOf(input.author);
   if(!input.plan||typeof input.plan!=='object')throw Error('A structured plan is required');
   const plan=clone(input.plan),brief=input.brief||'';if(typeof brief!=='string'||brief.length>12000)throw Error('Brief limit exceeded');
   const parent=input.parentHash?this.store.getArtifact(input.parentHash):null;
   if(parent&&parent.plan_id!==plan.plan_id)throw Error('Parent plan identity mismatch');
   const result=await this.evaluate(plan,input.siteId,input.transform);
   const history=[{plan,candidateHash:result.candidate.hash,valid:result.valid,diagnostics:result.diagnostics}];
-  return this.store.create('drafts',{schemaVersion:1,project:plan.plan_id+':'+(input.siteId||'unassigned'),brief,parentHash:parent?.hash||null,baselineHash:parent?.hash||result.candidate.hash,siteId:input.siteId||null,surveyHash:result.assessment?.surveyHash||null,transform:input.transform||null,plan,assemblyBaseline:plan,...result,history,cursor:0});
+  return this.store.create('drafts',{schemaVersion:1,project:plan.plan_id+':'+(input.siteId||'unassigned'),brief,parentHash:parent?.hash||null,baselineHash:parent?.hash||result.candidate.hash,siteId:input.siteId||null,surveyHash:result.assessment?.surveyHash||null,transform:input.transform||null,author,plan,assemblyBaseline:plan,...result,history,cursor:0});
  });}
  editDraft(id,input){return this.serialized(async()=>{
   const draft=this.store.get('drafts',id);this.version(draft,input.expectedVersion);
@@ -68,7 +76,7 @@ class DesignService{
   catch(error){result={candidate:draft.candidate,valid:false,diagnostics:[{reason:error.message}],assessment:null};}
   const history=draft.history.slice(0,draft.cursor+1);history.push({plan,candidateHash:result.candidate.hash,valid:result.valid,diagnostics:result.diagnostics});
   if(history.length>50)history.shift();
-  return this.store.update('drafts',id,input.expectedVersion,{...draft,plan,...result,history,cursor:history.length-1});
+  return this.store.update('drafts',id,input.expectedVersion,{...(input.author!==undefined?{author:authorOf(input.author)}:{}),...draft,plan,...result,history,cursor:history.length-1});
  });}
  history(id,input){return this.serialized(async()=>{
   const draft=this.store.get('drafts',id);this.version(draft,input.expectedVersion);
@@ -89,12 +97,12 @@ class DesignService{
   const existing=this.store.list('revisions').filter(r=>r.project===draft.project).sort((a,b)=>a.createdAt.localeCompare(b.createdAt));
   const current=existing.at(-1);
   if(current&&current.artifactHash!==draft.parentHash&&current.draftId!==id){const e=Error('Revision conflict: another design has been saved; branch from its artifact');e.status=409;throw e;}
-  return this.store.create('revisions',{schemaVersion:1,project:draft.project,draftId:id,parentHash:current?.artifactHash||draft.parentHash,artifactHash:draft.candidate.hash,surveyHash:draft.surveyHash,siteId:draft.siteId,transform:draft.transform,brief:draft.brief,plan:draft.plan,idempotencyKey:input.idempotencyKey});
+  return this.store.create('revisions',{schemaVersion:1,project:draft.project,draftId:id,parentHash:current?.artifactHash||draft.parentHash,artifactHash:draft.candidate.hash,surveyHash:draft.surveyHash,siteId:draft.siteId,transform:draft.transform,brief:draft.brief,author:draft.author||null,plan:draft.plan,idempotencyKey:input.idempotencyKey});
  }
  context(id){
   const d=this.store.get('drafts',id);let site=null;
   if(d.siteId){const {blocks,...metadata}=this.store.get('sites',d.siteId);const heights=Array(metadata.dimensions.x*metadata.dimensions.z).fill(-1);for(const c of blocks){const index=c.x+c.z*metadata.dimensions.x;heights[index]=Math.max(heights[index],c.y);}site={...metadata,nonAirCells:blocks.length,highestNonAir:heights,heightNote:'Local Y, X-major columns; -1 means a known empty column. Highest block is not necessarily ground. Retrieve exact cells from the sites endpoint when needed.'};}
-  return {schemaVersion:1,draftId:id,expectedVersion:d.version,brief:d.brief,parentHash:d.parentHash,candidateHash:d.candidate.hash,site,transform:d.transform,plan:d.plan,diagnostics:d.diagnostics,access:d.access,components:d.candidate.components,spaces:d.candidate.spaces,instructions:'Submit structured plans or scoped palette changes. Preserve component identities and unrelated geometry. Compilation does not grant world-write permission.'};
+  return {schemaVersion:1,draftId:id,expectedVersion:d.version,brief:d.brief,author:d.author||null,parentHash:d.parentHash,candidateHash:d.candidate.hash,site,transform:d.transform,plan:d.plan,diagnostics:d.diagnostics,access:d.access,components:d.candidate.components,spaces:d.candidate.spaces,instructions:'Submit structured plans or scoped palette changes. Preserve component identities and unrelated geometry. Compilation does not grant world-write permission.'};
  }
  request(id,input){const draft=this.store.get('drafts',id);this.version(draft,input.expectedVersion);if(typeof input.instruction!=='string'||!input.instruction.trim()||input.instruction.length>6000)throw Error('A bounded revision instruction is required');if(input.componentId&&!draft.plan.components.some(c=>c.id===input.componentId))throw Error('Unknown component');return this.store.create('requests',{schemaVersion:1,draftId:id,baselineHash:draft.candidate.hash,expectedVersion:draft.version,componentId:input.componentId||null,instruction:input.instruction});}
 }

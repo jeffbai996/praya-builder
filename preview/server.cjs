@@ -31,6 +31,7 @@ const iconNames=new Set([...artifacts.values()].flatMap(artifact=>artifact.block
 const icons=new Map();
 const workspace=workspaceApi({artifacts,port});
 const files = new Map([
+  ['/favicon.svg',['favicon.svg','image/svg+xml']],
   ['/transport',['transport.html','text/html']], ['/transport.js',['transport.js','text/javascript']], ['/transport.css',['transport.css','text/css']],
   ['/placement-readiness.js',['placement-readiness.js','text/javascript']],
   ['/plot-editor.js',['plot-editor.js','text/javascript']], ['/capture-controls.js',['capture-controls.js','text/javascript']],

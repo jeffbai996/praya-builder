@@ -96,7 +96,7 @@ acceptance steps.
 
 ## Placement interface, b20260913.01
 
-Open a design and use **Place in world**, either beside the drawing controls or
+Open a design and use **Build**, either beside the drawing controls or
 in the mode bar. The panel shows the connected world and the design's survey.
 A world-name or UUID mismatch disables preview and offers **Prepare placement
 copy** using only surveys from the connected world within its reserved bounds.

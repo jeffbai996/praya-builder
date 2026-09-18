@@ -59,7 +59,7 @@ async function main(){
    await page.route('**/construction/prepare',route=>route.fulfill({status:400,contentType:'application/json',body:JSON.stringify({error:'Survey world differs from the isolated bridge world'})}));
    await page.locator('#prepare-placement').click();await settled();
    assert.equal(await page.locator('#studio-alert').isVisible(),true);
-   assert.match(await page.locator('#studio-alert-message').textContent(),/Open Place in world/);
+   assert.match(await page.locator('#studio-alert-message').textContent(),/Open Build/);
    await page.locator('#refresh-placement').click();await settled();
    assert.equal(await page.locator('#studio-alert').isVisible(),true,'unrelated success does not clear error');
    await setTheme(page,'oled');

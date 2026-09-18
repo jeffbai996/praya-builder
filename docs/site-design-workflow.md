@@ -58,7 +58,7 @@ operations are available under `/api/workspace/`; writes require the
 | `captures/{id}/cancel` | POST: cancel future reads without publishing a partial survey |
 | `sites` | POST: `schematic` as base64 and `metadata` |
 | `sites/{id}` | GET: exact immutable survey |
-| `drafts` | POST: `plan` or `catalogue`, optional `parentHash`, `siteId`, `transform`, `brief` |
+| `drafts` | POST: `plan` or `catalogue`, optional `parentHash`, `siteId`, `transform`, `brief`, `author` (`{agent, model, effort, note}`; recorded on the draft and copied to saved versions so designs from different models and effort levels can be compared) |
 | `drafts/{id}/context` | GET: brief, plan, identities, site summary, highest-non-air columns and diagnostics |
 | `drafts/{id}/edit` | POST: `expectedVersion`, full `plan` or `palette` patch, optional `componentId` |
 | `drafts/{id}/edit` | POST: `expectedVersion`, roof `componentId`, `variant: {name: "roof-canopy", value: "open" or "sheltered"}` |

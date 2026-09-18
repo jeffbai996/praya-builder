@@ -22,7 +22,7 @@ export function placementFit(candidate,site,transform){
 }
 
 export function placementErrorMessage(message){
- if(/Survey world (differs|identity)/.test(message))return 'This design belongs to another world. Open Place in world and prepare a copy for the connected server.';
+ if(/Survey world (differs|identity)/.test(message))return 'This design belongs to another world. Open Build and prepare a copy for the connected server.';
  const block=/Block not in tested placement allowlist: ([A-Z0-9_]+)/.exec(message);
  if(block)return `Placement is blocked by ${block[1].toLowerCase().replaceAll('_',' ')}. The bridge does not yet support changing or restoring this block. The placement adapter needs support for it before this design can be placed here.`;
  return message;
