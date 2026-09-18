@@ -53,13 +53,17 @@ function designChoices(){
  return ordered.filter(d=>{if(seen.has(d.project))return false;seen.add(d.project);return true;}).sort((a,b)=>designName(a.name).localeCompare(designName(b.name)));
 }
 const STUDIO_AUTHOR={agent:'studio',model:'operator'};
-function authorTag(d){const a=d.author;if(!a)return ' · unrecorded';return ' · '+[a.model||a.agent||'unrecorded',a.effort].filter(Boolean).join(' @ ');}
+function modelName(id){if(!id)return '';const known={'claude-fable-5-1':'Claude Fable 5.1','claude-opus-5':'Claude Opus 5','claude-sonnet-5':'Claude Sonnet 5','claude-haiku-4-5':'Claude Haiku 4.5','operator':'Operator','unrecorded':'Unrecorded'};if(known[id])return known[id];
+ return id.split(/[-_]/).map(p=>/^\d+$/.test(p)?p:p[0].toUpperCase()+p.slice(1)).join(' ').replace(/(\d) (\d)/g,'$1.$2');}
+function authorLabel(a){if(!a)return 'Unrecorded';return [modelName(a.model||a.agent),a.effort].filter(Boolean).join(' · ');}
+function authorTag(d){return d.author?' · '+authorLabel(d.author):'';}
+function authorChip(a){const chip=$('draft-author');if(!chip)return;chip.hidden=!a;chip.textContent=a?authorLabel(a):'';chip.dataset.agent=a?.agent||'';}
 function renderDesignChoices(current=$('draft-select').value){
  const select=$('draft-select'),latest=designChoices();select.replaceChildren(new Option('Choose a design',''));
- for(const d of latest)select.add(new Option(designName(d.name)+authorTag(d)+(d.valid?'':' · needs changes'),d.id));
+ for(const d of latest)select.add(new Option(designName(d.name)+(d.valid?'':' · needs changes'),d.id));
  const rest=index.drafts.filter(d=>!latest.some(n=>n.id===d.id));
  if(showAllDrafts){const group=document.createElement('optgroup');group.label='Earlier versions and working drafts';
-  for(const d of rest.sort((a,b)=>a.name.localeCompare(b.name)))group.append(new Option(d.name+authorTag(d)+(d.valid?'':' · needs changes'),d.id));select.append(group);
+  for(const d of rest.sort((a,b)=>a.name.localeCompare(b.name)))group.append(new Option(d.name+(d.valid?'':' · needs changes'),d.id));select.append(group);
  }else if(current&&!latest.some(d=>d.id===current)){
   const d=index.drafts.find(d=>d.id===current);if(d)select.add(new Option(d.name+' · currently open',d.id));
  }
@@ -107,7 +111,7 @@ async function renderDraft(next,{frame=false}={}){
  if(draft&&(draft.id!==next.id||draft.candidate.hash!==next.candidate.hash))clearPlacementJob();draft=next;await scene.load(mesh);if(token!==ticket)return;
  scene.position(site?draft.transform.origin.map((v,i)=>v-site.origin[i]):[0,0,0]);scene.show();
  if(frame)scene.frame(site?.dimensions||draft.candidate.dimensions,site?contextSurface:0);
- renderDesignChoices(draft.id);$('draft-title').textContent=designName(draft.plan.name);$('rename-design').hidden=false;$('rename-form').hidden=true;
+ renderDesignChoices(draft.id);$('draft-title').textContent=designName(draft.plan.name);authorChip(draft.author);$('rename-design').hidden=false;$('rename-form').hidden=true;
  const selected=$('studio-component').value;$('studio-component').replaceChildren(new Option('Whole building',''),...draft.plan.components.map(c=>new Option(componentLabel(c.id),c.id)));$('studio-component').value=selected;
  materials();renderVersions();await loadChanges();
  $('candidate-state').textContent=draft.valid?'Ready to review':'Needs changes';$('candidate-state').dataset.state=draft.valid?'valid':'invalid';
@@ -167,7 +171,7 @@ function materials(){
 }
 const requireDraft=()=>{if(!draft)throw Error('Open a design first');return draft;};
 function placement(){const origin=coordinates('origin');return {siteId:site?.id,transform:{origin,turns:Number($('turns').value)},brief:$('brief').value};}
-async function chooseSite(id){await selectSite(id);clearPlacementJob();draft=null;$('draft-select').value='';delete document.body.dataset.draft;document.body.dataset.ready='false';scene.hide();draftControls(false);$('candidate-state').textContent='No design';delete $('candidate-state').dataset.state;$('candidate-summary').textContent='';$('asset-support').replaceChildren();$('sign-tools').hidden=true;$('reference-list').replaceChildren();$('add-references').disabled=true;$('review-metrics').replaceChildren();$('diagnostics').replaceChildren();$('draft-title').textContent=site?'Choose a design for this site':'No design open';$('rename-design').hidden=true;$('rename-form').hidden=true;$('save-state').hidden=true;$('version-list').replaceChildren();$('compare-summary').textContent='';selection();backLink();const url=new URL(location.href);url.searchParams.delete('draft');if(id)url.searchParams.set('site',id);else url.searchParams.delete('site');history.replaceState(null,'',url);}
+async function chooseSite(id){await selectSite(id);clearPlacementJob();draft=null;$('draft-select').value='';delete document.body.dataset.draft;document.body.dataset.ready='false';scene.hide();draftControls(false);$('candidate-state').textContent='No design';delete $('candidate-state').dataset.state;$('candidate-summary').textContent='';$('asset-support').replaceChildren();$('sign-tools').hidden=true;$('reference-list').replaceChildren();$('add-references').disabled=true;$('review-metrics').replaceChildren();$('diagnostics').replaceChildren();$('draft-title').textContent=site?'Choose a design for this site':'No design open';authorChip(null);$('rename-design').hidden=true;$('rename-form').hidden=true;$('save-state').hidden=true;$('version-list').replaceChildren();$('compare-summary').textContent='';selection();backLink();const url=new URL(location.href);url.searchParams.delete('draft');if(id)url.searchParams.set('site',id);else url.searchParams.delete('site');history.replaceState(null,'',url);}
 async function continueRevision(r){const d=await api('drafts',{plan:r.plan,parentHash:r.artifactHash,siteId:r.siteId,transform:r.transform,brief:r.brief,author:STUDIO_AUTHOR});await refresh();await renderDraft(d,{frame:true});mode('design');status('New draft opened from the saved version; the saved version is unchanged.');}
 $('rename-design').onclick=()=>{$('rename-input').value=draft.plan.name;$('rename-form').hidden=false;$('rename-design').hidden=true;$('rename-input').focus();$('rename-input').select();};
 $('rename-cancel').onclick=()=>{$('rename-form').hidden=true;$('rename-design').hidden=!draft;};
@@ -251,7 +255,7 @@ function updatePlacement(){
  const state=placementReadiness(draft,site,bridge,index?.revisions||[]);
  if(state.ready&&placementIssue?.draftId===draft.id&&placementIssue.hash===draft.candidate.hash&&placementIssue.worldId===bridge.worldId){state.kind='preview-blocked';state.title='Placement preview is blocked';state.message=placementIssue.message;}
  $('placement-readiness').dataset.state=state.kind;$('placement-readiness-title').textContent=state.title;$('placement-readiness-message').textContent=state.message;
- $('placement-teaser-title').textContent=state.kind==='ready'?'Ready for placement review':'Place this design';
+ $('placement-teaser-title').textContent=state.kind==='ready'?'Ready for placement review':'Build this design';
  $('placement-teaser').textContent=state.kind==='world-mismatch'?`Uses ${site.world} · connected to ${bridge.world}. Prepare a copy to continue.`:state.title;
  $('placement-world').textContent=bridge?.connected?bridge.world:'Not connected';$('placement-source').textContent=site?`${site.name} · ${site.world}`:'No site attached';
  $('prepare-placement').disabled=!state.ready||busy;$('placement-save').hidden=state.kind!=='unsaved';$('placement-save').disabled=busy;

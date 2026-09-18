@@ -257,7 +257,7 @@ plan = {"schema_version": 1, "plan_id": "north-plot-point-tower", "revision": "r
 print(f"cells={len(cells)} (cleared air {cleared}) components={len(components)} ops={sum(len(c['operations']) for c in components)} palette={len(palette)}", file=sys.stderr)
 json.dump(plan, open("/tmp/tower/plan.json", "w"))
 if "--dry" in sys.argv: sys.exit(0)
-body = json.dumps({"plan": plan, "siteId": SITE, "transform": {"origin": ORIGIN, "turns": 0}, "author": {"agent": "claude-bot", "model": "claude-fable-5-1", "effort": "session default"},
+body = json.dumps({"plan": plan, "siteId": SITE, "transform": {"origin": ORIGIN, "turns": 0}, "author": {"agent": "claude-bot", "model": "claude-fable-5-1", "effort": "medium"},
                    "brief": "Point tower study R1 on the Praya first plot (R0 review: rear brick grid replaced by the street pier language with brick blades at the core only; plain parapet; three planted west balconies): six residential storeys over a lobby podium within the 33-block survey cap, recessed street glazing, planted west balconies, east setback, retained forecourt trees. Review only, no placement."}).encode()
 req = urllib.request.Request(f"{BASE}/api/workspace/drafts", data=body, method="POST", headers={"Content-Type": "application/json", "X-Builder-Write": "1"})
 try: resp = json.load(urllib.request.urlopen(req, timeout=120))

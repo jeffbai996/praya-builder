@@ -247,3 +247,14 @@ body:not(.studio-body) #export-schematic,body:not(.studio-body) #download-schema
 #save-note,#download{background:var(--success-soft);color:var(--success);border-color:var(--success)}
 #edit-in-studio,.project-card-body .workspace-start{color:var(--accent);background:var(--accent-soft);border-color:var(--accent)}
 @media(max-width:700px){.working-design-list{grid-template-columns:1fr}.working-design-link{grid-template-columns:64px minmax(0,1fr) 14px;min-height:76px;gap:10px}.working-thumb{width:64px;height:58px}.library-tools{flex-wrap:wrap}.library-tools input{flex:1 1 180px}.library-tools select{flex:1 1 130px}.continue-design{gap:10px}.continue-design strong{font-size:13px}.library-footer{flex-wrap:wrap}}
+
+/* 2026-09-18 sweep: section rhythm and softer geometry */
+.library-section-title{margin:34px 0 16px;padding-bottom:10px;border-bottom:1px solid var(--line)}
+.library-heading{margin-bottom:12px}
+.register-tools{margin:0 0 16px}
+.continue-design{border-radius:12px}
+.project-card,.working-design-list>*{border-radius:12px;overflow:hidden}
+button,select,input[type=search],input[type=text]{border-radius:8px}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.primary-button,.secondary-button{transition:background .15s ease,border-color .15s ease,transform .08s ease}
+.primary-button:active,.secondary-button:active{transform:translateY(1px)}
