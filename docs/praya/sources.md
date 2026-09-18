@@ -22,6 +22,20 @@ The rendered [GOV.PRAYA Transport Department page](https://www.govpraya.org/tran
 
 Direct user follow-up in the same task: “inside here ive stored a lot of heads which represent road signs”. “Here” refers to the Transport Department Oakville location just identified. Six follow-up screenshots from `2026-09-16_12.00.47.png` through `2026-09-16_12.00.59.png` are preserved under their original filenames in `docs/reference-images/` and documented in the dated reference record. The images visibly establish a labelled Road Signage Storage room, numerous wall- and stand-displayed sign heads, and storage chests. They support a preliminary visual grouping, but not exact sign meanings, source/profile IDs or texture data.
 
+## Reference images: where they live
+
+The original screenshots referenced from these records are kept **untracked** in
+`docs/reference-images/` on the development checkout (fragbox, WSL:
+`~/repos/praya-builder/docs/reference-images/`, roughly 120 MB of PNGs). They are
+deliberately not committed; git is the wrong place for 5-8 MB screenshots.
+
+- Bots and agents on other hosts read them over SSH into fragbox's WSL, for example
+  `ssh fragbox 'wsl -e bash -lc "ls ~/repos/praya-builder/docs/reference-images"'`,
+  then copy or view the named file. Link by original filename with provenance, as
+  the maintenance policy already requires.
+- If the checkout moves, update this section rather than committing the images.
+- Anything in `preview/.workspace/references/` is a studio upload, not a canon source.
+
 ## Next consolidation work
 
 Retrieve the actual transport manual and vector masters before claiming its precise dimensions/fonts are implemented. Reconcile website/wiki/older institutional lore with dated sources and explicit user decisions, preserving historical versions. Keep speculative gp-ai requirements separate from fictional-world facts. Do not silently expand this initial register into an exhaustive national canon.
