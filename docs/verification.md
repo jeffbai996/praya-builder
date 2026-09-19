@@ -626,3 +626,18 @@ The current catalogue has **19** revisions across nine projects, rather than the
 Historical review backfill completed: **23/23 saved versions**, each with six
 exteriors, four elevations and derived floor plans. Before/after SHA-256 maps for
 all draft, revision, site and job records were identical. No world endpoint used.
+
+
+### B1 follow-up — empty expansion budget and compact tower
+
+Independent part review found that repeated zero-emission calls could evade the
+primitive and written-cell budgets. Every v2 operation visit is now charged before
+conditional evaluation, with a separate 100,000-visit ceiling. The 100×100×100
+empty-call regression fails promptly at that ceiling. Focused probes: **28 passed**;
+full tree: **207 passed, 6 opt-in checks skipped**; Gradle and all 19 catalogue
+artifact parity checks passed.
+
+The R2 generator now emits real cuboids/repeated groups: 627 operations versus
+1,873, 106 component-per-line source lines, 94 unchanged component identities,
+4,079 cells and the identical corrected R2 artifact hash. This closes the compact
+v2 follow-up; the earlier R1 hash exception remains documented under B2.

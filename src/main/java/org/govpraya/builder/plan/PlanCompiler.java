@@ -23,6 +23,7 @@ public final class PlanCompiler {
     private int[] dimensions;
     private int work;
     private int primitives;
+    private int operationVisits;
 
     private PlanCompiler(PartLibrary partLibrary) { this.partLibrary = partLibrary; }
 
@@ -381,6 +382,7 @@ public final class PlanCompiler {
                               int repeatDepth, List<BoundFrame> frames, Deque<String> callStack) {
         if (operations.size() > 4096) throw new IllegalArgumentException("Operation limit exceeded");
         for (JsonElement element : operations) {
+            if (++operationVisits > 100_000) throw new IllegalArgumentException("Expanded operation traversal limit exceeded");
             JsonObject op = element.getAsJsonObject(); String type = text(op.get("op"));
             if (!enabled(op, params)) continue;
             if (type.equals("repeat")) {

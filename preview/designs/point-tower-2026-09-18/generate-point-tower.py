@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""Point Tower R2 for the Praya first plot. Emits a plan; posts only with --post."""
+"""Point Tower R2 for the Praya first plot. Emits a plan; posts only with --post.
+
+The original design and R1/R2 architectural authorship are Claude/Fable's; a later
+operator regenerating or posting the source must provide their own run provenance.
+"""
 import json, sys, urllib.request, os
 from pathlib import Path
 from collections import defaultdict
@@ -230,30 +234,82 @@ used = {r for r, _ in cells.values()}; palette = {k: v for k, v in palette.items
 # ---------- emit ----------
 by_comp = defaultdict(list)
 for (x, y, z), (role, comp) in sorted(cells.items(), key=lambda t: (t[0][1], t[0][2], t[0][0])): by_comp[comp].append((x, y, z, role))
+
+def cuboids(entries):
+    """Partition final cells into deterministic maximal boxes without changing ownership."""
+    remaining = {(x, y, z): role for x, y, z, role in entries}
+    result = []
+    while remaining:
+        x0, y0, z0 = min(remaining, key=lambda p: (p[1], p[2], p[0])); role = remaining[(x0, y0, z0)]
+        x1 = x0 + 1
+        while remaining.get((x1, y0, z0)) == role: x1 += 1
+        z1 = z0 + 1
+        while all(remaining.get((x, y0, z1)) == role for x in range(x0, x1)): z1 += 1
+        y1 = y0 + 1
+        while all(remaining.get((x, y1, z)) == role for z in range(z0, z1) for x in range(x0, x1)): y1 += 1
+        for y in range(y0, y1):
+            for z in range(z0, z1):
+                for x in range(x0, x1): del remaining[(x, y, z)]
+        result.append({"op": "box", "min": [x0, y0, z0], "max": [x1, y1, z1], "material": role})
+    return result
+
+def repeats(ops):
+    """Fold adjacent congruent boxes into schema-v2 repeats with a constant step."""
+    result, i = [], 0
+    while i < len(ops):
+        first = ops[i]; size = tuple(b - a for a, b in zip(first["min"], first["max"]))
+        if i + 1 < len(ops):
+            second = ops[i + 1]
+            step = tuple(b - a for a, b in zip(first["min"], second["min"]))
+            count = 1
+            while i + count < len(ops):
+                current = ops[i + count]
+                if current["material"] != first["material"]: break
+                if tuple(b - a for a, b in zip(current["min"], current["max"])) != size: break
+                if tuple(current["min"][axis] - first["min"][axis] for axis in range(3)) != tuple(step[axis] * count for axis in range(3)): break
+                count += 1
+            if count >= 2 and any(step):
+                result.append({"op": "repeat", "count": count, "step": list(step), "operations": [first]})
+                i += count; continue
+        result.append(first); i += 1
+    return result
+
 components = []
 for comp in comp_order:
-    ops, run = [], None
-    for (x, y, z, role) in by_comp[comp]:
-        if run and run[3] == role and run[1] == y and run[2] == z and run[4] == x: run[4] = x + 1
-        else:
-            if run: ops.append(run)
-            run = [x, y, z, role, x + 1]
-    if run: ops.append(run)
+    ops = repeats(cuboids(by_comp[comp]))
     components.append({"id": comp, "role": comp.replace("-", " "), "origin": [0, 0, 0],
-                       "operations": [{"op": "box", "min": [r[0], r[1], r[2]], "max": [r[4], r[1] + 1, r[2] + 1], "material": r[3]} for r in ops]})
+                       "operations": ops})
 signs = [{"at": [13, 4, CZ0 - 1], "lines": ["----------", "POINT TOWER", "LOBBY", "----------"]},
          {"at": [14, 4, CZ0 - 1], "lines": ["----------", "LIFT + STAIR", "LEVELS 1-6", "----------"]}]
 for s in range(TOWER_STOREYS):
     signs.append({"at": [12, TOWER_BASE + s * STOREY + 3, CZ0], "lines": ["--------", f"LEVEL {s + 1}", "RESIDENCES", "--------"]})
-plan = {"schema_version": 1, "plan_id": "north-plot-point-tower", "revision": "r2", "name": "Point Tower · R2",
+plan = {"schema_version": 2, "plan_id": "north-plot-point-tower", "revision": "r2", "name": "Point Tower · R2",
         "description": "Connection-state successor to R1 with identical building geometry and ownership. Six residential storeys over a lobby podium on the Praya first plot, within the surveyed 33-block height. Pale quartz piers with recessed black panes to the street, brick blades and privacy panes to the rear, charcoal flanks with timber shades, planted west balconies, an east setback terrace and a screened pale crown. The forecourt keeps the street trees. Review only, no placement.",
         "dimensions": {"x": DIMS[0], "y": DIMS[1], "z": DIMS[2]}, "palette": palette, "components": components, "signs": signs}
 print(f"cells={len(cells)} (cleared air {cleared}) components={len(components)} ops={sum(len(c['operations']) for c in components)} palette={len(palette)}", file=sys.stderr)
 output = Path(__file__).with_name("point-tower-r2.plan.json")
-output.write_text(json.dumps(plan, separators=(",", ":")) + "\n", encoding="utf-8")
+lines = ["{"]
+for key in ("schema_version", "plan_id", "revision", "name", "description", "dimensions", "palette"):
+    lines.append(f'  {json.dumps(key)}: {json.dumps(plan[key], separators=(",", ":"))},')
+lines.append('  "components": [')
+for index, component in enumerate(components):
+    lines.append("    " + json.dumps(component, separators=(",", ":")) + ("," if index + 1 < len(components) else ""))
+lines.append("  ],")
+lines.append('  "signs": ' + json.dumps(signs, separators=(",", ":")))
+lines.append("}")
+output.write_text("\n".join(lines) + "\n", encoding="utf-8")
 print("plan", output)
 if "--post" not in sys.argv: sys.exit(0)
-body = json.dumps({"plan": plan, "siteId": SITE, "transform": {"origin": ORIGIN, "turns": 0}, "author": {"agent": "claude-bot", "model": "claude-fable-5-1", "effort": "medium"},
+author_text = os.environ.get("BUILDER_AUTHOR_JSON")
+if "--author" in sys.argv:
+    index = sys.argv.index("--author")
+    if index + 1 >= len(sys.argv): raise SystemExit("--author requires a JSON object")
+    author_text = sys.argv[index + 1]
+if not author_text: raise SystemExit("--post requires --author JSON or BUILDER_AUTHOR_JSON")
+try: author = json.loads(author_text)
+except json.JSONDecodeError as error: raise SystemExit(f"invalid author JSON: {error}")
+if not isinstance(author, dict) or not author: raise SystemExit("author must be a non-empty JSON object")
+body = json.dumps({"plan": plan, "siteId": SITE, "transform": {"origin": ORIGIN, "turns": 0}, "author": author,
                    "brief": "Point Tower R2 connection-state successor to R1. Geometry and ownership are unchanged; panes and bars are resolved by PlanCompiler. Review only, no placement."}).encode()
 req = urllib.request.Request(f"{BASE}/api/workspace/drafts", data=body, method="POST", headers={"Content-Type": "application/json", "X-Builder-Write": "1"})
 try: resp = json.load(urllib.request.urlopen(req, timeout=120))

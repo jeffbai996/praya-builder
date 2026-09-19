@@ -203,3 +203,21 @@ def test_expanded_primitive_and_work_budgets_are_enforced(run_probe, tmp_path):
     reject(run_probe, value, parts, "Expanded operation limit exceeded")
     value["components"][0]["operations"] = [{"op": "box", "min": [0, 0, 0], "max": [16, 16, 16], "material": "wall"} for _ in range(25)]
     reject(run_probe, value, parts, "Expansion work limit exceeded")
+
+
+def test_zero_emission_calls_still_consume_traversal_budget(run_probe, tmp_path):
+    fixture = part(
+        parameters={"variant": {"type": "enum", "values": ["on", "off"], "default": "off"}},
+        components=[{"id": "optional", "role": "test", "origin": [0, 0, 0],
+                     "when": {"param": "variant", "equals": "on"},
+                     "operations": [{"op": "block", "at": [0, 0, 0], "material": "wall"}]}],
+    )
+    parts = write_parts(tmp_path, fixture)
+    value = base_plan()
+    leaf = {"op": "call", "part": "test.fixture", "at": [0, 0, 0], "params": {"variant": "off"}}
+    value["components"][0]["operations"] = [{"op": "repeat", "count": 100, "step": [0, 0, 0], "operations": [
+        {"op": "repeat", "count": 100, "step": [0, 0, 0], "operations": [
+            {"op": "repeat", "count": 100, "step": [0, 0, 0], "operations": [leaf]}
+        ]}
+    ]}]
+    reject(run_probe, value, parts, "Expanded operation traversal limit exceeded")

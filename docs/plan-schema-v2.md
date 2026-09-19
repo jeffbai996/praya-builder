@@ -26,7 +26,8 @@ role or `{"param":"material_parameter"}`. Raw block-state interpolation and
 general expression evaluation are deliberately unsupported.
 
 Expansion is bounded to three nested repeats, 4,096 expanded primitive operations,
-100,000 cells of expansion work, 10,000 final cells per component, and the existing
+100,000 cells of expansion work, 100,000 expanded operation visits (including
+disabled and zero-emission calls), 10,000 final cells per component, and the existing
 plan dimension and final-cell limits.
 
 ## Part definitions
@@ -62,3 +63,11 @@ List the exact validated registry used by the compiler with:
 ```text
 PlanCli --parts [WORKSPACE_PARTS_DIRECTORY]
 ```
+
+
+The Point Tower R2 study now uses 510 boxes and 117 repeated groups, replacing
+1,873 row-wise operations with 627 operations across the same 94 components.
+Its component-per-line JSON occupies 106 lines and compiles to exactly the same
+`94590e608ccf7882b924b601d97dfde98dfb6f7e0c958a409f8c1411dd241b8c` artifact.
+R1 remains unchanged. The generator only posts when explicitly invoked with
+`--post` and caller provenance via `--author JSON` or `BUILDER_AUTHOR_JSON`.
