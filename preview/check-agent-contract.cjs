@@ -109,3 +109,15 @@ test('saved revisions snapshot versioned diagnostics and context exposes fixed l
  assert.deepEqual(context.limits,LIMITS);
  assert.deepEqual(context.site.caps,siteCaps(store.get('sites',site.id),draft.candidate,placement));
 });
+
+test('saving actor is retained separately from the design author',async()=>{
+ const root=fs.mkdtempSync(path.join(os.tmpdir(),'builder-save-actor-'));
+ try{
+  const store=new FileStore(root),service=new DesignService(store,{compile:compiler});
+  const designer={agent:'designer',model:'design-model'},actor={agent:'reviewer',model:'review-model'};
+  const draft=await service.createDraft({plan:plan(),author:designer});
+  const saved=service.save(draft.id,{expectedVersion:draft.version,candidateHash:draft.candidate.hash,idempotencyKey:'actor-fixture',author:actor});
+  assert.deepEqual(saved.author,designer);assert.deepEqual(saved.savedBy,actor);
+  assert.deepEqual(store.get('revisions',saved.id).savedBy,actor);
+ }finally{fs.rmSync(root,{recursive:true,force:true});}
+});

@@ -669,3 +669,8 @@ v2 follow-up; the earlier R1 hash exception remains documented under B2.
 ## 2026-09-18 - feat(review): add durable blind design comparisons
 
 A4: three runner/service tests passed; actual disposable CLI/HTTP round trip passed with two shuffled entrants, hidden attribution, explicit reveal and 13 sheet views. Browser contract passed blind display, stale-gallery suppression, exact sheet binding, reveal conflict/retry and 320px layout. No paid inference calls.
+
+
+## 2026-09-18 - feat(mcp): expose the common builder design tools
+
+C: four agent-contract tests passed, including savedBy separate from design author. MCP unit/installer tests: three passed, one host-runtime check skipped on studio host; seven tools previously registered against the real Minecraft-host FastMCP runtime. Installation status is recorded in the response handoff.

@@ -95,6 +95,7 @@ class DesignService{
  });}
  version(draft,expected){if(draft.version!==expected){const e=Error('Revision conflict: reload the current draft');e.status=409;throw e;}}
  save(id,input){
+  const savedBy=input.author===undefined?null:authorOf(input.author);
   if(!/^[a-zA-Z0-9_-]{1,100}$/.test(input.idempotencyKey||''))throw Error('An idempotency key is required');
   const prior=this.store.list('revisions').find(r=>r.draftId===id&&r.idempotencyKey===input.idempotencyKey);
   if(prior){if(prior.artifactHash!==input.candidateHash)throw Error('Idempotency key reused with a different candidate');return prior;}
@@ -104,7 +105,7 @@ class DesignService{
   const existing=this.store.list('revisions').filter(r=>r.project===draft.project).sort((a,b)=>a.createdAt.localeCompare(b.createdAt));
   const current=existing.at(-1);
   if(current&&current.artifactHash!==draft.parentHash&&current.draftId!==id){const e=Error('Revision conflict: another design has been saved; branch from its artifact');e.status=409;throw e;}
-  return this.store.create('revisions',{schemaVersion:1,project:draft.project,draftId:id,parentHash:current?.artifactHash||draft.parentHash,artifactHash:draft.candidate.hash,surveyHash:draft.surveyHash,siteId:draft.siteId,transform:draft.transform,brief:draft.brief,author:draft.author||null,diagnosticsVersion:draft.diagnosticsVersion||null,diagnostics:draft.diagnostics,access:draft.access,plan:draft.plan,idempotencyKey:input.idempotencyKey});
+  return this.store.create('revisions',{schemaVersion:1,project:draft.project,draftId:id,parentHash:current?.artifactHash||draft.parentHash,artifactHash:draft.candidate.hash,surveyHash:draft.surveyHash,siteId:draft.siteId,transform:draft.transform,brief:draft.brief,author:draft.author||null,savedBy,diagnosticsVersion:draft.diagnosticsVersion||null,diagnostics:draft.diagnostics,access:draft.access,plan:draft.plan,idempotencyKey:input.idempotencyKey});
  }
  context(id){
   const d=this.store.get('drafts',id);let site=null;

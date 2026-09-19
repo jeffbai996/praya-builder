@@ -85,6 +85,13 @@ runtime limit and the existing 10,000-cell plan ceiling. Invalid candidates
 retain the prior render but cannot be saved. Version conflicts return 409.
 Save idempotency keys cannot be reused for different artifacts.
 
+The same design contract is exposed to squad agents by the seven FastMCP tools in
+[`ops/mcp/tools_builder.py`](../ops/mcp/tools_builder.py). Writes require an
+explicit author and use the normal workspace validation path. Review sheets
+return manifests and absolute image links, not image bytes. The adapter has no
+placement or RCON operation; see [`ops/mcp/README.md`](../ops/mcp/README.md) for
+installation and verification.
+
 The walking check uses a conservative grid, two-block headroom, one-block steps
 and openable doors. It checks reachability from the confirmed street connection.
 It does not simulate Minecraft player physics or establish architectural quality.
