@@ -9,14 +9,16 @@ async function request(route,body){
 async function review(id,directory){
  if(!/^[a-z0-9-]{1,80}$/.test(id||''))throw Error('A draft ID is required');
  const context=await request('drafts/'+id+'/context');
- const result={draftId:id,candidateHash:context.candidateHash,author:context.author,diagnosticsVersion:context.diagnosticsVersion,diagnostics:context.diagnostics,access:context.access,siteCaps:context.site?.caps,limits:context.limits,sheet:context.sheet||null};
+ const result={draftId:id,candidateHash:context.candidateHash,author:context.author,diagnosticsVersion:context.diagnosticsVersion,diagnosticsSource:context.diagnosticsSource,diagnostics:context.diagnostics,access:context.access,siteCaps:context.site?.caps,limits:context.limits,sheet:context.sheet||null};
  const out=path.resolve(directory||'review-'+id);fs.mkdirSync(out,{recursive:true});
  if(context.sheet?.index){
   const prefix='/api/workspace/artifacts/'+context.candidateHash+'/sheet/';
-  if(context.sheet.index!==prefix+'index.json')throw Error('Unexpected review sheet path');
+  const suffix=context.sheet.reviewHash?'?review='+context.sheet.reviewHash:'';
+  if(context.sheet.reviewHash&&!/^[a-f0-9]{64}$/.test(context.sheet.reviewHash))throw Error('Invalid review identity');
+  if(context.sheet.index!==prefix+'index.json'+suffix)throw Error('Unexpected review sheet path');
   const manifest=await request(context.sheet.index.slice('/api/workspace/'.length));
   for(const view of manifest.views||[]){
-   if(!/^[a-z0-9-]+\.png$/.test(view.file)||view.url!==prefix+view.file)throw Error('Unexpected sheet image path');
+   if(!/^[a-z0-9-]+\.png$/.test(view.file)||view.url!==prefix+view.file+suffix)throw Error('Unexpected sheet image path');
    const response=await fetch(new URL(view.url,base),{signal:AbortSignal.timeout(65000)});
    if(!response.ok)throw Error('Sheet download failed: '+view.file+' ('+response.status+')');
    fs.writeFileSync(path.join(out,view.file),Buffer.from(await response.arrayBuffer()));

@@ -42,6 +42,8 @@ const files = new Map([
   ['/review-state.js',['review-state.js','text/javascript']],
   ['/register-thumbnails.js',['register-thumbnails.js','text/javascript']],
   ['/thumbnail-render.html',['thumbnail-render.html','text/html']],
+  ['/review-sheet-render.js',['review-sheet-render.js','text/javascript']],
+  ['/review-sheet-ui.js',['review-sheet-ui.js','text/javascript']],
   ['/thumbnail-render.js',['thumbnail-render.js','text/javascript']],
   ['/material-icons.js',['material-icons.js','text/javascript']],
   ['/exports.js',['exports.js','text/javascript']], ['/viewer-tools.js',['viewer-tools.js','text/javascript']],

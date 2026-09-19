@@ -585,3 +585,23 @@ The current catalogue has **19** revisions across nine projects, rather than the
   blocks receive 386 corrected arm properties. Preserving R1's broken connections
   would contradict the requested resolver correction; see b2-connection-states.md.
 - No world endpoints were used. R2 is a source study, not a placed building.
+
+
+## 2026-09-18 — A2 review sheets
+
+- Renderer browser contract: six perspective presets, four orthographic elevations,
+  plan clipping, projected diagnostic markers, bounded labels and repeat PNG bytes.
+  Real Point Tower R1 perspective and plan PNGs visually inspected.
+- Cache/queue tests: 3 passed, including immutable review identity, atomic publish,
+  corrupt-image detection, failed-worker cleanup and bounded admission.
+- Isolated real HTTP/Chromium smoke: **13 views**, 423,964-byte plan PNG; manifest
+  cache repeat, PNG SHA-256, separate review hashes for changed transform, legacy
+  current-rules source and CLI PNG downloads passed. Worker processes exited.
+- UI browser contract: lazy rendering, same artifact/new draft version refresh,
+  stale response suppression, retry, keyboard tabs, image caption and foreign URL
+  rejection passed. Existing studio-polish suite passed, including 320-pixel modes.
+- Parent focused pytest (cache, renderer, UI and agent contracts): **4 passed**.
+  Node syntax and diff checks passed. Production renderer paths configured in the
+  existing private runtime file; no credentials were copied to tracked files.
+- Serial sheet backfill for the 23 historical saved versions is running separately;
+  final verification records its result. Draft/site/job records are hash-checked.

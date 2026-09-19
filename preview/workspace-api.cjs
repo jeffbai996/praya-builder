@@ -1,6 +1,7 @@
 const fs=require('node:fs');
 const path=require('node:path');
 const {FileStore}=require('./workspace-store.cjs');
+const {ReviewSheetService}=require('./review-sheets.cjs');
 const {LIMITS}=require('./draft-context.cjs');
 const {DesignService,diff}=require('./design-service.cjs');
 const {importSite,transformCells}=require('./sites.cjs');
@@ -33,6 +34,7 @@ function workspaceApi({artifacts,port}){
  const store=new FileStore(process.env.BUILDER_WORKSPACE_DIR||path.join(__dirname,'.workspace'));
  claimWorkspace(store.root);
  const service=new DesignService(store),construction=new ConstructionService(store),cached=new Map();
+ const sheets=new ReviewSheetService({store,catalogue:artifacts,baseUrl:`http://127.0.0.1:${port}`});
  const surveyBridge=process.env.BUILDER_SURVEY_URL?new PaperBridge({url:process.env.BUILDER_SURVEY_URL,token:process.env.BUILDER_SURVEY_TOKEN||''}):construction.bridge;
  const captures=new CaptureService(store,surveyBridge,{busy:()=>Boolean(construction.active)});
  const origins=new Set([`http://localhost:${port}`,`http://127.0.0.1:${port}`]);if(process.env.PREVIEW_PUBLIC_ORIGIN)origins.add(new URL(process.env.PREVIEW_PUBLIC_ORIGIN).origin);
@@ -76,6 +78,17 @@ function workspaceApi({artifacts,port}){
     const revision=store.get('revisions',route.split('/')[1]);
     if(!revision.siteId)throw Error('This revision has no surveyed site');
     send(placementPackage(revision,store.get('sites',revision.siteId),store.getArtifact(revision.artifactHash)));
+   }
+   else if(/^revisions\/[a-z0-9-]+\/sheet$/.test(route)&&req.method==='GET'){
+    const descriptor=sheets.describe(store.get('revisions',route.split('/')[1]));
+    send(await sheets.ensure(descriptor.artifactHash,descriptor.reviewHash));
+   }
+   else if(/^artifacts\/[a-f0-9]{64}\/sheet\/(?:index\.json|[a-z0-9-]+\.png)$/.test(route)&&req.method==='GET'){
+    const [,hash,,file]=route.split('/'),reviewHash=url.searchParams.get('review');
+    if(reviewHash!==null&&!/^[a-f0-9]{64}$/.test(reviewHash))throw Error('Invalid review hash');
+    const manifest=await sheets.ensure(hash,reviewHash);
+    if(file==='index.json')send(manifest);
+    else{const bytes=sheets.readImage(hash,manifest.reviewHash,file);res.writeHead(200,{'Content-Type':'image/png','Cache-Control':'private, max-age=31536000, immutable'});res.end(bytes);}
    }
    // Version thumbnails: rendered once by a browser from the immutable artifact, then kept with the revision.
    else if(/^revisions\/[a-z0-9-]+\/thumbnail$/.test(route)){
@@ -145,7 +158,10 @@ function workspaceApi({artifacts,port}){
     const [,id,action]=route.split('/');
     if(req.method==='GET'){
      const d=store.get('drafts',id);
-     if(action==='context')send(service.context(id));
+     if(action==='context'){
+      const context=service.context(id),sheet=sheets.describe(d),review=sheets.getReview(sheet.artifactHash,sheet.reviewHash);
+      send({...context,diagnostics:review.diagnostics,diagnosticsVersion:review.diagnosticsVersion,diagnosticsSource:review.diagnosticsSource,sheet});
+     }
      else if(action==='support')send(assetSupport(d.candidate,url.searchParams.get('signData')==='1'?{connected:true,capabilities:{signData:1}}:{connected:false}));
      else if(action==='diff'){const requested=url.searchParams.get('baseline');if(requested&&!/^[a-f0-9]{64}$/.test(requested))throw Error('Baseline must be an artifact hash');const baseline=requested||d.baselineHash||d.parentHash||d.history[0].candidateHash;send(diff(d.candidate,store.getArtifact(baseline)));}
      else if(action==='mesh'){
@@ -161,7 +177,12 @@ function workspaceApi({artifacts,port}){
     }else if(req.method==='POST'){
      if(action==='edit')send(await service.editDraft(id,body));
      else if(action==='history')send(await service.history(id,body));
-     else if(action==='save')send(service.save(id,body),201);
+     else if(action==='save'){
+      const saved=service.save(id,body);
+      // Saving geometry succeeds even when the optional browser renderer is unavailable.
+      try{const sheet=sheets.describe(saved);send({...saved,sheet},201);sheets.ensure(sheet.artifactHash,sheet.reviewHash).catch(error=>console.error('Review sheet:',error.message));}
+      catch(error){console.error('Review sheet:',error.message);send({...saved,sheet:null,sheetError:error.message},201);}
+     }
      else if(action==='request')send(service.request(id,body),201);
      else send({error:'Unknown operation'},404);
     }else send({error:'Method not allowed'},405);

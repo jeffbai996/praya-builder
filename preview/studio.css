@@ -232,3 +232,12 @@ body[data-busy=true][data-ready=true] .drawing-veil{display:flex}
 .studio-body .placement-entry,.studio-body .studio-drawing,.studio-body .studio-side>section,.studio-body .studio-panel{border-radius:12px}
 .studio-body :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .studio-body .layer-chip>span{border-radius:999px}
+
+/* Review sheets keep the interactive canvas and saved evidence together. */
+.sheet-tabs{display:flex;gap:.25rem;border-bottom:1px solid var(--line);padding:.5rem 1rem}
+.sheet-tabs button{border:0;border-radius:0;background:transparent;color:var(--muted);padding:.6rem .8rem}
+.sheet-tabs button[aria-selected="true"]{color:var(--text);box-shadow:inset 0 -2px var(--accent)}
+#sheet-review{padding:1rem;min-width:0}.sheet-toolbar{display:flex;align-items:center;gap:1rem;justify-content:space-between}.sheet-toolbar p{overflow-wrap:anywhere}
+.sheet-gallery{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:1rem}
+.sheet-gallery figure{margin:0;min-width:0}.sheet-gallery img{display:block;width:100%;height:auto;border:1px solid var(--line);border-radius:.4rem}.sheet-gallery figcaption{padding:.45rem 0;color:var(--muted);font-size:.85rem}
+.sheet-gallery a{display:block}.sheet-gallery a:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
