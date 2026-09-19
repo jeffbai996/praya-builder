@@ -91,11 +91,11 @@ class ReviewSheetService{
  snapshot(ref,artifact){
   const site=this.site(ref),historical=Array.isArray(ref.diagnostics)&&Number.isInteger(ref.diagnosticsVersion);
   const diagnostics=historical?clone(ref.diagnostics):diagnose(artifact,site,ref.transform||null);
-  return {artifactHash:artifact.hash,diagnostics,diagnosticsVersion:historical?ref.diagnosticsVersion:DIAGNOSTICS_VERSION,diagnosticsSource:historical?'saved-snapshot':'current-rules',surveyHash:ref.surveyHash||site?.hash||null,transform:validateTransform(ref.transform||null),rendererVersion:this.rendererVersion};
+  return {...(ref.reviewLabel?{reviewLabel:String(ref.reviewLabel).slice(0,120)}:{}),artifactHash:artifact.hash,diagnostics,diagnosticsVersion:historical?ref.diagnosticsVersion:DIAGNOSTICS_VERSION,diagnosticsSource:historical?'saved-snapshot':'current-rules',surveyHash:ref.surveyHash||site?.hash||null,transform:validateTransform(ref.transform||null),rendererVersion:this.rendererVersion};
  }
  defaultSnapshot(artifact){return {artifactHash:artifact.hash,diagnostics:[],diagnosticsVersion:null,diagnosticsSource:'artifact-only',surveyHash:null,transform:null,rendererVersion:this.rendererVersion};}
  persist(snapshot){
-  const reviewHash=digest({artifactHash:snapshot.artifactHash,diagnostics:snapshot.diagnostics,diagnosticsVersion:snapshot.diagnosticsVersion,diagnosticsSource:snapshot.diagnosticsSource,surveyHash:snapshot.surveyHash,transform:snapshot.transform,rendererVersion:snapshot.rendererVersion});
+  const reviewHash=digest({...(snapshot.reviewLabel?{reviewLabel:snapshot.reviewLabel}:{}),artifactHash:snapshot.artifactHash,diagnostics:snapshot.diagnostics,diagnosticsVersion:snapshot.diagnosticsVersion,diagnosticsSource:snapshot.diagnosticsSource,surveyHash:snapshot.surveyHash,transform:snapshot.transform,rendererVersion:snapshot.rendererVersion});
   const review={schemaVersion:1,reviewHash,...snapshot};atomicJSON(reviewInputPath(this.store.root,snapshot.artifactHash,reviewHash),review);return review;
  }
  describe(ref){

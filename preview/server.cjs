@@ -43,6 +43,7 @@ const files = new Map([
   ['/register-thumbnails.js',['register-thumbnails.js','text/javascript']],
   ['/thumbnail-render.html',['thumbnail-render.html','text/html']],
   ['/review-sheet-render.js',['review-sheet-render.js','text/javascript']],
+  ['/bakeoff-ui.js',['bakeoff-ui.js','text/javascript']],
   ['/parts-ui.js',['parts-ui.js','text/javascript']],
   ['/review-sheet-ui.js',['review-sheet-ui.js','text/javascript']],
   ['/thumbnail-render.js',['thumbnail-render.js','text/javascript']],

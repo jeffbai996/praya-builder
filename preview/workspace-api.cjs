@@ -1,6 +1,7 @@
 const fs=require('node:fs');
 const path=require('node:path');
 const {FileStore}=require('./workspace-store.cjs');
+const {BakeoffService}=require('./bakeoff-service.cjs');
 const {ReviewSheetService}=require('./review-sheets.cjs');
 const {listParts}=require('./parts-service.cjs');
 const {LIMITS}=require('./draft-context.cjs');
@@ -36,6 +37,7 @@ function workspaceApi({artifacts,port}){
  claimWorkspace(store.root);
  const service=new DesignService(store),construction=new ConstructionService(store),cached=new Map();
  const sheets=new ReviewSheetService({store,catalogue:artifacts,baseUrl:`http://127.0.0.1:${port}`});
+ const bakeoffs=new BakeoffService({store,service,sheets});
  const surveyBridge=process.env.BUILDER_SURVEY_URL?new PaperBridge({url:process.env.BUILDER_SURVEY_URL,token:process.env.BUILDER_SURVEY_TOKEN||''}):construction.bridge;
  const captures=new CaptureService(store,surveyBridge,{busy:()=>Boolean(construction.active)});
  const origins=new Set([`http://localhost:${port}`,`http://127.0.0.1:${port}`]);if(process.env.PREVIEW_PUBLIC_ORIGIN)origins.add(new URL(process.env.PREVIEW_PUBLIC_ORIGIN).origin);
@@ -48,6 +50,15 @@ function workspaceApi({artifacts,port}){
    if(write&&req.headers['x-builder-write']!=='1'){send({error:'X-Builder-Write header required'},403);return true;}
    const body=write?await readBody(req):null;
    if(route==='context'&&req.method==='GET')send({schemaVersion:1,sites:store.list('sites').map(({blocks,...s})=>({...s,cells:blocks.length})),drafts:store.list('drafts').map(d=>({id:d.id,name:d.plan.name,version:d.version,valid:d.valid,candidateHash:d.candidate.hash,parentHash:d.parentHash,project:d.project,siteId:d.siteId,author:d.author||null,createdAt:d.createdAt})),revisions:store.list('revisions'),jobs:store.list('jobs').map(j=>({id:j.id,state:j.state,kind:j.kind,artifactHash:j.artifactHash,world:j.world,createdAt:j.createdAt})),limits:LIMITS,models:'External agent workflow; no provider calls'});
+   else if(route==='bakeoffs'&&req.method==='GET')send(bakeoffs.list());
+   else if(route==='bakeoffs'&&req.method==='POST')send(bakeoffs.view(bakeoffs.create(body)),201);
+   else if(/^bakeoffs\/[a-z0-9-]+(?:\/(?:entry|reveal))?$/.test(route)){
+    const [,id,action]=route.split('/');
+    if(req.method==='GET'&&!action)send(bakeoffs.view(store.get('bakeoffs',id)));
+    else if(req.method==='POST'&&action==='entry')send(bakeoffs.view(await bakeoffs.submit(id,body)));
+    else if(req.method==='POST'&&action==='reveal')send(bakeoffs.view(await bakeoffs.reveal(id,body)));
+    else send({error:'Unknown comparison operation'},404);
+   }
    else if(route==='parts'&&req.method==='GET')send(await listParts(path.join(store.root,'parts')));
    else if(route==='integration'&&req.method==='GET'){const config=integrationConfig(),target=await captures.status();send({...config,capture:target.connected&&target.world===config.world&&target.capabilities?.survey===1?'paper-survey':'worldedit-schematic',selections:store.list('selections'),captures:store.list('captures').map(({selection,...job})=>job)});}
    else if(route==='capture/status'&&req.method==='GET')send(await captures.status());

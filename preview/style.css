@@ -258,3 +258,7 @@ button,select,input[type=search],input[type=text]{border-radius:8px}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .primary-button,.secondary-button{transition:background .15s ease,border-color .15s ease,transform .08s ease}
 .primary-button:active,.secondary-button:active{transform:translateY(1px)}
+
+.bakeoff-list{margin:2rem 0}.bakeoff-card{border:1px solid var(--line);border-radius:6px;padding:1rem;margin:1rem 0;background:var(--panel)}
+.bakeoff-entrants{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:1rem;margin:1rem 0}.bakeoff-entrant{min-width:0;padding:1rem;background:var(--panel-soft);border-radius:4px}.bakeoff-entrant p{font-size:.85rem;overflow-wrap:anywhere}.bakeoff-entrant h4{font-size:1.1rem;margin:0 0 .6rem}.bakeoff-state{text-transform:capitalize}
+.bakeoff-gallery{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:1rem}.bakeoff-gallery figure{margin:0}.bakeoff-gallery img{width:100%;height:auto}.bakeoff-gallery figcaption{font-size:.85rem;color:var(--muted);padding:.4rem 0}

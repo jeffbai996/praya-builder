@@ -1,3 +1,4 @@
+import {mountBakeoffs} from './bakeoff-ui.js';
 import {projectThumbnail} from './register-thumbnails.js';
 import {createScene} from './scene.js';
 import {materialIcon} from './material-icons.js';
@@ -269,3 +270,5 @@ async function init(){
 }
 workingDesigns();
 init();
+
+mountBakeoffs(document.getElementById("bakeoff-list"));

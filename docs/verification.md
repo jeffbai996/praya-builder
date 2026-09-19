@@ -664,3 +664,8 @@ v2 follow-up; the earlier R1 hash exception remains documented under B2.
   selected-cell positioning, error handling and resets when changing drafts.
 - Existing studio-polish acceptance remains green, including mobile modes.
   No placement or world-writing endpoint was called.
+
+
+## 2026-09-18 - feat(review): add durable blind design comparisons
+
+A4: three runner/service tests passed; actual disposable CLI/HTTP round trip passed with two shuffled entrants, hidden attribution, explicit reveal and 13 sheet views. Browser contract passed blind display, stale-gallery suppression, exact sheet binding, reveal conflict/retry and 320px layout. No paid inference calls.

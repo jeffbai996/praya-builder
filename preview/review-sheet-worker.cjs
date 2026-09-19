@@ -28,7 +28,7 @@ async function main(){
    const mesh=meshArtifact(artifact,view.ceiling),diagnostics=diagnosticsFor(review.diagnostics||[],view);
    const rendered=await page.evaluate(async payload=>{
     const {renderReviewView}=await import('/review-sheet-render.js');return renderReviewView(payload);
-   },{mesh,view,dimensions:artifact.dimensions,diagnostics,components:artifact.components||[],name:artifact.name,artifactHash:artifact.hash});
+   },{mesh,view,dimensions:artifact.dimensions,diagnostics,components:artifact.components||[],name:review.reviewLabel||artifact.name,artifactHash:artifact.hash});
    if(rendered?.hash!==artifact.hash||typeof rendered.png!=='string'||!rendered.png.startsWith('data:image/png;base64,'))throw Error(`Renderer returned an invalid image for ${view.id}`);
    const bytes=Buffer.from(rendered.png.slice('data:image/png;base64,'.length),'base64');if(bytes.length<8||bytes.subarray(1,4).toString('ascii')!=='PNG')throw Error(`Renderer returned invalid PNG bytes for ${view.id}`);
    write(path.join(outputDir,view.file),bytes);

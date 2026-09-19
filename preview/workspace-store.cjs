@@ -1,7 +1,7 @@
 const fs=require('node:fs');
 const path=require('node:path');
 const {randomUUID}=require('node:crypto');
-const collections=new Set(['sites','briefs','drafts','revisions','jobs','requests','selections','captures','capture-chunks']);
+const collections=new Set(['sites','briefs','drafts','revisions','jobs','requests','selections','captures','capture-chunks','bakeoffs']);
 class FileStore{
  constructor(root,{maxBytes=512*1024*1024}={}){this.root=path.resolve(root);this.maxBytes=maxBytes;fs.mkdirSync(this.root,{recursive:true,mode:0o700});}
  file(kind,id){if(!collections.has(kind)&&kind!=='artifacts')throw Error('Unknown collection');if(!/^[a-z0-9-]{1,80}$/.test(id))throw Error('Invalid record id');return path.join(this.root,kind,id+'.json');}
