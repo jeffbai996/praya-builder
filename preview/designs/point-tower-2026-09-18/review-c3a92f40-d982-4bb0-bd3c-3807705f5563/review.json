@@ -1,0 +1,1922 @@
+{
+  "draftId": "c3a92f40-d982-4bb0-bd3c-3807705f5563",
+  "candidateHash": "7422b4e839347b37478a5aafb0ccd2cc4c2d7f4a935495bbd250c11089e9b993",
+  "author": {
+    "agent": "claude-bot",
+    "model": "claude-fable-5-1",
+    "effort": "medium",
+    "note": "Point Tower R3 interior pass, 2026-09-19"
+  },
+  "diagnosticsVersion": 1,
+  "diagnosticsSource": "saved-snapshot",
+  "diagnostics": [
+    {
+      "rule": "walk.headroom",
+      "version": 1,
+      "severity": "warning",
+      "component": "switchback-stair",
+      "at": [
+        13,
+        2,
+        10
+      ],
+      "message": "A supported route has less than two blocks of headroom.",
+      "hint": "Blocked at [13,3,10] by minecraft:smooth_quartz_stairs[facing=north,half=bottom,shape=straight,waterlogged=false] (switchback-stair)."
+    },
+    {
+      "rule": "light.dark-corridor",
+      "version": 1,
+      "severity": "info",
+      "component": "tower-slab-4",
+      "at": [
+        13,
+        22,
+        8
+      ],
+      "message": "152 reached cells are farther than 8 blocks from a known light-emitting block.",
+      "hint": "Farthest route cell [13,22,8] is 14 blocks from a light."
+    },
+    {
+      "rule": "sign.orphan",
+      "version": 1,
+      "severity": "error",
+      "component": "lobby",
+      "at": [
+        13,
+        4,
+        7
+      ],
+      "message": "Wall sign has no supporting block behind it.",
+      "hint": "Add a supporting block behind the north-facing sign."
+    },
+    {
+      "rule": "sign.orphan",
+      "version": 1,
+      "severity": "error",
+      "component": "lobby",
+      "at": [
+        14,
+        4,
+        7
+      ],
+      "message": "Wall sign has no supporting block behind it.",
+      "hint": "Add a supporting block behind the north-facing sign."
+    }
+  ],
+  "access": {
+    "model": "voxel-walk-v2",
+    "checked": true,
+    "openableDoors": 26,
+    "reachedCells": 1667,
+    "issues": [],
+    "limitations": "Full-block support approximation; doors assumed openable. Player physics and resource-pack appearance require in-game inspection."
+  },
+  "siteCaps": {
+    "coordinateSystem": "plan",
+    "boundsConvention": "min inclusive, max exclusive",
+    "surveyTopExclusive": 112,
+    "surveyTopPlanExclusive": 33,
+    "survey": {
+      "min": [
+        -8,
+        -31,
+        -8
+      ],
+      "max": [
+        35,
+        33,
+        23
+      ]
+    },
+    "plot": {
+      "min": [
+        0,
+        -31,
+        0
+      ],
+      "max": [
+        27,
+        33,
+        15
+      ]
+    },
+    "frontage": [
+      13,
+      1,
+      0
+    ],
+    "protected": [
+      {
+        "min": [
+          -1,
+          2,
+          -6
+        ],
+        "max": [
+          0,
+          3,
+          -5
+        ]
+      },
+      {
+        "min": [
+          -2,
+          2,
+          -5
+        ],
+        "max": [
+          -1,
+          3,
+          -4
+        ]
+      },
+      {
+        "min": [
+          -1,
+          2,
+          -2
+        ],
+        "max": [
+          0,
+          3,
+          -1
+        ]
+      },
+      {
+        "min": [
+          0,
+          2,
+          -1
+        ],
+        "max": [
+          1,
+          3,
+          0
+        ]
+      },
+      {
+        "min": [
+          31,
+          3,
+          -6
+        ],
+        "max": [
+          32,
+          4,
+          -5
+        ]
+      },
+      {
+        "min": [
+          26,
+          3,
+          -5
+        ],
+        "max": [
+          27,
+          4,
+          -4
+        ]
+      },
+      {
+        "min": [
+          30,
+          3,
+          -5
+        ],
+        "max": [
+          31,
+          4,
+          -4
+        ]
+      },
+      {
+        "min": [
+          27,
+          3,
+          -4
+        ],
+        "max": [
+          28,
+          4,
+          -3
+        ]
+      },
+      {
+        "min": [
+          31,
+          3,
+          -2
+        ],
+        "max": [
+          32,
+          4,
+          -1
+        ]
+      },
+      {
+        "min": [
+          28,
+          3,
+          -1
+        ],
+        "max": [
+          29,
+          4,
+          0
+        ]
+      },
+      {
+        "min": [
+          32,
+          3,
+          -1
+        ],
+        "max": [
+          33,
+          4,
+          0
+        ]
+      },
+      {
+        "min": [
+          27,
+          3,
+          0
+        ],
+        "max": [
+          28,
+          4,
+          1
+        ]
+      },
+      {
+        "min": [
+          -1,
+          3,
+          14
+        ],
+        "max": [
+          0,
+          4,
+          15
+        ]
+      },
+      {
+        "min": [
+          -2,
+          3,
+          15
+        ],
+        "max": [
+          -1,
+          4,
+          16
+        ]
+      },
+      {
+        "min": [
+          -1,
+          3,
+          18
+        ],
+        "max": [
+          0,
+          4,
+          19
+        ]
+      },
+      {
+        "min": [
+          0,
+          3,
+          19
+        ],
+        "max": [
+          1,
+          4,
+          20
+        ]
+      },
+      {
+        "min": [
+          31,
+          5,
+          14
+        ],
+        "max": [
+          32,
+          6,
+          15
+        ]
+      },
+      {
+        "min": [
+          26,
+          5,
+          15
+        ],
+        "max": [
+          27,
+          6,
+          16
+        ]
+      },
+      {
+        "min": [
+          30,
+          5,
+          15
+        ],
+        "max": [
+          31,
+          6,
+          16
+        ]
+      },
+      {
+        "min": [
+          27,
+          5,
+          16
+        ],
+        "max": [
+          28,
+          6,
+          17
+        ]
+      },
+      {
+        "min": [
+          31,
+          5,
+          18
+        ],
+        "max": [
+          32,
+          6,
+          19
+        ]
+      },
+      {
+        "min": [
+          28,
+          5,
+          19
+        ],
+        "max": [
+          29,
+          6,
+          20
+        ]
+      },
+      {
+        "min": [
+          32,
+          5,
+          19
+        ],
+        "max": [
+          33,
+          6,
+          20
+        ]
+      },
+      {
+        "min": [
+          27,
+          5,
+          20
+        ],
+        "max": [
+          28,
+          6,
+          21
+        ]
+      }
+    ]
+  },
+  "limits": {
+    "buildCells": 10000,
+    "surveyVolume": 262144,
+    "queue": 4,
+    "planBytes": 1048576,
+    "planSchemaVersions": [
+      1,
+      2
+    ],
+    "repeatDepth": 3,
+    "expandedPrimitives": 4096,
+    "writeWork": 100000,
+    "expandedVisits": 100000
+  },
+  "sheet": {
+    "schemaVersion": 1,
+    "artifactHash": "7422b4e839347b37478a5aafb0ccd2cc4c2d7f4a935495bbd250c11089e9b993",
+    "reviewHash": "16e6f123628a66b7756e59581992d5254cd370e2f5016d207bdf7c94362d93a3",
+    "rendererVersion": "review-sheet-v1",
+    "diagnosticsVersion": 1,
+    "diagnosticsSource": "saved-snapshot",
+    "views": [
+      {
+        "id": "perspective",
+        "label": "Perspective",
+        "kind": "exterior",
+        "ceiling": 33,
+        "file": "perspective.png",
+        "preset": "perspective",
+        "projection": {
+          "type": "perspective",
+          "viewport": {
+            "width": 960,
+            "height": 640
+          },
+          "viewMatrix": [
+            -0.7980413689309591,
+            -0.23497392303177075,
+            0.5549029004878787,
+            0,
+            -5.551115123125784e-17,
+            0.9208437524218043,
+            0.3899317679104013,
+            0,
+            -0.6026026663356221,
+            0.3111816818528855,
+            -0.7348714087542177,
+            0,
+            15.293078478085118,
+            -14.12542562982205,
+            -77.42670074571262,
+            1
+          ],
+          "projectionMatrix": [
+            1.8316516129697487,
+            0,
+            0,
+            0,
+            0,
+            2.7474774194546225,
+            0,
+            0,
+            0,
+            0,
+            -1.0002000200020003,
+            -1,
+            0,
+            0,
+            -0.20002000200020004,
+            0
+          ],
+          "viewProjectionMatrix": [
+            -1.4617337606189775,
+            -0.6455855476904586,
+            -0.5550138921671443,
+            -0.5549029004878787,
+            -1.0167708969054107e-16,
+            2.52999741662477,
+            -0.3900097620633987,
+            -0.3899317679104013,
+            -1.1037581457735135,
+            0.8549646442387153,
+            0.7350183977348667,
+            0.7348714087542177,
+            28.011591861657553,
+            -38.80928795812167,
+            77.24216763255045,
+            77.42670074571262
+          ],
+          "clipCeiling": null
+        },
+        "url": "/api/workspace/artifacts/7422b4e839347b37478a5aafb0ccd2cc4c2d7f4a935495bbd250c11089e9b993/sheet/perspective.png?review=16e6f123628a66b7756e59581992d5254cd370e2f5016d207bdf7c94362d93a3",
+        "sha256": "2d691c87687eda6abfe35f283ae10bf3319aaf6a76e9f55aff4cd006d9b53ff0",
+        "pngHash": "2d691c87687eda6abfe35f283ae10bf3319aaf6a76e9f55aff4cd006d9b53ff0",
+        "markers": [],
+        "diagnosticCount": 4,
+        "labels": {
+          "title": "Point Tower · R3 · Perspective",
+          "summary": "2 errors · 1 warning · 1 info",
+          "legend": "Components · switchback stair · tower slab 4 · lobby",
+          "markers": "· 4 not shown"
+        }
+      },
+      {
+        "id": "front",
+        "label": "Front",
+        "kind": "exterior",
+        "ceiling": 33,
+        "file": "front.png",
+        "preset": "front",
+        "projection": {
+          "type": "perspective",
+          "viewport": {
+            "width": 960,
+            "height": 640
+          },
+          "viewMatrix": [
+            -1,
+            0,
+            0,
+            0,
+            0,
+            0.9899494936611666,
+            0.14142135623730948,
+            0,
+            0,
+            0.14142135623730948,
+            -0.9899494936611666,
+            0,
+            13.5,
+            -17.147339443773777,
+            -53.380542176183404,
+            1
+          ],
+          "projectionMatrix": [
+            1.8316516129697487,
+            0,
+            0,
+            0,
+            0,
+            2.7474774194546225,
+            0,
+            0,
+            0,
+            0,
+            -1.0002000200020003,
+            -1,
+            0,
+            0,
+            -0.20002000200020004,
+            0
+          ],
+          "viewProjectionMatrix": [
+            -1.8316516129697487,
+            0,
+            0,
+            0,
+            0,
+            2.719863880234592,
+            -0.14144964333726695,
+            -0.14142135623730948,
+            0,
+            0.3885519828906559,
+            0.9901475033608689,
+            0.9899494936611666,
+            24.727296775091606,
+            -47.11192792549204,
+            53.191199350336056,
+            53.380542176183404
+          ],
+          "clipCeiling": null
+        },
+        "url": "/api/workspace/artifacts/7422b4e839347b37478a5aafb0ccd2cc4c2d7f4a935495bbd250c11089e9b993/sheet/front.png?review=16e6f123628a66b7756e59581992d5254cd370e2f5016d207bdf7c94362d93a3",
+        "sha256": "65684f7e2e9fc20d0a1c1a9f21a23007701185e628f5a730cdd231808f29a47c",
+        "pngHash": "65684f7e2e9fc20d0a1c1a9f21a23007701185e628f5a730cdd231808f29a47c",
+        "markers": [],
+        "diagnosticCount": 4,
+        "labels": {
+          "title": "Point Tower · R3 · Front",
+          "summary": "2 errors · 1 warning · 1 info",
+          "legend": "Components · switchback stair · tower slab 4 · lobby",
+          "markers": "· 4 not shown"
+        }
+      },
+      {
+        "id": "side",
+        "label": "Side",
+        "kind": "exterior",
+        "ceiling": 33,
+        "file": "side.png",
+        "preset": "side",
+        "projection": {
+          "type": "perspective",
+          "viewport": {
+            "width": 960,
+            "height": 640
+          },
+          "viewMatrix": [
+            0,
+            -0.29271427209411177,
+            0.9561999555074319,
+            0,
+            0,
+            0.9561999555074319,
+            0.29271427209411177,
+            0,
+            -1,
+            0,
+            0,
+            0,
+            7.500000000000001,
+            -11.58660660372526,
+            -84.79777559647158,
+            1
+          ],
+          "projectionMatrix": [
+            1.8316516129697487,
+            0,
+            0,
+            0,
+            0,
+            2.7474774194546225,
+            0,
+            0,
+            0,
+            0,
+            -1.0002000200020003,
+            -1,
+            0,
+            0,
+            -0.20002000200020004,
+            0
+          ],
+          "viewProjectionMatrix": [
+            0,
+            -0.8042258529306684,
+            -0.9563912146244451,
+            -0.9561999555074319,
+            0,
+            2.627137786240184,
+            -0.29277282080340156,
+            -0.29271427209411177,
+            -1.8316516129697487,
+            0,
+            0,
+            0,
+            13.737387097273116,
+            -31.833940011838965,
+            84.6147168457158,
+            84.79777559647158
+          ],
+          "clipCeiling": null
+        },
+        "url": "/api/workspace/artifacts/7422b4e839347b37478a5aafb0ccd2cc4c2d7f4a935495bbd250c11089e9b993/sheet/side.png?review=16e6f123628a66b7756e59581992d5254cd370e2f5016d207bdf7c94362d93a3",
+        "sha256": "3844f56798d47fb6bc1bb328f9388d75f97ebc75b6db3bd308840604a5602782",
+        "pngHash": "3844f56798d47fb6bc1bb328f9388d75f97ebc75b6db3bd308840604a5602782",
+        "markers": [],
+        "diagnosticCount": 4,
+        "labels": {
+          "title": "Point Tower · R3 · Side",
+          "summary": "2 errors · 1 warning · 1 info",
+          "legend": "Components · switchback stair · tower slab 4 · lobby",
+          "markers": "· 4 not shown"
+        }
+      },
+      {
+        "id": "rear",
+        "label": "Rear",
+        "kind": "exterior",
+        "ceiling": 33,
+        "file": "rear.png",
+        "preset": "rear",
+        "projection": {
+          "type": "perspective",
+          "viewport": {
+            "width": 960,
+            "height": 640
+          },
+          "viewMatrix": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0.9805806756909201,
+            0.1961161351381841,
+            0,
+            0,
+            -0.1961161351381841,
+            0.9805806756909201,
+            0,
+            -13.5,
+            -14.463564966441066,
+            -68.76797677652364,
+            1
+          ],
+          "projectionMatrix": [
+            1.8316516129697487,
+            0,
+            0,
+            0,
+            0,
+            2.7474774194546225,
+            0,
+            0,
+            0,
+            0,
+            -1.0002000200020003,
+            -1,
+            0,
+            0,
+            -0.20002000200020004,
+            0
+          ],
+          "viewProjectionMatrix": [
+            1.8316516129697487,
+            0,
+            0,
+            0,
+            0,
+            2.694123264414359,
+            -0.1961553622879267,
+            -0.1961161351381841,
+            0,
+            -0.5388246528828721,
+            -0.9807768114396332,
+            -0.9805806756909201,
+            -24.727296775091606,
+            -39.73831815011178,
+            68.58171174537583,
+            68.76797677652364
+          ],
+          "clipCeiling": null
+        },
+        "url": "/api/workspace/artifacts/7422b4e839347b37478a5aafb0ccd2cc4c2d7f4a935495bbd250c11089e9b993/sheet/rear.png?review=16e6f123628a66b7756e59581992d5254cd370e2f5016d207bdf7c94362d93a3",
+        "sha256": "86be81d6a287f693e26eff5176aa917f1513886a3f7280b6dc1b13aa31be9914",
+        "pngHash": "86be81d6a287f693e26eff5176aa917f1513886a3f7280b6dc1b13aa31be9914",
+        "markers": [],
+        "diagnosticCount": 4,
+        "labels": {
+          "title": "Point Tower · R3 · Rear",
+          "summary": "2 errors · 1 warning · 1 info",
+          "legend": "Components · switchback stair · tower slab 4 · lobby",
+          "markers": "· 4 not shown"
+        }
+      },
+      {
+        "id": "roof",
+        "label": "Roof",
+        "kind": "exterior",
+        "ceiling": 33,
+        "file": "roof.png",
+        "preset": "roof",
+        "projection": {
+          "type": "perspective",
+          "viewport": {
+            "width": 960,
+            "height": 640
+          },
+          "viewMatrix": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0.0001470588219392166,
+            0.9999999891868514,
+            0,
+            0,
+            -0.9999999891868514,
+            0.0001470588219392166,
+            0,
+            -13.500000000000002,
+            7.497610213044875,
+            -60.095460444332346,
+            1
+          ],
+          "projectionMatrix": [
+            1.8316516129697487,
+            0,
+            0,
+            0,
+            0,
+            2.7474774194546225,
+            0,
+            0,
+            0,
+            0,
+            -1.0002000200020003,
+            -1,
+            0,
+            0,
+            -0.20002000200020004,
+            0
+          ],
+          "viewProjectionMatrix": [
+            1.8316516129697487,
+            0,
+            0,
+            0,
+            0,
+            0.0004040407926095957,
+            -1.0002000091866887,
+            -0.9999999891868514,
+            0,
+            -2.747477389745741,
+            -0.00014708823664507503,
+            -0.0001470588219392166,
+            -24.72729677509161,
+            20.599514760213157,
+            59.907460736450425,
+            60.095460444332346
+          ],
+          "clipCeiling": null
+        },
+        "url": "/api/workspace/artifacts/7422b4e839347b37478a5aafb0ccd2cc4c2d7f4a935495bbd250c11089e9b993/sheet/roof.png?review=16e6f123628a66b7756e59581992d5254cd370e2f5016d207bdf7c94362d93a3",
+        "sha256": "2be7e90b845084aa0b6b82283c69970b2e8641ab223c1e5a91c4740a350ad7a1",
+        "pngHash": "2be7e90b845084aa0b6b82283c69970b2e8641ab223c1e5a91c4740a350ad7a1",
+        "markers": [],
+        "diagnosticCount": 4,
+        "labels": {
+          "title": "Point Tower · R3 · Roof",
+          "summary": "2 errors · 1 warning · 1 info",
+          "legend": "Components · switchback stair · tower slab 4 · lobby",
+          "markers": "· 4 not shown"
+        }
+      },
+      {
+        "id": "street",
+        "label": "Street",
+        "kind": "exterior",
+        "ceiling": 33,
+        "file": "street.png",
+        "preset": "street",
+        "projection": {
+          "type": "perspective",
+          "viewport": {
+            "width": 960,
+            "height": 640
+          },
+          "viewMatrix": [
+            -0.910366477462605,
+            0.011411183784804812,
+            0.41364557485480036,
+            0,
+            -3.469446951953616e-18,
+            0.9996196995489014,
+            -0.027576371656986686,
+            0,
+            -0.41380294430118414,
+            -0.025104604326570582,
+            -0.9100202646805609,
+            0,
+            15.393469528004037,
+            -16.209586566315235,
+            -62.247649977983414,
+            1
+          ],
+          "projectionMatrix": [
+            1.8316516129697487,
+            0,
+            0,
+            0,
+            0,
+            2.7474774194546225,
+            0,
+            0,
+            0,
+            0,
+            -1.0002000200020003,
+            -1,
+            0,
+            0,
+            -0.20002000200020004,
+            0
+          ],
+          "viewProjectionMatrix": [
+            -1.6674742268379688,
+            0.03135196977799796,
+            -0.4137283122435102,
+            -0.41364557485480036,
+            -6.3548181056588186e-18,
+            2.7464325525526205,
+            0.027581887482900677,
+            0.027576371656986686,
+            -0.7579428303808949,
+            -0.0689743335115955,
+            0.9102022869357226,
+            0.9100202646805609,
+            28.195473290169268,
+            -44.535473069646095,
+            62.06008075105632,
+            62.247649977983414
+          ],
+          "clipCeiling": null
+        },
+        "url": "/api/workspace/artifacts/7422b4e839347b37478a5aafb0ccd2cc4c2d7f4a935495bbd250c11089e9b993/sheet/street.png?review=16e6f123628a66b7756e59581992d5254cd370e2f5016d207bdf7c94362d93a3",
+        "sha256": "f979b8230b1f1478d37f53e8cd634a265eca9ea2a111efa6dd9f687350ad756f",
+        "pngHash": "f979b8230b1f1478d37f53e8cd634a265eca9ea2a111efa6dd9f687350ad756f",
+        "markers": [],
+        "diagnosticCount": 4,
+        "labels": {
+          "title": "Point Tower · R3 · Street",
+          "summary": "2 errors · 1 warning · 1 info",
+          "legend": "Components · switchback stair · tower slab 4 · lobby",
+          "markers": "· 4 not shown"
+        }
+      },
+      {
+        "id": "elevation-north",
+        "label": "North elevation",
+        "kind": "elevation",
+        "ceiling": 33,
+        "file": "elevation-north.png",
+        "face": "north",
+        "projection": {
+          "type": "orthographic",
+          "viewport": {
+            "width": 960,
+            "height": 640
+          },
+          "viewMatrix": [
+            -1,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            -1,
+            0,
+            13.5,
+            -16.25,
+            -192.5,
+            1
+          ],
+          "projectionMatrix": [
+            0.03798670465337132,
+            0,
+            0,
+            0,
+            0,
+            0.05698005698005698,
+            0,
+            0,
+            0,
+            0,
+            -0.002000200020002,
+            0,
+            0,
+            0,
+            -1.0002000200020003,
+            1
+          ],
+          "viewProjectionMatrix": [
+            -0.03798670465337132,
+            0,
+            0,
+            0,
+            0,
+            0.05698005698005698,
+            0,
+            0,
+            0,
+            0,
+            0.002000200020002,
+            0,
+            0.5128205128205128,
+            -0.9259259259259259,
+            -0.6151615161516153,
+            1
+          ],
+          "clipCeiling": null
+        },
+        "url": "/api/workspace/artifacts/7422b4e839347b37478a5aafb0ccd2cc4c2d7f4a935495bbd250c11089e9b993/sheet/elevation-north.png?review=16e6f123628a66b7756e59581992d5254cd370e2f5016d207bdf7c94362d93a3",
+        "sha256": "8b37b23220aab8c1a8d5200b4b240d1fb7d2f6b575d5a281f0dd96c7413e9eaf",
+        "pngHash": "8b37b23220aab8c1a8d5200b4b240d1fb7d2f6b575d5a281f0dd96c7413e9eaf",
+        "markers": [],
+        "diagnosticCount": 4,
+        "labels": {
+          "title": "Point Tower · R3 · North elevation",
+          "summary": "2 errors · 1 warning · 1 info",
+          "legend": "Components · switchback stair · tower slab 4 · lobby",
+          "markers": "· 4 not shown"
+        }
+      },
+      {
+        "id": "elevation-east",
+        "label": "East elevation",
+        "kind": "elevation",
+        "ceiling": 33,
+        "file": "elevation-east.png",
+        "face": "east",
+        "projection": {
+          "type": "orthographic",
+          "viewport": {
+            "width": 960,
+            "height": 640
+          },
+          "viewMatrix": [
+            2.220446049250313e-16,
+            0,
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+            -1,
+            0,
+            2.220446049250313e-16,
+            0,
+            7.499999999999953,
+            -16.25,
+            -213.5,
+            1
+          ],
+          "projectionMatrix": [
+            0.03798670465337132,
+            0,
+            0,
+            0,
+            0,
+            0.05698005698005698,
+            0,
+            0,
+            0,
+            0,
+            -0.002000200020002,
+            0,
+            0,
+            0,
+            -1.0002000200020003,
+            1
+          ],
+          "viewProjectionMatrix": [
+            8.434742827161683e-18,
+            0,
+            -0.002000200020002,
+            0,
+            0,
+            0.05698005698005698,
+            0,
+            0,
+            -0.03798670465337132,
+            0,
+            -4.441336232123839e-19,
+            0,
+            0.2849002849002831,
+            -0.9259259259259259,
+            -0.5731573157315732,
+            1
+          ],
+          "clipCeiling": null
+        },
+        "url": "/api/workspace/artifacts/7422b4e839347b37478a5aafb0ccd2cc4c2d7f4a935495bbd250c11089e9b993/sheet/elevation-east.png?review=16e6f123628a66b7756e59581992d5254cd370e2f5016d207bdf7c94362d93a3",
+        "sha256": "8cad4853e0a61d6b5c9334aa6ddb376af1b50620d920accc83069343a81b82a5",
+        "pngHash": "8cad4853e0a61d6b5c9334aa6ddb376af1b50620d920accc83069343a81b82a5",
+        "markers": [],
+        "diagnosticCount": 4,
+        "labels": {
+          "title": "Point Tower · R3 · East elevation",
+          "summary": "2 errors · 1 warning · 1 info",
+          "legend": "Components · switchback stair · tower slab 4 · lobby",
+          "markers": "· 4 not shown"
+        }
+      },
+      {
+        "id": "elevation-south",
+        "label": "South elevation",
+        "kind": "elevation",
+        "ceiling": 33,
+        "file": "elevation-south.png",
+        "face": "south",
+        "projection": {
+          "type": "orthographic",
+          "viewport": {
+            "width": 960,
+            "height": 640
+          },
+          "viewMatrix": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            -13.5,
+            -16.25,
+            -207.5,
+            1
+          ],
+          "projectionMatrix": [
+            0.03798670465337132,
+            0,
+            0,
+            0,
+            0,
+            0.05698005698005698,
+            0,
+            0,
+            0,
+            0,
+            -0.002000200020002,
+            0,
+            0,
+            0,
+            -1.0002000200020003,
+            1
+          ],
+          "viewProjectionMatrix": [
+            0.03798670465337132,
+            0,
+            0,
+            0,
+            0,
+            0.05698005698005698,
+            0,
+            0,
+            0,
+            0,
+            -0.002000200020002,
+            0,
+            -0.5128205128205128,
+            -0.9259259259259259,
+            -0.5851585158515853,
+            1
+          ],
+          "clipCeiling": null
+        },
+        "url": "/api/workspace/artifacts/7422b4e839347b37478a5aafb0ccd2cc4c2d7f4a935495bbd250c11089e9b993/sheet/elevation-south.png?review=16e6f123628a66b7756e59581992d5254cd370e2f5016d207bdf7c94362d93a3",
+        "sha256": "eff611bbb2b2637c77f43551899ca6e14d2303924d8d080e588686cd6028d5f1",
+        "pngHash": "eff611bbb2b2637c77f43551899ca6e14d2303924d8d080e588686cd6028d5f1",
+        "markers": [],
+        "diagnosticCount": 4,
+        "labels": {
+          "title": "Point Tower · R3 · South elevation",
+          "summary": "2 errors · 1 warning · 1 info",
+          "legend": "Components · switchback stair · tower slab 4 · lobby",
+          "markers": "· 4 not shown"
+        }
+      },
+      {
+        "id": "elevation-west",
+        "label": "West elevation",
+        "kind": "elevation",
+        "ceiling": 33,
+        "file": "elevation-west.png",
+        "face": "west",
+        "projection": {
+          "type": "orthographic",
+          "viewport": {
+            "width": 960,
+            "height": 640
+          },
+          "viewMatrix": [
+            2.220446049250313e-16,
+            0,
+            -1,
+            0,
+            0,
+            1,
+            0,
+            0,
+            1,
+            0,
+            2.220446049250313e-16,
+            0,
+            -7.499999999999958,
+            -16.25,
+            -186.5,
+            1
+          ],
+          "projectionMatrix": [
+            0.03798670465337132,
+            0,
+            0,
+            0,
+            0,
+            0.05698005698005698,
+            0,
+            0,
+            0,
+            0,
+            -0.002000200020002,
+            0,
+            0,
+            0,
+            -1.0002000200020003,
+            1
+          ],
+          "viewProjectionMatrix": [
+            8.434742827161683e-18,
+            0,
+            0.002000200020002,
+            0,
+            0,
+            0.05698005698005698,
+            0,
+            0,
+            0.03798670465337132,
+            0,
+            -4.441336232123839e-19,
+            0,
+            -0.2849002849002833,
+            -0.9259259259259259,
+            -0.6271627162716272,
+            1
+          ],
+          "clipCeiling": null
+        },
+        "url": "/api/workspace/artifacts/7422b4e839347b37478a5aafb0ccd2cc4c2d7f4a935495bbd250c11089e9b993/sheet/elevation-west.png?review=16e6f123628a66b7756e59581992d5254cd370e2f5016d207bdf7c94362d93a3",
+        "sha256": "39e941bb2097e9f0a124c8d70ab6c6b4f50d19a8c53b7b466e9577b19e13caad",
+        "pngHash": "39e941bb2097e9f0a124c8d70ab6c6b4f50d19a8c53b7b466e9577b19e13caad",
+        "markers": [],
+        "diagnosticCount": 4,
+        "labels": {
+          "title": "Point Tower · R3 · West elevation",
+          "summary": "2 errors · 1 warning · 1 info",
+          "legend": "Components · switchback stair · tower slab 4 · lobby",
+          "markers": "· 4 not shown"
+        }
+      },
+      {
+        "id": "plan-3",
+        "label": "Ground plan",
+        "kind": "plan",
+        "floor": 3,
+        "ceiling": 5,
+        "projection": {
+          "type": "orthographic",
+          "viewport": {
+            "width": 960,
+            "height": 640
+          },
+          "viewMatrix": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            2.220446049250313e-16,
+            1,
+            0,
+            0,
+            -1,
+            2.220446049250313e-16,
+            0,
+            -13.5,
+            7.499999999999955,
+            -202.5,
+            1
+          ],
+          "projectionMatrix": [
+            0.06858710562414265,
+            0,
+            0,
+            0,
+            0,
+            0.10288065843621398,
+            0,
+            0,
+            0,
+            0,
+            -0.002000200020002,
+            0,
+            0,
+            0,
+            -1.0002000200020003,
+            1
+          ],
+          "viewProjectionMatrix": [
+            0.06858710562414265,
+            0,
+            0,
+            0,
+            0,
+            2.2844095156896223e-17,
+            -0.002000200020002,
+            0,
+            0,
+            -0.10288065843621398,
+            -4.441336232123839e-19,
+            0,
+            -0.9259259259259258,
+            0.7716049382716001,
+            -0.5951595159515952,
+            1
+          ],
+          "clipCeiling": 5
+        },
+        "file": "plan-3.png",
+        "url": "/api/workspace/artifacts/7422b4e839347b37478a5aafb0ccd2cc4c2d7f4a935495bbd250c11089e9b993/sheet/plan-3.png?review=16e6f123628a66b7756e59581992d5254cd370e2f5016d207bdf7c94362d93a3",
+        "sha256": "3b39a865fc6520e4f7a6cf39b54904b7603e3a1fd2a7d3bc73df63432e22a0f8",
+        "pngHash": "3b39a865fc6520e4f7a6cf39b54904b7603e3a1fd2a7d3bc73df63432e22a0f8",
+        "markers": [
+          {
+            "number": 1,
+            "at": [
+              13,
+              4,
+              7
+            ],
+            "x": 480,
+            "y": 320,
+            "rule": "sign.orphan",
+            "severity": "error",
+            "component": "lobby"
+          },
+          {
+            "number": 2,
+            "at": [
+              14,
+              4,
+              7
+            ],
+            "x": 512.92,
+            "y": 320,
+            "rule": "sign.orphan",
+            "severity": "error",
+            "component": "lobby"
+          }
+        ],
+        "diagnosticCount": 2,
+        "labels": {
+          "title": "Point Tower · R3 · Ground plan",
+          "summary": "2 errors · 0 warnings · 0 info",
+          "legend": "Components · lobby",
+          "markers": "1 E sign.orphan · 2 E sign.orphan"
+        }
+      },
+      {
+        "id": "plan-7",
+        "label": "Level 1 plan",
+        "kind": "plan",
+        "floor": 7,
+        "ceiling": 9,
+        "projection": {
+          "type": "orthographic",
+          "viewport": {
+            "width": 960,
+            "height": 640
+          },
+          "viewMatrix": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            2.220446049250313e-16,
+            1,
+            0,
+            0,
+            -1,
+            2.220446049250313e-16,
+            0,
+            -13.5,
+            7.499999999999955,
+            -204.5,
+            1
+          ],
+          "projectionMatrix": [
+            0.06858710562414265,
+            0,
+            0,
+            0,
+            0,
+            0.10288065843621398,
+            0,
+            0,
+            0,
+            0,
+            -0.002000200020002,
+            0,
+            0,
+            0,
+            -1.0002000200020003,
+            1
+          ],
+          "viewProjectionMatrix": [
+            0.06858710562414265,
+            0,
+            0,
+            0,
+            0,
+            2.2844095156896223e-17,
+            -0.002000200020002,
+            0,
+            0,
+            -0.10288065843621398,
+            -4.441336232123839e-19,
+            0,
+            -0.9259259259259258,
+            0.7716049382716001,
+            -0.5911591159115912,
+            1
+          ],
+          "clipCeiling": 9
+        },
+        "file": "plan-7.png",
+        "url": "/api/workspace/artifacts/7422b4e839347b37478a5aafb0ccd2cc4c2d7f4a935495bbd250c11089e9b993/sheet/plan-7.png?review=16e6f123628a66b7756e59581992d5254cd370e2f5016d207bdf7c94362d93a3",
+        "sha256": "217d7620e70a9a2afa93007247e54bead194ab1c81eafbecf1074a31e61cfd40",
+        "pngHash": "217d7620e70a9a2afa93007247e54bead194ab1c81eafbecf1074a31e61cfd40",
+        "markers": [],
+        "diagnosticCount": 0,
+        "labels": {
+          "title": "Point Tower · R3 · Level 1 plan",
+          "summary": "0 errors · 0 warnings · 0 info",
+          "legend": "Components · core 0 · core 1 · core 2 · core 3 · core 4 · core 5 · +94 more",
+          "markers": "No diagnostics on this level"
+        }
+      },
+      {
+        "id": "plan-10",
+        "label": "Level 2 plan",
+        "kind": "plan",
+        "floor": 10,
+        "ceiling": 12,
+        "projection": {
+          "type": "orthographic",
+          "viewport": {
+            "width": 960,
+            "height": 640
+          },
+          "viewMatrix": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            2.220446049250313e-16,
+            1,
+            0,
+            0,
+            -1,
+            2.220446049250313e-16,
+            0,
+            -13.5,
+            7.499999999999954,
+            -206,
+            1
+          ],
+          "projectionMatrix": [
+            0.06858710562414265,
+            0,
+            0,
+            0,
+            0,
+            0.10288065843621398,
+            0,
+            0,
+            0,
+            0,
+            -0.002000200020002,
+            0,
+            0,
+            0,
+            -1.0002000200020003,
+            1
+          ],
+          "viewProjectionMatrix": [
+            0.06858710562414265,
+            0,
+            0,
+            0,
+            0,
+            2.2844095156896223e-17,
+            -0.002000200020002,
+            0,
+            0,
+            -0.10288065843621398,
+            -4.441336232123839e-19,
+            0,
+            -0.9259259259259258,
+            0.7716049382716001,
+            -0.5881588158815882,
+            1
+          ],
+          "clipCeiling": 12
+        },
+        "file": "plan-10.png",
+        "url": "/api/workspace/artifacts/7422b4e839347b37478a5aafb0ccd2cc4c2d7f4a935495bbd250c11089e9b993/sheet/plan-10.png?review=16e6f123628a66b7756e59581992d5254cd370e2f5016d207bdf7c94362d93a3",
+        "sha256": "f98186b73750846bd5970d2eb47dc785af978e1e6257f0bc563a0b8a029c1135",
+        "pngHash": "f98186b73750846bd5970d2eb47dc785af978e1e6257f0bc563a0b8a029c1135",
+        "markers": [],
+        "diagnosticCount": 0,
+        "labels": {
+          "title": "Point Tower · R3 · Level 2 plan",
+          "summary": "0 errors · 0 warnings · 0 info",
+          "legend": "Components · core 0 · core 1 · core 2 · core 3 · core 4 · core 5 · +94 more",
+          "markers": "No diagnostics on this level"
+        }
+      },
+      {
+        "id": "plan-14",
+        "label": "Level 3 plan",
+        "kind": "plan",
+        "floor": 14,
+        "ceiling": 16,
+        "projection": {
+          "type": "orthographic",
+          "viewport": {
+            "width": 960,
+            "height": 640
+          },
+          "viewMatrix": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            2.220446049250313e-16,
+            1,
+            0,
+            0,
+            -1,
+            2.220446049250313e-16,
+            0,
+            -13.5,
+            7.499999999999954,
+            -208,
+            1
+          ],
+          "projectionMatrix": [
+            0.06858710562414265,
+            0,
+            0,
+            0,
+            0,
+            0.10288065843621398,
+            0,
+            0,
+            0,
+            0,
+            -0.002000200020002,
+            0,
+            0,
+            0,
+            -1.0002000200020003,
+            1
+          ],
+          "viewProjectionMatrix": [
+            0.06858710562414265,
+            0,
+            0,
+            0,
+            0,
+            2.2844095156896223e-17,
+            -0.002000200020002,
+            0,
+            0,
+            -0.10288065843621398,
+            -4.441336232123839e-19,
+            0,
+            -0.9259259259259258,
+            0.7716049382716001,
+            -0.5841584158415842,
+            1
+          ],
+          "clipCeiling": 16
+        },
+        "file": "plan-14.png",
+        "url": "/api/workspace/artifacts/7422b4e839347b37478a5aafb0ccd2cc4c2d7f4a935495bbd250c11089e9b993/sheet/plan-14.png?review=16e6f123628a66b7756e59581992d5254cd370e2f5016d207bdf7c94362d93a3",
+        "sha256": "6c150ce2365c5ea307fc2962e10e8dbdd9d8d4b60c83e48ad008124df5c8d393",
+        "pngHash": "6c150ce2365c5ea307fc2962e10e8dbdd9d8d4b60c83e48ad008124df5c8d393",
+        "markers": [],
+        "diagnosticCount": 0,
+        "labels": {
+          "title": "Point Tower · R3 · Level 3 plan",
+          "summary": "0 errors · 0 warnings · 0 info",
+          "legend": "Components · core 0 · core 1 · core 2 · core 3 · core 4 · core 5 · +94 more",
+          "markers": "No diagnostics on this level"
+        }
+      },
+      {
+        "id": "plan-18",
+        "label": "Level 4 plan",
+        "kind": "plan",
+        "floor": 18,
+        "ceiling": 20,
+        "projection": {
+          "type": "orthographic",
+          "viewport": {
+            "width": 960,
+            "height": 640
+          },
+          "viewMatrix": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            2.220446049250313e-16,
+            1,
+            0,
+            0,
+            -1,
+            2.220446049250313e-16,
+            0,
+            -13.5,
+            7.499999999999954,
+            -210,
+            1
+          ],
+          "projectionMatrix": [
+            0.06858710562414265,
+            0,
+            0,
+            0,
+            0,
+            0.10288065843621398,
+            0,
+            0,
+            0,
+            0,
+            -0.002000200020002,
+            0,
+            0,
+            0,
+            -1.0002000200020003,
+            1
+          ],
+          "viewProjectionMatrix": [
+            0.06858710562414265,
+            0,
+            0,
+            0,
+            0,
+            2.2844095156896223e-17,
+            -0.002000200020002,
+            0,
+            0,
+            -0.10288065843621398,
+            -4.441336232123839e-19,
+            0,
+            -0.9259259259259258,
+            0.7716049382716001,
+            -0.5801580158015802,
+            1
+          ],
+          "clipCeiling": 20
+        },
+        "file": "plan-18.png",
+        "url": "/api/workspace/artifacts/7422b4e839347b37478a5aafb0ccd2cc4c2d7f4a935495bbd250c11089e9b993/sheet/plan-18.png?review=16e6f123628a66b7756e59581992d5254cd370e2f5016d207bdf7c94362d93a3",
+        "sha256": "a725cf6c513dcffe8c55c9eaa0b1fbd781acabb5f449a614b01dba0463785f1e",
+        "pngHash": "a725cf6c513dcffe8c55c9eaa0b1fbd781acabb5f449a614b01dba0463785f1e",
+        "markers": [],
+        "diagnosticCount": 0,
+        "labels": {
+          "title": "Point Tower · R3 · Level 4 plan",
+          "summary": "0 errors · 0 warnings · 0 info",
+          "legend": "Components · core 0 · core 1 · core 2 · core 3 · core 4 · core 5 · +94 more",
+          "markers": "No diagnostics on this level"
+        }
+      },
+      {
+        "id": "plan-22",
+        "label": "Level 5 plan",
+        "kind": "plan",
+        "floor": 22,
+        "ceiling": 24,
+        "projection": {
+          "type": "orthographic",
+          "viewport": {
+            "width": 960,
+            "height": 640
+          },
+          "viewMatrix": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            2.220446049250313e-16,
+            1,
+            0,
+            0,
+            -1,
+            2.220446049250313e-16,
+            0,
+            -13.5,
+            7.499999999999953,
+            -212,
+            1
+          ],
+          "projectionMatrix": [
+            0.06858710562414265,
+            0,
+            0,
+            0,
+            0,
+            0.10288065843621398,
+            0,
+            0,
+            0,
+            0,
+            -0.002000200020002,
+            0,
+            0,
+            0,
+            -1.0002000200020003,
+            1
+          ],
+          "viewProjectionMatrix": [
+            0.06858710562414265,
+            0,
+            0,
+            0,
+            0,
+            2.2844095156896223e-17,
+            -0.002000200020002,
+            0,
+            0,
+            -0.10288065843621398,
+            -4.441336232123839e-19,
+            0,
+            -0.9259259259259258,
+            0.7716049382716,
+            -0.5761576157615762,
+            1
+          ],
+          "clipCeiling": 24
+        },
+        "file": "plan-22.png",
+        "url": "/api/workspace/artifacts/7422b4e839347b37478a5aafb0ccd2cc4c2d7f4a935495bbd250c11089e9b993/sheet/plan-22.png?review=16e6f123628a66b7756e59581992d5254cd370e2f5016d207bdf7c94362d93a3",
+        "sha256": "8534eebebbf69cc38e4665f82c90b00c0d92e08a44042155a95a1fcd7618b860",
+        "pngHash": "8534eebebbf69cc38e4665f82c90b00c0d92e08a44042155a95a1fcd7618b860",
+        "markers": [
+          {
+            "number": 1,
+            "at": [
+              13,
+              22,
+              8
+            ],
+            "x": 480,
+            "y": 352.92,
+            "rule": "light.dark-corridor",
+            "severity": "info",
+            "component": "tower-slab-4"
+          }
+        ],
+        "diagnosticCount": 1,
+        "labels": {
+          "title": "Point Tower · R3 · Level 5 plan",
+          "summary": "0 errors · 0 warnings · 1 info",
+          "legend": "Components · tower slab 4",
+          "markers": "1 I light.dark-corridor"
+        }
+      },
+      {
+        "id": "plan-26",
+        "label": "Level 6 plan",
+        "kind": "plan",
+        "floor": 26,
+        "ceiling": 28,
+        "projection": {
+          "type": "orthographic",
+          "viewport": {
+            "width": 960,
+            "height": 640
+          },
+          "viewMatrix": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            2.220446049250313e-16,
+            1,
+            0,
+            0,
+            -1,
+            2.220446049250313e-16,
+            0,
+            -13.5,
+            7.499999999999952,
+            -214,
+            1
+          ],
+          "projectionMatrix": [
+            0.06858710562414265,
+            0,
+            0,
+            0,
+            0,
+            0.10288065843621398,
+            0,
+            0,
+            0,
+            0,
+            -0.002000200020002,
+            0,
+            0,
+            0,
+            -1.0002000200020003,
+            1
+          ],
+          "viewProjectionMatrix": [
+            0.06858710562414265,
+            0,
+            0,
+            0,
+            0,
+            2.2844095156896223e-17,
+            -0.002000200020002,
+            0,
+            0,
+            -0.10288065843621398,
+            -4.441336232123839e-19,
+            0,
+            -0.9259259259259258,
+            0.7716049382715999,
+            -0.5721572157215722,
+            1
+          ],
+          "clipCeiling": 28
+        },
+        "file": "plan-26.png",
+        "url": "/api/workspace/artifacts/7422b4e839347b37478a5aafb0ccd2cc4c2d7f4a935495bbd250c11089e9b993/sheet/plan-26.png?review=16e6f123628a66b7756e59581992d5254cd370e2f5016d207bdf7c94362d93a3",
+        "sha256": "e00d3d1319f291540a1644d3a988f32a07a8114914e11f8071bcbfb51c9bc1ec",
+        "pngHash": "e00d3d1319f291540a1644d3a988f32a07a8114914e11f8071bcbfb51c9bc1ec",
+        "markers": [],
+        "diagnosticCount": 0,
+        "labels": {
+          "title": "Point Tower · R3 · Level 6 plan",
+          "summary": "0 errors · 0 warnings · 0 info",
+          "legend": "Components · core 0 · core 1 · core 2 · core 3 · core 4 · core 5 · +94 more",
+          "markers": "No diagnostics on this level"
+        }
+      },
+      {
+        "id": "plan-30",
+        "label": "Level 7 plan",
+        "kind": "plan",
+        "floor": 30,
+        "ceiling": 32,
+        "projection": {
+          "type": "orthographic",
+          "viewport": {
+            "width": 960,
+            "height": 640
+          },
+          "viewMatrix": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            2.220446049250313e-16,
+            1,
+            0,
+            0,
+            -1,
+            2.220446049250313e-16,
+            0,
+            -13.5,
+            7.499999999999952,
+            -216,
+            1
+          ],
+          "projectionMatrix": [
+            0.06858710562414265,
+            0,
+            0,
+            0,
+            0,
+            0.10288065843621398,
+            0,
+            0,
+            0,
+            0,
+            -0.002000200020002,
+            0,
+            0,
+            0,
+            -1.0002000200020003,
+            1
+          ],
+          "viewProjectionMatrix": [
+            0.06858710562414265,
+            0,
+            0,
+            0,
+            0,
+            2.2844095156896223e-17,
+            -0.002000200020002,
+            0,
+            0,
+            -0.10288065843621398,
+            -4.441336232123839e-19,
+            0,
+            -0.9259259259259258,
+            0.7716049382715999,
+            -0.5681568156815682,
+            1
+          ],
+          "clipCeiling": 32
+        },
+        "file": "plan-30.png",
+        "url": "/api/workspace/artifacts/7422b4e839347b37478a5aafb0ccd2cc4c2d7f4a935495bbd250c11089e9b993/sheet/plan-30.png?review=16e6f123628a66b7756e59581992d5254cd370e2f5016d207bdf7c94362d93a3",
+        "sha256": "5a033fc633e67272127ada060ac5068dc8c6b417fa46721c1c1790f2d722aba0",
+        "pngHash": "5a033fc633e67272127ada060ac5068dc8c6b417fa46721c1c1790f2d722aba0",
+        "markers": [],
+        "diagnosticCount": 0,
+        "labels": {
+          "title": "Point Tower · R3 · Level 7 plan",
+          "summary": "0 errors · 0 warnings · 0 info",
+          "legend": "Components · core 0 · core 1 · core 2 · core 3 · core 4 · core 5 · +94 more",
+          "markers": "No diagnostics on this level"
+        }
+      }
+    ]
+  }
+}

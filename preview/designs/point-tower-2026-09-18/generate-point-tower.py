@@ -116,7 +116,8 @@ box("lobby", 4, 2, 8, 8, 3, 9, "counter"); put("lobby", 4, 2, 7, "seat-s"); put(
 box("lobby", 18, 2, 7, 23, 3, 8, "seat-n"); put("lobby", 20, 2, 8, "table")
 for x in (2, 24): put("lobby", x, 2, 6, "planter")
 for x in (7, 13, 19): put("lobby-lighting", x, 4, 6, "lantern-hang")
-put("lobby", 13, 4, CZ0 - 1, "sign-n"); put("lobby", 14, 4, CZ0 - 1, "sign-n")
+for x in (3, 24): put("lobby-lighting", x, 4, 11, "lantern-hang")   # rear corners of the lobby were 10 blocks from a light
+put("lobby", 14, 4, CZ0, "sign-n"); put("lobby", 15, 4, CZ0, "sign-n")   # on the lift shaft face, supported behind
 
 # ---------- tower storeys ----------
 for s in range(TOWER_STOREYS):
@@ -151,7 +152,7 @@ for s in range(TOWER_STOREYS):
     if balcony:
         box(f"west-balcony-{s}", TX0 - 2, base, bz0, TX0, base + 1, bz0 + 5, "slab-edge")
         box(f"west-balcony-{s}", TX0 - 2, base + 1, bz0, TX0 - 1, base + 2, bz0 + 5, "bars")
-        for z in (bz0, bz0 + 4): put(f"west-balcony-{s}", TX0 - 1, base + 1, z, "planter")
+        for z in (bz0, bz0 + 4): put(f"west-balcony-{s}", TX0 - 1, base + 1, z, "planter"); put(f"west-balcony-{s}", TX0 - 1, base + 2, z, "lantern")
         box(f"tower-side-walls-{s}", TX0, y0, bz0, TX0 + 1, y1, bz0 + 2, "pane"); box(f"tower-side-walls-{s}", TX0, y0, bz0 + 3, TX0 + 1, y1, bz0 + 5, "pane")
         put(f"west-balcony-{s}", TX0, base + 1, bz0 + 2, "door-w-lower"); put(f"west-balcony-{s}", TX0, base + 2, bz0 + 2, "door-w-upper"); put(f"tower-side-walls-{s}", TX0, base + 3, bz0 + 2, "frame")
     # core walls (x10, x16, south z11), lift shaft x14..15 z9..10, flat doors off the corridor row z8
@@ -173,11 +174,25 @@ for s in range(TOWER_STOREYS):
         put(f"flat-fitout-{s}", far, y0, 8, "bed-head"); put(f"flat-fitout-{s}", far, y0, 9, "bed-foot"); put(f"flat-fitout-{s}", far, y0, 10, "bookshelf")
         sx = far + 2 if west else far - 2
         put(f"flat-fitout-{s}", sx, y0, 9, "seat-s"); put(f"flat-fitout-{s}", sx, y0, 10, "table"); put(f"flat-fitout-{s}", sx + (1 if west else -1), y0, 10, "carpet")
-        put(f"flat-fitout-{s}", sx, y0, 12, "fern")
-        kx = fx0 if west else fx1 - 3
+        # R3: a real wet room in the outer rear corner (R1/R2 had none). Two
+        # interior cells, walls on the two open sides, door towards the flat,
+        # basin and a shower corner with its own light. Kitchen moves along
+        # the rear wall to clear the door approach.
+        bx0 = fx0 if west else fx1 - 2                       # wet-room interior x range [bx0, bx0+2)
+        wall_x = bx0 + 2 if west else bx0 - 1                # the wall between wet room and flat
+        box(f"wet-room-{s}", wall_x, y0, TZ1 - 4, wall_x + 1, y1, TZ1 - 1, "stone")           # side wall z11..13
+        box(f"wet-room-{s}", bx0, y0, TZ1 - 4, bx0 + 2, y1, TZ1 - 3, "stone")                 # north wall z11
+        put(f"wet-room-{s}", wall_x, y0, TZ1 - 3, "door-w-lower" if west else "door-e-lower")
+        put(f"wet-room-{s}", wall_x, y0 + 1, TZ1 - 3, "door-w-upper" if west else "door-e-upper")
+        put(f"wet-room-{s}", bx0 if west else bx0 + 1, y0, TZ1 - 3, "cauldron")               # basin
+        put(f"wet-room-{s}", bx0 + 1 if west else bx0, y0 + 2, TZ1 - 2, "lantern-hang")       # shower light
+        put(f"wet-room-{s}", bx0 + 1 if west else bx0, y0, TZ1 - 2, "carpet")                 # shower tray
+        kx = fx0 + 3 if west else fx1 - 6                    # kitchen run along the rear wall, beside the wet room
         box(f"flat-fitout-{s}", kx, y0, TZ1 - 2, kx + 3, y0 + 1, TZ1 - 1, "counter")
-        put(f"flat-fitout-{s}", kx + (0 if west else 2), y0, TZ1 - 3, "smoker"); put(f"flat-fitout-{s}", kx + 1, y0, TZ1 - 3, "cauldron")
+        put(f"flat-fitout-{s}", kx + (1 if west else 0), y0, TZ1 - 3, "smoker"); put(f"flat-fitout-{s}", kx + (2 if west else 1), y0, TZ1 - 3, "cauldron")
+        put(f"flat-fitout-{s}", kx + (0 if west else 2), y0, TZ1 - 4, "fern")
     put(f"wayfinding-{s}", 12, y0 + 2, CZ0, "sign-s")
+    put(f"corridor-light-{s}", 14, y0 + 2, CZ0, "lantern-hang")
 
 # ---------- switchback stair: run A x11 (z9,z10) up, landing x12 z10, run B x13 (z10,z9) up, exit x13 z8 ----------
 levels = [GROUND] + [TOWER_BASE + s * STOREY for s in range(TOWER_STOREYS)]
@@ -185,6 +200,7 @@ for i, lvl in enumerate(levels[:-1]):
     nxt = levels[i + 1]
     put("switchback-stair", 11, lvl, 9, "stair-s"); put("switchback-stair", 11, lvl + 1, 10, "stair-s")   # run A up, southward
     put("switchback-stair", 12, lvl + 1, 10, "stone")                                                     # half landing
+    if i == 0: put("switchback-stair", 13, lvl + 1, 10, "stone")                                       # no crawl space under the ground-floor return
     put("switchback-stair", 13, lvl + 2, 10, "stair-n"); put("switchback-stair", 13, lvl + 3, 9, "stair-n")  # run B up, northward
     for (xx, zz) in ((13, 9), (13, 10), (12, 10)): put("switchback-stair", xx, nxt, zz, "air")             # stairwell opening in the slab above
 # ground-floor core (lobby level): same walls, open to the lobby on the north
@@ -208,7 +224,7 @@ box("setback-terrace", TX1 - SETBACK, sb, TZ0, TX1, sb + 1, TZ1, "slab-edge")
 for z in range(TZ0, TZ1): put("setback-terrace", TX1 - 1, sb + 1, z, "bars")
 for x in range(TX1 - SETBACK, TX1 - 1):
     put("setback-terrace", x, sb + 1, TZ0, "bars"); put("setback-terrace", x, sb + 1, TZ1 - 1, "planter")
-put("setback-terrace", TX1 - SETBACK - 1, sb + 1, 10, "door-e-lower"); put("setback-terrace", TX1 - SETBACK - 1, sb + 2, 10, "door-e-upper")
+put("setback-terrace", TX1 - SETBACK - 1, sb + 1, 10, "door-e-lower"); put("setback-terrace", TX1 - SETBACK - 1, sb + 2, 10, "door-e-upper"); put("setback-terrace", TX1 - SETBACK, sb + 3, 10, "shade-e")
 
 # ---------- survey clearance ----------
 site = json.load(urllib.request.urlopen(f"{BASE}/api/workspace/sites/{SITE}", timeout=30))
@@ -279,15 +295,15 @@ for comp in comp_order:
     ops = repeats(cuboids(by_comp[comp]))
     components.append({"id": comp, "role": comp.replace("-", " "), "origin": [0, 0, 0],
                        "operations": ops})
-signs = [{"at": [13, 4, CZ0 - 1], "lines": ["----------", "POINT TOWER", "LOBBY", "----------"]},
-         {"at": [14, 4, CZ0 - 1], "lines": ["----------", "LIFT + STAIR", "LEVELS 1-6", "----------"]}]
+signs = [{"at": [14, 4, CZ0], "lines": ["----------", "POINT TOWER", "LOBBY", "----------"]},
+         {"at": [15, 4, CZ0], "lines": ["----------", "LIFT + STAIR", "LEVELS 1-6", "----------"]}]
 for s in range(TOWER_STOREYS):
     signs.append({"at": [12, TOWER_BASE + s * STOREY + 3, CZ0], "lines": ["--------", f"LEVEL {s + 1}", "RESIDENCES", "--------"]})
-plan = {"schema_version": 2, "plan_id": "north-plot-point-tower", "revision": "r2", "name": "Point Tower · R2",
-        "description": "Connection-state successor to R1 with identical building geometry and ownership. Six residential storeys over a lobby podium on the Praya first plot, within the surveyed 33-block height. Pale quartz piers with recessed black panes to the street, brick blades and privacy panes to the rear, charcoal flanks with timber shades, planted west balconies, an east setback terrace and a screened pale crown. The forecourt keeps the street trees. Review only, no placement.",
+plan = {"schema_version": 2, "plan_id": "north-plot-point-tower", "revision": "r3", "name": "Point Tower · R3",
+        "description": "R3 interior pass on the R2 tower: every flat gains a wet room in its outer rear corner with basin, shower tray and light; kitchens move along the rear wall to keep door approaches clear; balcony lanterns; timber shade over the setback terrace door. Six residential storeys over a lobby podium on the Praya first plot, within the 33-block survey cap. Review only, no placement.",
         "dimensions": {"x": DIMS[0], "y": DIMS[1], "z": DIMS[2]}, "palette": palette, "components": components, "signs": signs}
 print(f"cells={len(cells)} (cleared air {cleared}) components={len(components)} ops={sum(len(c['operations']) for c in components)} palette={len(palette)}", file=sys.stderr)
-output = Path(__file__).with_name("point-tower-r2.plan.json")
+output = Path(__file__).with_name("point-tower-r3.plan.json")
 lines = ["{"]
 for key in ("schema_version", "plan_id", "revision", "name", "description", "dimensions", "palette"):
     lines.append(f'  {json.dumps(key)}: {json.dumps(plan[key], separators=(",", ":"))},')
@@ -309,8 +325,9 @@ if not author_text: raise SystemExit("--post requires --author JSON or BUILDER_A
 try: author = json.loads(author_text)
 except json.JSONDecodeError as error: raise SystemExit(f"invalid author JSON: {error}")
 if not isinstance(author, dict) or not author: raise SystemExit("author must be a non-empty JSON object")
-body = json.dumps({"plan": plan, "siteId": SITE, "transform": {"origin": ORIGIN, "turns": 0}, "author": author,
-                   "brief": "Point Tower R2 connection-state successor to R1. Geometry and ownership are unchanged; panes and bars are resolved by PlanCompiler. Review only, no placement."}).encode()
+parent = sys.argv[sys.argv.index("--parent") + 1] if "--parent" in sys.argv else None
+body = json.dumps({"plan": plan, "siteId": SITE, "transform": {"origin": ORIGIN, "turns": 0}, "author": author, **({"parentHash": parent} if parent else {}),
+                   "brief": "Point Tower R3: wet rooms in every flat, kitchens relocated to clear door approaches, balcony lanterns, terrace door shade. Review only, no placement."}).encode()
 req = urllib.request.Request(f"{BASE}/api/workspace/drafts", data=body, method="POST", headers={"Content-Type": "application/json", "X-Builder-Write": "1"})
 try: resp = json.load(urllib.request.urlopen(req, timeout=120))
 except urllib.error.HTTPError as err: print("HTTP", err.code, err.read().decode()[:2000]); sys.exit(1)
