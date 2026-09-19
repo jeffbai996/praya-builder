@@ -52,7 +52,6 @@ def test_repeat_translates_without_losing_state(run_probe):
 
 
 @pytest.mark.parametrize("mutation", [
-    lambda p: p.update(schema_version=2),
     lambda p: p.update(unknown=True),
     lambda p: p["dimensions"].update(x=0),
     lambda p: p["dimensions"].update(x=49),

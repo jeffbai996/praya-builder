@@ -605,3 +605,24 @@ The current catalogue has **19** revisions across nine projects, rather than the
   existing private runtime file; no credentials were copied to tracked files.
 - Serial sheet backfill for the 23 historical saved versions is running separately;
   final verification records its result. Draft/site/job records are hash-checked.
+
+
+## 2026-09-18 — B1 additive plan vocabulary
+
+- Added schema-v2 nested repeats (depth three), half-open shell/interior fills,
+  bounded typed part calls, rotated directional states, caller ownership and sign
+  slots. V2 expands to the same artifact format; v1 semantics remain available.
+- Focused Java probes: **27 passed**. Repeated against an isolated archive of the
+  exact staged B1 tree with an empty bundled-part index: **27 passed** in 7.37 s.
+  This verifies B1 does not accidentally depend on the subsequent B3 definitions.
+- Shared working-tree full pytest: **206 passed, 5 skipped**; Gradle build passed.
+  Browser/installed-MCP opt-in checks are recorded separately, not counted as run.
+- Exact 19-catalogue serialized-byte/hash parity and Point Tower R1/R2 checks pass.
+- Part registry listing is deterministic. Workspace files are bounded and validated,
+  and versioned jar definitions take precedence. B3 adds the initial 13 definitions.
+- Meaningful compact v2 Point Tower source is a follow-up acceptance item; no claim
+  is made that minifying the existing operations satisfies that requirement.
+
+Historical review backfill completed: **23/23 saved versions**, each with six
+exteriors, four elevations and derived floor plans. Before/after SHA-256 maps for
+all draft, revision, site and job records were identical. No world endpoint used.
