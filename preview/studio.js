@@ -62,15 +62,24 @@ function modelName(id){if(!id)return '';const known={'claude-fable-5-1':'Claude 
 function authorLabel(a){if(!a)return 'Unrecorded';return [modelName(a.model||a.agent),a.effort].filter(Boolean).join(' · ');}
 function authorTag(d){return d.author?' · '+authorLabel(d.author):'';}
 function authorChip(a){const chip=$('draft-author');if(!chip)return;chip.hidden=!a;chip.textContent=a?authorLabel(a):'';chip.dataset.agent=a?.agent||'';}
+function touchedAt(d){const saves=index.revisions.filter(r=>r.draftId===d.id).map(r=>r.createdAt);return [d.createdAt||'',...saves].sort().at(-1)||'';}
+function whenShort(iso){if(!iso)return '';const t=new Date(iso);return isNaN(t)?'':t.toLocaleDateString([],{month:'short',day:'numeric'});}
+function choiceLabel(d){return designName(d.name)+(d.valid?'':' · needs changes')+(touchedAt(d)?' · '+whenShort(touchedAt(d)):'');}
 function renderDesignChoices(current=$('draft-select').value){
- const select=$('draft-select'),latest=designChoices();select.replaceChildren(new Option('Choose a design',''));
- for(const d of latest)select.add(new Option(designName(d.name)+(d.valid?'':' · needs changes'),d.id));
+ // Fifteen designs in one alphabetical list stopped being readable (Jeff
+ // 2026-09-19). Group by site, newest first inside each group, with the
+ // handful touched most recently pinned at the top so the working set is
+ // one glance away. Names stay clean; the date is the only decoration.
+ const select=$('draft-select'),latest=designChoices().sort((a,b)=>touchedAt(b).localeCompare(touchedAt(a)));
+ select.replaceChildren(new Option('Choose a design',''));
+ const addGroup=(label,items)=>{if(!items.length)return;const g=document.createElement('optgroup');g.label=label;for(const d of items)g.append(new Option(choiceLabel(d),d.id));select.append(g);};
+ const recent=latest.slice(0,4);addGroup('Recent',recent);
+ const siteName=id=>(index.sites.find(s=>s.id===id)||{}).name||'Unknown site';
+ const bySite=new Map();for(const d of latest){if(recent.includes(d))continue;const key=d.siteId||'';if(!bySite.has(key))bySite.set(key,[]);bySite.get(key).push(d);}
+ for(const [sid,items] of [...bySite.entries()].sort((a,b)=>(a[0]?0:1)-(b[0]?0:1)||siteName(a[0]).localeCompare(siteName(b[0]))))addGroup(sid?siteName(sid):'Studies without a site',items);
  const rest=index.drafts.filter(d=>!latest.some(n=>n.id===d.id));
- if(showAllDrafts){const group=document.createElement('optgroup');group.label='Earlier versions and working drafts';
-  for(const d of rest.sort((a,b)=>a.name.localeCompare(b.name)))group.append(new Option(d.name+(d.valid?'':' · needs changes'),d.id));select.append(group);
- }else if(current&&!latest.some(d=>d.id===current)){
-  const d=index.drafts.find(d=>d.id===current);if(d)select.add(new Option(d.name+' · currently open',d.id));
- }
+ if(showAllDrafts){addGroup('Earlier versions and working drafts',rest.slice().sort((a,b)=>touchedAt(b).localeCompare(touchedAt(a))));}
+ else if(current&&!latest.some(d=>d.id===current)){const d=index.drafts.find(d=>d.id===current);if(d)select.add(new Option(d.name+' · currently open',d.id));}
  select.value=current;$('draft-history').hidden=!rest.length;$('draft-history').textContent=showAllDrafts?'Show current designs':'Show all drafts';$('draft-history').setAttribute('aria-expanded',String(showAllDrafts));
 }
 $('draft-history').onclick=()=>{showAllDrafts=!showAllDrafts;renderDesignChoices();};
