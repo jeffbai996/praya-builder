@@ -679,3 +679,13 @@ C: four agent-contract tests passed, including savedBy separate from design auth
 ## 2026-09-18 - chore(plugin): deprecate legacy per-block generation
 
 B4: legacy generate remains available for one release and emits an enable-time warning. README now describes the plan/compiler workflow. Java build passes; the warning has not been observed on a running Minecraft server because no plugin deployment or restart was performed.
+
+
+## 2026-09-18 - Final sweep regression
+
+- Full suite with Node 20, Java 21 and Chromium: **211 passed, 2 skipped in 76.19s**.
+- `bash gradlew --no-daemon -q build` passed; all 42 changed JS/CJS files passed syntax checks.
+- Explicit catalogue gate passed all 19 byte-identical artifacts and immutable Point Tower R1; corrected R2 still matches its documented hash.
+- Native fragserv FastMCP runtime registered exactly seven Builder tools after installation. The service remains inactive; no Minecraft service was started.
+- The fragserv builder test environment initially lacked httpx. Added the tested httpx 0.28.1 to requirements-dev.txt so a fresh install can collect the new tests.
+- Build label is b20260918.01. Removed executable bits from new data/modules, and removed a temporary part-warning print from the test.

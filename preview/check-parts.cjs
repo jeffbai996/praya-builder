@@ -103,16 +103,13 @@ test('the shipped part registry has the complete documented vocabulary', () => {
 
 test('each default part fixture compiles, remains caller-owned, and has no A1 errors', () => {
   const command = compiler();
-  const warningProfile = {};
   for (const part of readParts()) {
     const candidate = compile(command, plan(part, part.test.params));
     assert.ok(candidate.blocks.length > 0, `${part.id} emitted no cells`);
     assert.ok(candidate.blocks.every(block => block.component === 'caller'), `${part.id} leaked part ownership`);
     const errors = diagnose(candidate, null, null).filter(entry => entry.severity === 'error');
-    warningProfile[part.id] = diagnose(candidate, null, null).filter(entry => entry.severity === 'warning').map(entry => entry.rule);
     assert.deepEqual(errors, [], `${part.id} has A1 errors: ${JSON.stringify(errors)}`);
   }
-  console.log(`A1 default warnings ${JSON.stringify(warningProfile)}`);
 });
 
 test('rotatable parts compile at all four quarter turns within their fixture dimensions', () => {
