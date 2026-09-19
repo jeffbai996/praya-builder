@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "id": "entrance.canopy",
+  "description": "A legible, supported entrance canopy with two clear-front columns.",
+  "provenance": {"author": "Codex / gpt-5.6-terra", "project": "initial architectural vocabulary"},
+  "style": "civic-modern",
+  "parameters": {
+    "width": {"type": "integer", "min": 3, "max": 8, "default": 4},
+    "depth": {"type": "integer", "min": 2, "max": 5, "default": 3},
+    "roof": {"type": "material", "default": "trim"},
+    "column": {"type": "material", "default": "column"},
+    "facing": {"type": "enum", "values": ["north", "east", "south", "west"], "default": "north"}
+  },
+  "bounds": {"min": [0, 0, 0], "max": [{"param": "width"}, 3, {"param": "depth"}]},
+  "rotation": {"param": "facing", "turns": {"north": 0, "east": 1, "south": 2, "west": 3}},
+  "components": [{"id": "canopy", "role": "entrance", "origin": [0, 0, 0], "operations": [
+    {"op": "box", "min": [0, 2, 0], "max": [{"param": "width"}, 3, {"param": "depth"}], "material": {"param": "roof"}},
+    {"op": "box", "min": [0, 0, {"param": "depth", "offset": -1}], "max": [1, 2, {"param": "depth"}], "material": {"param": "column"}},
+    {"op": "box", "min": [{"param": "width", "offset": -1}, 0, {"param": "depth", "offset": -1}], "max": [{"param": "width"}, 2, {"param": "depth"}], "material": {"param": "column"}}
+  ]}],
+  "test": {"at": [5, 5, 5], "params": {}, "expect": {"valid": true}}
+}

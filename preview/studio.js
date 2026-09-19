@@ -4,6 +4,7 @@ import {createScene} from './scene.js';
 import {readTheme,saveTheme,bindThemeToggle} from './review-state.js';
 import {presets,compose} from './sign-presets.js';
 import {versionThumbnail} from './version-thumbs.js';
+import {createPartsUI} from './parts-ui.js';
 import {createReviewSheetUI} from './review-sheet-ui.js';
 import {renderSupport} from './support-list.js';
 const $=id=>document.getElementById(id);
@@ -29,6 +30,7 @@ try{scene=createScene($('studio-model'));scene.theme(theme);}catch(error){status
 bindThemeToggle($('theme-toggle'),theme,value=>{document.documentElement.dataset.theme=value;saveTheme(value);scene?.theme(value);});
 async function api(route,body){if(body&&/^drafts\/[a-z0-9-]+\/edit$/.test(route)&&body.author===undefined)body={...body,author:STUDIO_AUTHOR};const response=await fetch('/api/workspace/'+route,{method:body===undefined?'GET':'POST',headers:body===undefined?{}:{'Content-Type':'application/json','X-Builder-Write':'1'},body:body===undefined?undefined:JSON.stringify(body)});let data;try{data=await response.json();}catch{data={error:response.ok?'Unexpected response':'Connection failed ('+response.status+')'};}if(!response.ok){const error=Error(data.error||'Workspace request failed');error.status=response.status;throw error;}return data;}
 const sheetUI=createReviewSheetUI({api,openImage:(url,label)=>{const dialog=$('reference-dialog');dialog.querySelector('img').src=url;dialog.querySelector('img').alt=label;$('reference-caption').textContent=label;dialog.showModal();}});
+const partsUI=createPartsUI({container:$('part-tools'),api,onChange:()=>materials(),apply:async part=>{let applied;await action(async()=>{const d=requireDraft();applied=await api(`drafts/${d.id}/edit`,{expectedVersion:d.version,part});await renderDraft(applied);});if(!applied)throw Error('Part was not applied; check the workspace alert.');if(!applied.valid)throw Error('The candidate needs changes; see its diagnostics.');}});
 async function action(work){if(busy)return;busy=true;document.body.dataset.busy='true';updatePlacement();try{await work();}catch(error){if(error.status===409&&draft)conflict(error);else status(placementErrorMessage(error.message),'error');}finally{busy=false;document.body.dataset.busy='false';updatePlacement();}}
 // A 409 means the draft moved under us. Keep the camera and cutaway; let the user reload the draft on their terms.
 function conflict(error){status('This action conflicts with a newer saved version. Your current design is kept. '+error.message,'warning');const box=$('studio-status');box.dataset.tone='warning';box.textContent='This design changed elsewhere; your view is kept. ';const actions=document.createElement('span');actions.className='conflict-actions';const reload=document.createElement('button');reload.type='button';reload.textContent='Reload design';reload.onclick=()=>action(async()=>{await refresh();await renderDraft(await api('drafts/'+draft.id));status('Design reloaded.');});const detail=document.createElement('button');detail.type='button';detail.textContent='Details';detail.onclick=()=>{status(error.message,'error');};actions.append(reload,detail);box.append(actions);}
@@ -115,7 +117,7 @@ async function renderDraft(next,{frame=false}={}){
  if(frame)scene.frame(site?.dimensions||draft.candidate.dimensions,site?contextSurface:0);
  renderDesignChoices(draft.id);$('draft-title').textContent=designName(draft.plan.name);authorChip(draft.author);$('rename-design').hidden=false;$('rename-form').hidden=true;
  const selected=$('studio-component').value;$('studio-component').replaceChildren(new Option('Whole building',''),...draft.plan.components.map(c=>new Option(componentLabel(c.id),c.id)));$('studio-component').value=selected;
- materials();renderVersions();await loadChanges();
+ partsUI.setDraft(draft);materials();renderVersions();await loadChanges();
  $('candidate-state').textContent=draft.valid?'Ready to review':'Needs changes';$('candidate-state').dataset.state=draft.valid?'valid':'invalid';
  $('candidate-summary').textContent=`${draft.candidate.blocks.length.toLocaleString()} cells · ${changes.length.toLocaleString()} changes from the compared version · draft version ${draft.version} · ${draft.candidate.hash.slice(0,12)}`;
  review(draft);support();references();sheetUI.setDraft(draft);
@@ -163,7 +165,7 @@ $('reference-close').onclick=()=>$('reference-dialog').close();
 $('add-references').onclick=()=>action(async()=>{const d=requireDraft(),files=[...$('reference-files').files];if(!files.length)throw Error('Choose one or more PNG or JPEG files');for(const file of files){if(file.size>8*1024*1024)throw Error(file.name+' exceeds 8 MiB');const bytes=new Uint8Array(await file.arrayBuffer());let binary='';for(let i=0;i<bytes.length;i+=8192)binary+=String.fromCharCode(...bytes.subarray(i,i+8192));await api(`drafts/${d.id}/references`,{name:file.name,type:file.type,data:btoa(binary),note:$('reference-note').value});}$('reference-files').value='';$('reference-note').value='';await references();status(files.length+' reference'+(files.length===1?'':'s')+' added.');});
 function materials(){
  if(!draft)return;const id=$('studio-component').value,selected=$('material-role').value,roles=new Set();
- const collect=ops=>{for(const op of ops){if(op.material&&op.material!=='air')roles.add(op.material);if(op.operations)collect(op.operations);}};
+ const collect=ops=>{for(const role of partsUI.roles(ops))if(role!=='air')roles.add(role);};
  for(const c of draft.plan.components)if(!id||c.id===id)collect(c.operations);
  $('material-role').replaceChildren(...[...roles].sort().map(k=>new Option(label(k),k)));
  if(roles.has(selected))$('material-role').value=selected;
@@ -173,7 +175,7 @@ function materials(){
 }
 const requireDraft=()=>{if(!draft)throw Error('Open a design first');return draft;};
 function placement(){const origin=coordinates('origin');return {siteId:site?.id,transform:{origin,turns:Number($('turns').value)},brief:$('brief').value};}
-async function chooseSite(id){await selectSite(id);clearPlacementJob();draft=null;sheetUI.setDraft(null);$('draft-select').value='';delete document.body.dataset.draft;document.body.dataset.ready='false';scene.hide();draftControls(false);$('candidate-state').textContent='No design';delete $('candidate-state').dataset.state;$('candidate-summary').textContent='';$('asset-support').replaceChildren();$('sign-tools').hidden=true;$('reference-list').replaceChildren();$('add-references').disabled=true;$('review-metrics').replaceChildren();$('diagnostics').replaceChildren();$('draft-title').textContent=site?'Choose a design for this site':'No design open';authorChip(null);$('rename-design').hidden=true;$('rename-form').hidden=true;$('save-state').hidden=true;$('version-list').replaceChildren();$('compare-summary').textContent='';selection();backLink();const url=new URL(location.href);url.searchParams.delete('draft');if(id)url.searchParams.set('site',id);else url.searchParams.delete('site');history.replaceState(null,'',url);}
+async function chooseSite(id){await selectSite(id);clearPlacementJob();draft=null;sheetUI.setDraft(null);partsUI.setDraft(null);$('draft-select').value='';delete document.body.dataset.draft;document.body.dataset.ready='false';scene.hide();draftControls(false);$('candidate-state').textContent='No design';delete $('candidate-state').dataset.state;$('candidate-summary').textContent='';$('asset-support').replaceChildren();$('sign-tools').hidden=true;$('reference-list').replaceChildren();$('add-references').disabled=true;$('review-metrics').replaceChildren();$('diagnostics').replaceChildren();$('draft-title').textContent=site?'Choose a design for this site':'No design open';authorChip(null);$('rename-design').hidden=true;$('rename-form').hidden=true;$('save-state').hidden=true;$('version-list').replaceChildren();$('compare-summary').textContent='';selection();backLink();const url=new URL(location.href);url.searchParams.delete('draft');if(id)url.searchParams.set('site',id);else url.searchParams.delete('site');history.replaceState(null,'',url);}
 async function continueRevision(r){const d=await api('drafts',{plan:r.plan,parentHash:r.artifactHash,siteId:r.siteId,transform:r.transform,brief:r.brief,author:STUDIO_AUTHOR});await refresh();await renderDraft(d,{frame:true});mode('design');status('New draft opened from the saved version; the saved version is unchanged.');}
 $('rename-design').onclick=()=>{$('rename-input').value=draft.plan.name;$('rename-form').hidden=false;$('rename-design').hidden=true;$('rename-input').focus();$('rename-input').select();};
 $('rename-cancel').onclick=()=>{$('rename-form').hidden=true;$('rename-design').hidden=!draft;};
@@ -221,7 +223,8 @@ $('studio-model').addEventListener('pointerdown',e=>{pointerStart=[e.clientX,e.c
 $('studio-model').addEventListener('click',e=>{
  if(scene.navigationMode()==='free'||scene.navigationMode()==='pan'||!draft||!pointerStart||Math.hypot(e.clientX-pointerStart[0],e.clientY-pointerStart[1])>5)return;
  const hit=scene.pick(e);if(!hit)return;const point=hit.point.clone().addScaledVector(hit.face.normal,-.01);
- const cell=localCells(draft.candidate.blocks).find(c=>c.x===Math.floor(point.x)&&c.y===Math.floor(point.y)&&c.z===Math.floor(point.z));
+ const pickedIndex=localCells(draft.candidate.blocks).findIndex(c=>c.x===Math.floor(point.x)&&c.y===Math.floor(point.y)&&c.z===Math.floor(point.z));
+ const cell=pickedIndex<0?null:draft.candidate.blocks[pickedIndex];partsUI.selectCell(cell);
  if(cell){$('studio-component').value=cell.component;materials();highlight();selection(componentLabel(cell.component),label(cell.block),`${cell.block} · (${cell.x}, ${cell.y}, ${cell.z})`);}
 });
 let job,pollTimer,placementIssue;

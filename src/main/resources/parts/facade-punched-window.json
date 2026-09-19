@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "id": "facade.punched-window",
+  "description": "A solid wall panel with a proportioned punched window and optional shade.",
+  "provenance": {"author": "Codex / gpt-5.6-terra", "project": "initial architectural vocabulary"},
+  "style": "old-town-compatible",
+  "parameters": {
+    "width": {"type": "integer", "min": 3, "max": 8, "default": 4},
+    "height": {"type": "integer", "min": 3, "max": 8, "default": 4},
+    "wall": {"type": "material", "default": "wall"},
+    "glass": {"type": "material", "default": "glass"},
+    "shade": {"type": "material", "default": "shade"},
+    "awning": {"type": "enum", "values": ["none", "awning"], "default": "none"},
+    "facing": {"type": "enum", "values": ["north", "east", "south", "west"], "default": "north"}
+  },
+  "bounds": {"min": [0, 0, 0], "max": [{"param": "width"}, {"param": "height"}, 2]},
+  "rotation": {"param": "facing", "turns": {"north": 0, "east": 1, "south": 2, "west": 3}},
+  "components": [{"id": "window", "role": "facade", "origin": [0, 0, 0], "operations": [
+    {"op": "box", "min": [0, 0, 0], "max": [{"param": "width"}, 1, 1], "material": {"param": "wall"}},
+    {"op": "box", "min": [0, {"param": "height", "offset": -1}, 0], "max": [{"param": "width"}, {"param": "height"}, 1], "material": {"param": "wall"}},
+    {"op": "box", "min": [0, 1, 0], "max": [1, {"param": "height", "offset": -1}, 1], "material": {"param": "wall"}},
+    {"op": "box", "min": [{"param": "width", "offset": -1}, 1, 0], "max": [{"param": "width"}, {"param": "height", "offset": -1}, 1], "material": {"param": "wall"}},
+    {"op": "box", "min": [1, 1, 0], "max": [{"param": "width", "offset": -1}, {"param": "height", "offset": -1}, 1], "material": {"param": "glass"}},
+    {"op": "box", "min": [0, {"param": "height", "offset": -1}, 1], "max": [{"param": "width"}, {"param": "height"}, 2], "material": {"param": "shade"}, "when": {"param": "awning", "equals": "awning"}}
+  ]}],
+  "test": {"at": [6, 5, 6], "params": {}, "expect": {"valid": true}}
+}

@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "id": "kitchen.run",
+  "description": "A linear kitchen run with base cabinets, a continuous counter and a tall appliance end.",
+  "provenance": {"author": "Codex / gpt-5.6-terra", "project": "initial architectural vocabulary"},
+  "style": "interior-civic-modern",
+  "parameters": {
+    "width": {"type": "integer", "min": 3, "max": 8, "default": 4},
+    "cabinet": {"type": "material", "default": "cabinet"},
+    "counter": {"type": "material", "default": "counter"},
+    "appliance": {"type": "material", "default": "appliance"},
+    "facing": {"type": "enum", "values": ["north", "east", "south", "west"], "default": "north"}
+  },
+  "bounds": {"min": [0, 0, 0], "max": [{"param": "width"}, 3, 1]},
+  "rotation": {"param": "facing", "turns": {"north": 0, "east": 1, "south": 2, "west": 3}},
+  "components": [{"id": "kitchen", "role": "kitchen", "origin": [0, 0, 0], "operations": [
+    {"op": "box", "min": [0, 0, 0], "max": [{"param": "width"}, 1, 1], "material": {"param": "cabinet"}},
+    {"op": "box", "min": [0, 1, 0], "max": [{"param": "width"}, 2, 1], "material": {"param": "counter"}},
+    {"op": "box", "min": [{"param": "width", "offset": -1}, 0, 0], "max": [{"param": "width"}, 3, 1], "material": {"param": "appliance"}}
+  ]}],
+  "test": {"at": [5, 5, 5], "params": {}, "expect": {"valid": true}}
+}

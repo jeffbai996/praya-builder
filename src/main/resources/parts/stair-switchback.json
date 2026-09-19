@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "id": "stair.switchback",
+  "description": "A compact two-flight stair wrapped around a shared intermediate landing; rise is per flight (total rise is twice this value).",
+  "provenance": {"author": "Codex / gpt-5.6-terra", "project": "initial architectural vocabulary"},
+  "style": "civic-modern",
+  "parameters": {
+    "rise": {"type": "integer", "min": 2, "max": 8, "default": 2},
+    "width": {"type": "integer", "min": 2, "max": 3, "default": 2},
+    "stair": {"type": "material", "default": "stair-up-south"},
+    "support": {"type": "material", "default": "floor"},
+    "facing": {"type": "enum", "values": ["north", "east", "south", "west"], "default": "south"}
+  },
+  "bounds": {"min": [0, -1, 0], "max": [{"param": "width", "scale": 2, "offset": 1}, {"param": "rise", "scale": 2}, {"param": "rise", "offset": 1}]},
+  "rotation": {"param": "facing", "turns": {"south": 0, "west": 1, "north": 2, "east": 3}},
+  "components": [{"id": "switchback", "role": "circulation", "origin": [0, 0, 0], "operations": [
+    {"op": "call", "part": "stair.straight", "at": [0, 0, 0], "params": {"rise": {"param": "rise"}, "width": {"param": "width"}, "stair": {"param": "stair"}, "support": {"param": "support"}, "facing": "south"}},
+    {"op": "box", "min": [0, {"param": "rise", "offset": -1}, {"param": "rise"}], "max": [{"param": "width", "scale": 2, "offset": 1}, {"param": "rise"}, {"param": "rise", "offset": 1}], "material": {"param": "support"}},
+    {"op": "call", "part": "stair.straight", "at": [{"param": "width", "scale": 2}, {"param": "rise"}, {"param": "rise"}], "params": {"rise": {"param": "rise"}, "width": {"param": "width"}, "stair": {"param": "stair"}, "support": {"param": "support"}, "facing": "north"}}
+  ]}],
+  "test": {"at": [6, 5, 6], "params": {}, "expect": {"valid": true}}
+}

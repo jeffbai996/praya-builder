@@ -1,1 +1,18 @@
-{"schema_version":1,"parts":[]}
+{
+  "schema_version": 1,
+  "parts": [
+    "stair-straight.json",
+    "stair-switchback.json",
+    "core-lift.json",
+    "facade-pier-bay.json",
+    "facade-punched-window.json",
+    "balcony-planted.json",
+    "roof-parapet.json",
+    "roof-screen.json",
+    "entrance-canopy.json",
+    "sign-wall-framed.json",
+    "kitchen-run.json",
+    "bed-alcove.json",
+    "seat-pair.json"
+  ]
+}

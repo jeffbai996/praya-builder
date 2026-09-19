@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "id": "core.lift",
+  "description": "A compact enclosed lift shaft with floor and roof closures.",
+  "provenance": {"author": "Codex / gpt-5.6-terra", "project": "initial architectural vocabulary"},
+  "style": "civic-modern",
+  "parameters": {
+    "height": {"type": "integer", "min": 3, "max": 16, "default": 6},
+    "wall": {"type": "material", "default": "wall"},
+    "air": {"type": "material", "default": "air"},
+    "floor": {"type": "material", "default": "floor"}
+  },
+  "bounds": {"min": [0, -1, 0], "max": [3, {"param": "height", "offset": 1}, 3]},
+  "components": [{"id": "shaft", "role": "vertical-core", "origin": [0, 0, 0], "operations": [
+    {"op": "fill", "min": [0, 0, 0], "max": [3, {"param": "height"}, 3], "material": {"param": "wall"}, "interior": {"param": "air"}},
+    {"op": "box", "min": [0, -1, 0], "max": [3, 0, 3], "material": {"param": "floor"}},
+    {"op": "box", "min": [0, {"param": "height"}, 0], "max": [3, {"param": "height", "offset": 1}, 3], "material": {"param": "floor"}}
+  ]}],
+  "test": {"at": [5, 5, 5], "params": {}, "expect": {"valid": true}}
+}

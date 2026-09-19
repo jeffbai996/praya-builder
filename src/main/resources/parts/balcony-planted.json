@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "id": "balcony.planted",
+  "description": "A shallow planted balcony with a continuous guard and planted outer edge.",
+  "provenance": {"author": "Codex / gpt-5.6-terra", "project": "initial architectural vocabulary"},
+  "style": "civic-modern",
+  "parameters": {
+    "width": {"type": "integer", "min": 3, "max": 8, "default": 4},
+    "depth": {"type": "integer", "min": 2, "max": 4, "default": 2},
+    "floor": {"type": "material", "default": "floor"},
+    "railing": {"type": "material", "default": "railing"},
+    "planter": {"type": "material", "default": "planter"},
+    "plant": {"type": "material", "default": "plant"},
+    "facing": {"type": "enum", "values": ["north", "east", "south", "west"], "default": "north"}
+  },
+  "bounds": {"min": [0, 0, 0], "max": [{"param": "width"}, 3, {"param": "depth"}]},
+  "rotation": {"param": "facing", "turns": {"north": 0, "east": 1, "south": 2, "west": 3}},
+  "components": [{"id": "balcony", "role": "outdoor-space", "origin": [0, 0, 0], "operations": [
+    {"op": "box", "min": [0, 0, 0], "max": [{"param": "width"}, 1, {"param": "depth"}], "material": {"param": "floor"}},
+    {"op": "box", "min": [0, 1, {"param": "depth", "offset": -1}], "max": [{"param": "width"}, 2, {"param": "depth"}], "material": {"param": "planter"}},
+    {"op": "box", "min": [0, 2, {"param": "depth", "offset": -1}], "max": [{"param": "width"}, 3, {"param": "depth"}], "material": {"param": "plant"}},
+    {"op": "box", "min": [0, 1, 0], "max": [1, 2, {"param": "depth", "offset": -1}], "material": {"param": "railing"}},
+    {"op": "box", "min": [{"param": "width", "offset": -1}, 1, 0], "max": [{"param": "width"}, 2, {"param": "depth", "offset": -1}], "material": {"param": "railing"}}
+  ]}],
+  "test": {"at": [6, 5, 6], "params": {}, "expect": {"valid": true}}
+}

@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "id": "roof.screen",
+  "description": "A screened roof-services enclosure with solid end posts and a permeable face.",
+  "provenance": {"author": "Codex / gpt-5.6-terra", "project": "initial architectural vocabulary"},
+  "style": "civic-modern",
+  "parameters": {
+    "width": {"type": "integer", "min": 2, "max": 8, "default": 4},
+    "height": {"type": "integer", "min": 2, "max": 5, "default": 3},
+    "post": {"type": "material", "default": "trim"},
+    "screen": {"type": "material", "default": "screen"},
+    "facing": {"type": "enum", "values": ["north", "east", "south", "west"], "default": "north"}
+  },
+  "bounds": {"min": [0, 0, 0], "max": [{"param": "width"}, {"param": "height"}, 1]},
+  "rotation": {"param": "facing", "turns": {"north": 0, "east": 1, "south": 2, "west": 3}},
+  "components": [{"id": "screen", "role": "roof-services", "origin": [0, 0, 0], "operations": [
+    {"op": "box", "min": [0, 0, 0], "max": [1, {"param": "height"}, 1], "material": {"param": "post"}},
+    {"op": "box", "min": [{"param": "width", "offset": -1}, 0, 0], "max": [{"param": "width"}, {"param": "height"}, 1], "material": {"param": "post"}},
+    {"op": "box", "min": [1, 0, 0], "max": [{"param": "width", "offset": -1}, {"param": "height"}, 1], "material": {"param": "screen"}}
+  ]}],
+  "test": {"at": [5, 5, 5], "params": {}, "expect": {"valid": true}}
+}

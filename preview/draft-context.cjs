@@ -1,4 +1,4 @@
-const LIMITS=Object.freeze({buildCells:10000,surveyVolume:262144,queue:4,planBytes:1048576});
+const LIMITS=Object.freeze({buildCells:10000,surveyVolume:262144,queue:4,planBytes:1048576,planSchemaVersions:Object.freeze([1,2]),repeatDepth:3,expandedPrimitives:4096,writeWork:100000,expandedVisits:100000});
 // Plan-local coordinates are the language an agent edits. World bounds remain explicit too.
 function siteCaps(site,candidate,transform){
  if(!site||!transform)return null;

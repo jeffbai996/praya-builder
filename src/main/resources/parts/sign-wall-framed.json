@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "id": "sign.wall-framed",
+  "description": "A framed wall sign with a calm dash-rule fallback for civic wayfinding.",
+  "provenance": {"author": "Codex / gpt-5.6-terra", "project": "initial architectural vocabulary"},
+  "style": "civic-wayfinding",
+  "parameters": {
+    "width": {"type": "integer", "min": 3, "max": 8, "default": 4},
+    "height": {"type": "integer", "min": 3, "max": 6, "default": 4},
+    "wall": {"type": "material", "default": "wall"},
+    "trim": {"type": "material", "default": "trim"},
+    "sign": {"type": "material", "default": "sign"},
+    "facing": {"type": "enum", "values": ["north", "east", "south", "west"], "default": "north"}
+  },
+  "bounds": {"min": [0, 0, 1], "max": [{"param": "width"}, {"param": "height"}, 3]},
+  "rotation": {"param": "facing", "turns": {"north": 0, "east": 1, "south": 2, "west": 3}},
+  "components": [{"id": "sign-frame", "role": "wayfinding", "origin": [0, 0, 0], "operations": [
+    {"op": "box", "min": [0, 0, 2], "max": [{"param": "width"}, {"param": "height"}, 3], "material": {"param": "wall"}},
+    {"op": "box", "min": [0, 0, 1], "max": [{"param": "width"}, 1, 2], "material": {"param": "trim"}},
+    {"op": "box", "min": [0, {"param": "height", "offset": -1}, 1], "max": [{"param": "width"}, {"param": "height"}, 2], "material": {"param": "trim"}},
+    {"op": "box", "min": [0, 1, 1], "max": [1, {"param": "height", "offset": -1}, 2], "material": {"param": "trim"}},
+    {"op": "box", "min": [{"param": "width", "offset": -1}, 1, 1], "max": [{"param": "width"}, {"param": "height", "offset": -1}, 2], "material": {"param": "trim"}},
+    {"op": "block", "at": [1, 1, 1], "material": {"param": "sign"}}
+  ]}],
+  "signs": [{"id": "label", "at": [1, 1, 1], "required": false, "lines": ["PRAYA", "--------", "BUILDINGS", "DEPARTMENT"]}],
+  "test": {"at": [6, 5, 6], "params": {}, "expect": {"valid": true}}
+}

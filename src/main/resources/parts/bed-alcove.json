@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "id": "bed.alcove",
+  "description": "A compact bed alcove with a headboard wall and side clearances for a small apartment.",
+  "provenance": {"author": "Codex / gpt-5.6-terra", "project": "initial architectural vocabulary"},
+  "style": "interior-civic-modern",
+  "parameters": {
+    "width": {"type": "integer", "min": 3, "max": 6, "default": 3},
+    "depth": {"type": "integer", "min": 3, "max": 5, "default": 3},
+    "floor": {"type": "material", "default": "floor"},
+    "wall": {"type": "material", "default": "wall"},
+    "bed": {"type": "material", "default": "bed"},
+    "facing": {"type": "enum", "values": ["north", "east", "south", "west"], "default": "north"}
+  },
+  "bounds": {"min": [0, 0, 0], "max": [{"param": "width"}, 3, {"param": "depth"}]},
+  "rotation": {"param": "facing", "turns": {"north": 0, "east": 1, "south": 2, "west": 3}},
+  "components": [{"id": "alcove", "role": "bedroom", "origin": [0, 0, 0], "operations": [
+    {"op": "box", "min": [0, 0, 0], "max": [{"param": "width"}, 1, {"param": "depth"}], "material": {"param": "floor"}},
+    {"op": "box", "min": [0, 1, 0], "max": [{"param": "width"}, 3, 1], "material": {"param": "wall"}},
+    {"op": "box", "min": [1, 1, 1], "max": [{"param": "width", "offset": -1}, 2, {"param": "depth", "offset": -1}], "material": {"param": "bed"}}
+  ]}],
+  "test": {"at": [6, 5, 6], "params": {}, "expect": {"valid": true}}
+}

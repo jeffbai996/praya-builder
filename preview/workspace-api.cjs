@@ -2,6 +2,7 @@ const fs=require('node:fs');
 const path=require('node:path');
 const {FileStore}=require('./workspace-store.cjs');
 const {ReviewSheetService}=require('./review-sheets.cjs');
+const {listParts}=require('./parts-service.cjs');
 const {LIMITS}=require('./draft-context.cjs');
 const {DesignService,diff}=require('./design-service.cjs');
 const {importSite,transformCells}=require('./sites.cjs');
@@ -47,6 +48,7 @@ function workspaceApi({artifacts,port}){
    if(write&&req.headers['x-builder-write']!=='1'){send({error:'X-Builder-Write header required'},403);return true;}
    const body=write?await readBody(req):null;
    if(route==='context'&&req.method==='GET')send({schemaVersion:1,sites:store.list('sites').map(({blocks,...s})=>({...s,cells:blocks.length})),drafts:store.list('drafts').map(d=>({id:d.id,name:d.plan.name,version:d.version,valid:d.valid,candidateHash:d.candidate.hash,parentHash:d.parentHash,project:d.project,siteId:d.siteId,author:d.author||null,createdAt:d.createdAt})),revisions:store.list('revisions'),jobs:store.list('jobs').map(j=>({id:j.id,state:j.state,kind:j.kind,artifactHash:j.artifactHash,world:j.world,createdAt:j.createdAt})),limits:LIMITS,models:'External agent workflow; no provider calls'});
+   else if(route==='parts'&&req.method==='GET')send(await listParts(path.join(store.root,'parts')));
    else if(route==='integration'&&req.method==='GET'){const config=integrationConfig(),target=await captures.status();send({...config,capture:target.connected&&target.world===config.world&&target.capabilities?.survey===1?'paper-survey':'worldedit-schematic',selections:store.list('selections'),captures:store.list('captures').map(({selection,...job})=>job)});}
    else if(route==='capture/status'&&req.method==='GET')send(await captures.status());
    else if(route==='capture/selection'&&req.method==='POST'){

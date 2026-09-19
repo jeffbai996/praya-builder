@@ -8,6 +8,7 @@ const {stateBlock}=require('./mesh.cjs');
 const {assessSite,hash}=require('./sites.cjs');
 const {checkAccess}=require('./accessibility.cjs');
 const {diagnose,DIAGNOSTICS_VERSION}=require('./diagnostics.cjs');
+const {listParts,insertPart,rewriteMaterial}=require('./parts-service.cjs');
 const {LIMITS,siteCaps}=require('./draft-context.cjs');
 const {applyVariant}=require('./component-variants.cjs');
 const run=promisify(execFile);
@@ -19,13 +20,13 @@ function diff(current,previous){
  for(const c of current.blocks){const before=old.get(key(c));if(!before)result.push({...c,kind:'add'});else if(before.block!==c.block||before.component!==c.component||currentText.get(key(c))!==previousText.get(key(c)))result.push({...c,kind:'change',before:before.block});old.delete(key(c));}
  for(const c of old.values())result.push({...c,kind:'remove'});return result;
 }
-async function compilePlan(plan){
+async function compilePlan(plan,{partsDir=path.join(process.env.BUILDER_WORKSPACE_DIR||path.join(__dirname,'.workspace'),'parts')}={}){
  const bytes=JSON.stringify(plan);if(Buffer.byteLength(bytes)>1048576)throw Error('Plan exceeds 1 MiB');
  const root=path.resolve(__dirname,'..'),classpath=fs.readFileSync(path.join(root,'build/regression-classpath.txt'),'utf8').trim();
  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'builder-compile-')),file=path.join(dir,'plan.json');
  fs.writeFileSync(file,bytes,{mode:0o600});
  const java=process.env.JAVA_HOME?path.join(process.env.JAVA_HOME,'bin/java'):'java';
- try{const {stdout}=await run(java,['-Xmx256m','-cp',classpath,'org.govpraya.builder.plan.PlanCli',file],{cwd:root,timeout:30000,maxBuffer:8*1024*1024});return JSON.parse(stdout);}
+ try{const {stdout}=await run(java,['-Xmx256m','-cp',classpath,'org.govpraya.builder.plan.PlanCli',file,partsDir],{cwd:root,timeout:30000,maxBuffer:8*1024*1024});return JSON.parse(stdout);}
  catch(error){throw Error((error.stderr||error.message).slice(0,3000));}
  finally{fs.unlinkSync(file);fs.rmdirSync(dir);}
 }
@@ -37,7 +38,7 @@ function authorOf(input){
  return Object.keys(out).length?out:null;
 }
 class DesignService{
- constructor(store,{compile=compilePlan}={}){this.store=store;this.compiler=compile;this.tail=Promise.resolve();this.pending=0;}
+ constructor(store,{compile=compilePlan}={}){this.store=store;this.compiler=compile===compilePlan?plan=>compilePlan(plan,{partsDir:path.join(store.root,'parts')}):compile;this.tail=Promise.resolve();this.pending=0;}
  async serialized(work){if(this.pending>=4){const e=Error('Compile queue is full; retry after current work finishes');e.status=429;throw e;}this.pending++;const task=this.tail.then(work);this.tail=task.catch(()=>{});try{return await task;}finally{this.pending--;}}
  async evaluate(plan,siteId,transform){
   const artifact=await this.compiler(plan);const {hash:artifactHash,...content}=artifact;if(hash(content)!==artifactHash)throw Error('Compiler artifact hash mismatch');
@@ -62,6 +63,9 @@ class DesignService{
   const author=input.author!==undefined?authorOf(input.author):draft.author||null;
   const plan=input.plan?clone(input.plan):clone(draft.plan);
   if(plan.plan_id!==draft.plan.plan_id||plan.revision!==draft.plan.revision)throw Error('Draft identity cannot be changed');
+  let parts=[];
+  if(input.part||JSON.stringify(plan.components).includes('\"call\"'))parts=(await listParts(path.join(this.store.root,'parts'))).parts;
+  if(input.part)insertPart(plan,input.part,parts);
   if(input.variant)applyVariant(plan,draft.assemblyBaseline||draft.history[0].plan,input.componentId,input.variant);
   if(input.palette){
    if(typeof input.palette!=='object'||Array.isArray(input.palette))throw Error('Invalid material patch');
@@ -70,7 +74,7 @@ class DesignService{
     if(input.componentId){
      const component=plan.components.find(c=>c.id===input.componentId);if(!component)throw Error('Unknown component');
      const localRole='edit_'+hash({id:component.id,role}).slice(0,12);plan.palette[localRole]=state;
-     const rewrite=ops=>{for(const op of ops){if(op.material===role)op.material=localRole;if(op.operations)rewrite(op.operations);}};rewrite(component.operations);
+     rewriteMaterial(component.operations,parts,role,localRole);
     }else plan.palette[role]=state;
    }
   }
@@ -105,7 +109,7 @@ class DesignService{
  context(id){
   const d=this.store.get('drafts',id);let site=null;
   if(d.siteId){const {blocks,...metadata}=this.store.get('sites',d.siteId);const heights=Array(metadata.dimensions.x*metadata.dimensions.z).fill(-1);for(const c of blocks){const index=c.x+c.z*metadata.dimensions.x;heights[index]=Math.max(heights[index],c.y);}site={...metadata,caps:siteCaps(metadata,d.candidate,d.transform),nonAirCells:blocks.length,highestNonAir:heights,heightNote:'Local Y, X-major columns; -1 means a known empty column. Highest block is not necessarily ground. Retrieve exact cells from the sites endpoint when needed.'};}
-  return {schemaVersion:1,draftId:id,expectedVersion:d.version,brief:d.brief,author:d.author||null,parentHash:d.parentHash,candidateHash:d.candidate.hash,site,transform:d.transform,plan:d.plan,diagnosticsVersion:d.diagnosticsVersion||null,diagnostics:d.diagnostics,access:d.access,limits:LIMITS,components:d.candidate.components,spaces:d.candidate.spaces,instructions:'Submit structured plans or scoped palette changes. Preserve component identities and unrelated geometry. Compilation does not grant world-write permission.'};
+  return {schemaVersion:1,draftId:id,expectedVersion:d.version,brief:d.brief,author:d.author||null,parentHash:d.parentHash,candidateHash:d.candidate.hash,site,transform:d.transform,plan:d.plan,diagnosticsVersion:d.diagnosticsVersion||null,diagnostics:d.diagnostics,access:d.access,limits:LIMITS,parts:'/api/workspace/parts',components:d.candidate.components,spaces:d.candidate.spaces,instructions:'Submit structured plans or scoped palette changes. Preserve component identities and unrelated geometry. Compilation does not grant world-write permission.'};
  }
  request(id,input){const draft=this.store.get('drafts',id);this.version(draft,input.expectedVersion);if(typeof input.instruction!=='string'||!input.instruction.trim()||input.instruction.length>6000)throw Error('A bounded revision instruction is required');if(input.componentId&&!draft.plan.components.some(c=>c.id===input.componentId))throw Error('Unknown component');return this.store.create('requests',{schemaVersion:1,draftId:id,baselineHash:draft.candidate.hash,expectedVersion:draft.version,componentId:input.componentId||null,instruction:input.instruction});}
 }

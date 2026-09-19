@@ -241,3 +241,5 @@ body[data-busy=true][data-ready=true] .drawing-veil{display:flex}
 .sheet-gallery{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:1rem}
 .sheet-gallery figure{margin:0;min-width:0}.sheet-gallery img{display:block;width:100%;height:auto;border:1px solid var(--line);border-radius:.4rem}.sheet-gallery figcaption{padding:.45rem 0;color:var(--muted);font-size:.85rem}
 .sheet-gallery a{display:block}.sheet-gallery a:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+
+.part-tools{border-top:1px solid var(--line);padding-top:1rem;margin-top:1rem}.part-tools summary{font-weight:600;cursor:pointer}.part-parameters{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.5rem}.part-position{display:flex;gap:.5rem}.part-position label{min-width:0;flex:1}.part-tools p[role=status]{overflow-wrap:anywhere}

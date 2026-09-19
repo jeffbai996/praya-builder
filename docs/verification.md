@@ -641,3 +641,26 @@ The R2 generator now emits real cuboids/repeated groups: 627 operations versus
 1,873, 106 component-per-line source lines, 94 unchanged component identities,
 4,079 cells and the identical corrected R2 artifact hash. This closes the compact
 v2 follow-up; the earlier R1 hash exception remains documented under B2.
+
+
+## 2026-09-18 — B3 architectural parts and Studio insertion
+
+- All 13 definitions ship with typed/default/bounded parameters, provenance, style
+  and declared test calls. Generated `docs/parts.md` matches the registry.
+- Part tests: **6 passed** through real Java compilation and A1 diagnostics: default
+  instances have zero errors; all four orientations compile in bounds, caller
+  ownership remains stable and out-of-range integer parameters are rejected.
+- Fixed stair landings and switchback connectivity, then checked actual registry
+  stair-shape orientation. The two flights now rotate independently. Both default
+  stairs reach their upper landing in `analyzeAccess`, with clear upper headroom.
+  This is a geometric model check, not a Minecraft player traversal.
+- Real service round trip passed: two seating calls, rotation, selected-component
+  material revision preserving the other seat/baseline, overlap retaining the last
+  valid candidate, and Undo restoring validity.
+- Actual scratch Studio inserted `seat.pair` at [3,1,3], producing seven cells in
+  component `part-seat-pair-1`, schema v2, valid draft v2. Browser check passed at
+  320 px without horizontal overflow; screenshot visually inspected.
+- Focused part-UI contract passed preload/default-role discovery, bounded fields,
+  selected-cell positioning, error handling and resets when changing drafts.
+- Existing studio-polish acceptance remains green, including mobile modes.
+  No placement or world-writing endpoint was called.

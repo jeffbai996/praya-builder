@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "id": "facade.pier-bay",
+  "description": "A framed facade bay with structural piers, recessed glazing and a guard rail.",
+  "provenance": {"author": "Codex / gpt-5.6-terra", "project": "initial architectural vocabulary"},
+  "style": "civic-modern",
+  "parameters": {
+    "width": {"type": "integer", "min": 3, "max": 8, "default": 4},
+    "height": {"type": "integer", "min": 3, "max": 8, "default": 4},
+    "pier": {"type": "material", "default": "wall"},
+    "glass": {"type": "material", "default": "glass"},
+    "rail": {"type": "material", "default": "railing"},
+    "facing": {"type": "enum", "values": ["north", "east", "south", "west"], "default": "north"}
+  },
+  "bounds": {"min": [0, 0, 0], "max": [{"param": "width"}, {"param": "height"}, 2]},
+  "rotation": {"param": "facing", "turns": {"north": 0, "east": 1, "south": 2, "west": 3}},
+  "components": [{"id": "bay", "role": "facade", "origin": [0, 0, 0], "operations": [
+    {"op": "box", "min": [0, 0, 0], "max": [{"param": "width"}, 1, 1], "material": {"param": "pier"}},
+    {"op": "box", "min": [0, {"param": "height", "offset": -1}, 0], "max": [{"param": "width"}, {"param": "height"}, 1], "material": {"param": "pier"}},
+    {"op": "box", "min": [0, 1, 0], "max": [1, {"param": "height", "offset": -1}, 1], "material": {"param": "pier"}},
+    {"op": "box", "min": [{"param": "width", "offset": -1}, 1, 0], "max": [{"param": "width"}, {"param": "height", "offset": -1}, 1], "material": {"param": "pier"}},
+    {"op": "box", "min": [1, 1, 0], "max": [{"param": "width", "offset": -1}, {"param": "height", "offset": -1}, 1], "material": {"param": "glass"}},
+    {"op": "box", "min": [0, 1, 1], "max": [{"param": "width"}, 2, 2], "material": {"param": "rail"}}
+  ]}],
+  "test": {"at": [6, 5, 6], "params": {}, "expect": {"valid": true}}
+}
