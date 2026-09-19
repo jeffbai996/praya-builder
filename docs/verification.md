@@ -689,3 +689,5 @@ B4: legacy generate remains available for one release and emits an enable-time w
 - Native fragserv FastMCP runtime registered exactly seven Builder tools after installation. The service remains inactive; no Minecraft service was started.
 - The fragserv builder test environment initially lacked httpx. Added the tested httpx 0.28.1 to requirements-dev.txt so a fresh install can collect the new tests.
 - Build label is b20260918.01. Removed executable bits from new data/modules, and removed a temporary part-warning print from the test.
+
+Final deployment: public HTTPS health, parts and bakeoff routes passed from Windows; both pages show b20260918.01. Studio restarted. MCP installed on fragserv, four host tests passed including real registration; service remains inactive. Scratch Studio stopped. No world writes.
