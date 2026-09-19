@@ -17,7 +17,7 @@ export function review(draft){
  for(const [name,value] of [['Changed existing blocks',assessment?.collisions.length??'—'],['Blocks to clear',assessment?.excavations.length??'—'],['Street access',draft.access?.checked?(draft.access.issues.length?'Needs review':'Routes checked'):'Not checked']]){
   const item=document.createElement('div'),strong=document.createElement('strong'),caption=document.createElement('span');strong.textContent=typeof value==='number'?value.toLocaleString():value;caption.textContent=name;item.append(strong,caption);metrics.append(item);
  }
- $('diagnostics').replaceChildren(...(draft.diagnostics.length?draft.diagnostics:[{reason:'No blocking findings in the current checks.'}]).map(issue=>{const li=document.createElement('li');li.textContent=(issue.component?componentLabel(issue.component)+': ':'')+(issue.reason||String(issue));return li;}));
+ $('diagnostics').replaceChildren(...(draft.diagnostics.length?draft.diagnostics:[{reason:'No blocking findings in the current checks.'}]).map(issue=>{const li=document.createElement('li');li.textContent=(issue.component?componentLabel(issue.component)+': ':'')+(issue.message||issue.reason||String(issue))+(issue.rule?' ['+issue.rule+']':'')+(issue.at?' at '+issue.at.join(', '):'')+(issue.hint?' — '+issue.hint:'');return li;}));
 }
 const finishes=['smooth_quartz','quartz_block','white_concrete','light_gray_concrete','gray_concrete','gray_terracotta','bricks','stone_bricks','smooth_stone','polished_andesite','sandstone','smooth_sandstone','oak_planks','spruce_planks','dark_oak_planks','glass','black_stained_glass','copper_block','deepslate_tiles'];
 export function finishChoices(state){

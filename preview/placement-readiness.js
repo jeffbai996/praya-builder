@@ -8,7 +8,7 @@ export function placementReadiness(draft,site,bridge,revisions=[]){
  if(!site)return state('no-site','Choose a placement site',`Prepare a copy of this design on a surveyed site in ${bridge.world}.`);
  if(site.world!==bridge.world)return state('world-mismatch','This design is on another world',`The design uses ${site.world}; the connected server is ${bridge.world}. Prepare a placement copy below.`);
  if(!site.worldId||site.worldId!==bridge.worldId)return state('identity-mismatch','This survey belongs to another world copy','Choose a survey captured from the connected server. Matching world names alone are not enough.');
- if(!draft.valid)return state('invalid','The design needs changes',draft.diagnostics?.slice(0,2).join(' · ')||'Review the site fit and design findings before saving.');
+ if(!draft.valid)return state('invalid','The design needs changes',draft.diagnostics?.filter(d=>!d.severity||d.severity==='error').slice(0,2).map(d=>d.message||d.reason||String(d)).join(' · ')||'Review the site fit and design findings before saving.');
  if(!revisions.some(r=>r.draftId===draft.id&&r.artifactHash===draft.candidate.hash&&r.surveyHash===draft.surveyHash))return state('unsaved','Save this placement version','Save the design on this site, then preview the changes before placing.');
  return state('ready','Ready to preview',`Preview the exact changes in ${bridge.world} before placing any blocks.`);
 }

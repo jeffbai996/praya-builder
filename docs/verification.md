@@ -536,3 +536,31 @@ Optionally set `BUILDER_PREVIEW_FILE` to the absolute path of a compiled preview
 - Measure tick responsiveness at the configured block ceiling.
 
 The registry/schematic smoke test does not cover player interaction, actual world placement/undo, permission combinations, or load performance. Browser design-review checks are recorded separately above and do not replace those game checks.
+
+
+## 2026-09-18 — A1/A3 structured review and agent round trip
+
+Implemented versioned located diagnostics, route-derived access hints, plan-local
+site caps, edit/history provenance, saved diagnostic snapshots and the CLI review
+command. Warnings/information remain saveable; errors block acceptance. Historic
+unknown model IDs were left unchanged. Operator edits and uploaded revisions have
+distinct provenance; 320-pixel version cards wrap long author labels.
+
+Evidence:
+- Full pytest: **186 passed**, with Node 20.20.2 and the existing Java 21 runtime.
+- Focused diagnostics/agent/CLI Node run: 10 passed, 1 historical-fixture test
+  explicitly skipped by default. Opting in with `A1_RUNTIME_FIXTURES=1` runs all
+  7 diagnostic tests and requires the historical source records to exist.
+- Real CLI post → review → edit → review → save passed through the Java compiler
+  on a disposable port-8092 store, including edited author and immutable snapshots.
+- Reposted unchanged historical plans to that scratch HTTP API. Tall R0 artifact
+  `74febc02cc68fa48eb051497b449f5d95669434c8cd888b5f73b9f0e5faa9b36`
+  still compiles identically and reports `bounds.survey-cap`, world Y112 exclusive.
+  Stair R0 `4dfce80240e23c096b61c26898fc754abeec073a24bd97fb92223c6a24d0d2c9`
+  still compiles identically and reports nearest reached `[12,3,10]`, obstruction
+  `[13,5,10]`, polished deepslate owned by `switchback-stair`.
+- Existing studio-polish browser acceptance passed after fixing 320-pixel overflow.
+- No original draft was edited by the replay; no world endpoint was called.
+
+The current catalogue has **19** revisions across nine projects, rather than the
+17 stated in the handoff. B2 must preserve all 19 exact artifacts.

@@ -60,7 +60,7 @@ operations are available under `/api/workspace/`; writes require the
 | `sites/{id}` | GET: exact immutable survey |
 | `drafts` | POST: `plan` or `catalogue`, optional `parentHash`, `siteId`, `transform`, `brief`, `author` (`{agent, model, effort, note}`; recorded on the draft and copied to saved versions so designs from different models and effort levels can be compared) |
 | `drafts/{id}/context` | GET: brief, plan, identities, site summary, highest-non-air columns and diagnostics |
-| `drafts/{id}/edit` | POST: `expectedVersion`, full `plan` or `palette` patch, optional `componentId` |
+| `drafts/{id}/edit` | POST: `expectedVersion`, full `plan` or `palette` patch, optional `componentId` and `author` |
 | `drafts/{id}/edit` | POST: `expectedVersion`, roof `componentId`, `variant: {name: "roof-canopy", value: "open" or "sheltered"}` |
 | `drafts/{id}/history` | POST: `expectedVersion`, `direction: "undo" or "redo"` |
 | `drafts/{id}/diff` | GET: owned-cell changes from the baseline |
@@ -182,3 +182,30 @@ The full milestone still requires a user-selected real-world extract and actual
 player walkthrough. Synthetic surveys and grid checks are not substitutes for
 those acceptance steps. Neighborhood generation and integrated model calls remain
 later stages.
+
+
+## Structured review and attribution
+
+`node preview/workspace-cli.cjs review <draft-id> [folder]` prints the current
+diagnostics and writes `review.json` to the chosen folder (default
+`review-<draft-id>`). When the context advertises a review sheet, it also downloads
+its index and images through the same workspace API. The generic route commands
+remain available for post, edit and save; no provider-specific integration is needed.
+
+Diagnostics carry `rule`, integer `version`, `severity`, `component`, plan-local
+`at`, `message` and `hint`. Only errors prevent saving; warnings and information
+remain visible. Saved revisions snapshot the diagnostics, rule-set version and
+access report instead of re-running a future rule set over an accepted record.
+Compilation failures preserve the previous candidate and produce a structured
+`compile.invalid-plan` error.
+
+Draft context includes `limits`, `author` and `site.caps`. Caps identify exclusive
+survey top Y in both world and plan coordinates, plus survey/plot boxes, frontage
+and protected volumes in plan coordinates after undoing placement rotation.
+Upper bounds are exclusive; a world cap of 112 allows cells only through Y111.
+
+An edit may set `author: {agent, model, effort, note}`. Omission preserves the prior
+author; explicit null records unknown provenance. Undo and redo restore the author
+of that history entry. Studio edits identify the operator; uploaded revisions stay
+unrecorded unless submitted through an agent with explicit provenance. Save does
+not relabel an immutable older version. Historic unknown model IDs stay unknown.
