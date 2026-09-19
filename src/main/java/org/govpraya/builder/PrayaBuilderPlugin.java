@@ -19,6 +19,7 @@ public class PrayaBuilderPlugin extends JavaPlugin {
         String model = getConfig().getString("gemini.model", "gemini-2.5-flash");
         generator = GeneratorFactory.create(getConfig().getString("ai.provider", "gemini"), credential, model, getLogger());
 
+        getLogger().warning("DEPRECATED: /pbuilder generate uses the legacy per-block generation path and will be removed after this release. Use Builder Studio structured plans instead.");
         getCommand("pbuilder").setExecutor(new BuilderCommand(this));
         if ("1".equals(System.getenv("BUILDER_TEST_BRIDGE"))) {
             try { bridge = new org.govpraya.builder.generation.TestWorldBridge(this); }

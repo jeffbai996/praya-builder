@@ -116,43 +116,19 @@ Set `GEMINI_API_KEY` in the server process environment, or point `GEMINI_API_KEY
 
 The model remains configurable through `gemini.model`; existing configurations are not overwritten. The bundled default is `gemini-2.5-flash`. Changing to a different provider requires an implementation of `BlockGenerator`, not just a model-name edit.
 
-Player commands (permission: `prayabuilder.use`, granted to operators by default):
+### Deprecated per-block generator
 
-```text
-/pbuilder generate small stone pavilion
-/pbuilder generate -save small stone pavilion
-```
+`/pbuilder generate [-save] <description>` remains available for one compatibility
+release and logs a deprecation warning at plugin startup. It sends a prompt to
+the configured legacy provider and expects one JSON entry per block. This path
+will be removed after the warning release; use Builder Studio and structured
+plans for design, diagnostics, review sheets, versioning and construction.
 
-Generation runs off the server thread. A player may have one request in flight, plus the configured cooldown. A successful response is validated as a complete grid before being handed to the server thread for state resolution and placement or export.
-
-Direct placement uses the location captured when the request started, and requires the player to remain in that world. Changes are recorded in the player's WorldEdit history for `//undo`. Existing blocks at generated positions can be replaced; this is not a protected-plot editor. Placement failures can leave partial changes in undo history. Undo still requires the relevant WorldEdit permission.
-
-`-save` writes a Sponge v3 `.schem` under `plugins/PrayaBuilder/schematics/`, without changing the world. Existing files with the same sanitized name are rejected, not overwritten. This is a separate directory from WorldEdit's schematic folder.
-
-## Grid contract
-
-```json
-{
-  "name": "Example pavilion",
-  "dimensions": {"x": 2, "y": 1, "z": 1},
-  "blocks": [
-    {"x": 0, "y": 0, "z": 0, "block": "minecraft:stone"},
-    {"x": 1, "y": 0, "z": 0, "block": "minecraft:stone_brick_slab[type=top,waterlogged=false]"}
-  ]
-}
-```
-
-Y is vertical. Dimensions must be positive integers within the configured limits; coordinates must be unique integers within those dimensions. Valid legacy grids without `dimensions` use the configured maximum dimensions. Invalid dimensions, coordinates, duplicates, malformed states, empty grids, and oversized block lists reject the whole build. Invalid block names/properties are rejected by the server registry before editing, rather than silently replaced with stone.
-
-Defaults are 48 × 64 × 48 and **10,000 block entries**. Existing configs without `limits.max-blocks` receive that fallback. Block-state properties are preserved in placement/export. Palette entries guide the model prompt; they are not an enforced material allowlist. Block-entity data such as sign text and chest contents is not supported.
-
-## Limitations
-
-- Previous experiments reported useful results around 1,000 blocks and truncation with larger builds. The new entry limit is a workload ceiling, not a quality guarantee; model output is still one entry per block.
-- The browser supports authored component revisions, but there is no world survey, automatic screenshot interpretation, construction queue, or external agent endpoint. The existing generation command remains player-only and does not consume component plans.
-- World edits still run synchronously. Do not raise the block ceiling to city-scale values; bounded scheduling belongs in the next stage.
-- Network requests have a 60-second timeout. HTTP failures, non-success finish reasons, empty text, and malformed responses are reported. Retries are not automatic, avoiding duplicate paid requests.
-- Air is omitted by the generation prompt, so direct placement does not clear existing rooms. Exported clipboards contain air at unspecified positions; use the appropriate WorldEdit paste options.
+`BlockGrid` remains supported as the bounded schematic/grid reader used by
+compatibility code. The deprecated command is not the agent interface and is not
+a route for neighborhood generation. Existing limits, registry validation,
+cooldowns, timeouts and WorldEdit undo behavior remain in force during the
+warning release.
 
 ## Tools
 

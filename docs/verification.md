@@ -674,3 +674,8 @@ A4: three runner/service tests passed; actual disposable CLI/HTTP round trip pas
 ## 2026-09-18 - feat(mcp): expose the common builder design tools
 
 C: four agent-contract tests passed, including savedBy separate from design author. MCP unit/installer tests: three passed, one host-runtime check skipped on studio host; seven tools previously registered against the real Minecraft-host FastMCP runtime. Installation status is recorded in the response handoff.
+
+
+## 2026-09-18 - chore(plugin): deprecate legacy per-block generation
+
+B4: legacy generate remains available for one release and emits an enable-time warning. README now describes the plan/compiler workflow. Java build passes; the warning has not been observed on a running Minecraft server because no plugin deployment or restart was performed.
