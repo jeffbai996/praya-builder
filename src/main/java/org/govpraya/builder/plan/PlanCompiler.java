@@ -1,6 +1,8 @@
 package org.govpraya.builder.plan;
 
 import com.google.gson.*;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -10,9 +12,11 @@ import static org.govpraya.builder.plan.PlanInput.*;
 /** Pure, bounded expansion; no server, network or registry calls. */
 public final class PlanCompiler {
     private static final Gson GSON = new Gson();
+    private static final FaceTable CONNECTION_FACES = FaceTable.load();
     private final Map<String, String> palette = new TreeMap<>();
     private final Map<Cell, OwnedBlock> cells = new TreeMap<>();
     private final Map<String, JsonObject> components = new TreeMap<>();
+    private final Map<String, BlockState> parsedStates = new HashMap<>();
     private int[] dimensions;
     private int work;
     private int primitives;
@@ -23,8 +27,79 @@ public final class PlanCompiler {
             if (result == 0) result = Integer.compare(z, other.z);
             return result == 0 ? Integer.compare(x, other.x) : result;
         }
+
+        Cell offset(Direction direction) {
+            return new Cell(x + direction.dx, y, z + direction.dz);
+        }
     }
     private record OwnedBlock(String state, String owner) {}
+    private enum Family { PANE, BARS, WALL, FENCE, STAIRS, OTHER }
+    private enum Direction {
+        NORTH("north", 0, -1), EAST("east", 1, 0), SOUTH("south", 0, 1), WEST("west", -1, 0);
+        final String property;
+        final int dx;
+        final int dz;
+        Direction(String property, int dx, int dz) { this.property = property; this.dx = dx; this.dz = dz; }
+        Direction opposite() { return values()[(ordinal() + 2) % 4]; }
+        Direction left() { return values()[(ordinal() + 3) % 4]; }
+        static Direction facing(String value) {
+            for (Direction direction : values()) if (direction.property.equals(value)) return direction;
+            return NORTH;
+        }
+    }
+    private record BlockState(String block, Map<String, String> properties) {
+        static BlockState parse(String state) {
+            int bracket = state.indexOf('[');
+            String block = bracket < 0 ? state : state.substring(0, bracket);
+            var properties = new TreeMap<String, String>();
+            if (bracket >= 0) for (String part : state.substring(bracket + 1, state.length() - 1).split(",")) {
+                String[] pair = part.split("=", 2);
+                properties.put(pair[0], pair[1]);
+            }
+            return new BlockState(block, properties);
+        }
+
+        String format() {
+            if (properties.isEmpty()) return block;
+            return block + "[" + String.join(",", new TreeMap<>(properties).entrySet().stream()
+                    .map(entry -> entry.getKey() + "=" + entry.getValue()).toList()) + "]";
+        }
+    }
+    private record FaceTable(Map<String, Map<String, String>> defaults, Map<String, String> faces) {
+        static FaceTable load() {
+            try (InputStream stream = PlanCompiler.class.getResourceAsStream("/block-face-connections-1.21.4.json")) {
+                if (stream == null) throw new IllegalStateException("Missing block-face connection table");
+                JsonObject root = JsonParser.parseString(new String(stream.readAllBytes(), StandardCharsets.UTF_8)).getAsJsonObject();
+                if (integer(root.get("schemaVersion")) != 1 || !"1.21.4".equals(text(root.get("minecraftVersion"))))
+                    throw new IllegalStateException("Unsupported block-face connection table");
+                var defaults = new HashMap<String, Map<String, String>>();
+                for (var entry : root.getAsJsonObject("defaults").entrySet()) {
+                    var properties = new TreeMap<String, String>();
+                    for (var property : entry.getValue().getAsJsonObject().entrySet())
+                        properties.put(property.getKey(), property.getValue().getAsString());
+                    defaults.put(entry.getKey(), Map.copyOf(properties));
+                }
+                var faces = new HashMap<String, String>();
+                for (var entry : root.getAsJsonObject("faces").entrySet()) faces.put(entry.getKey(), entry.getValue().getAsString());
+                return new FaceTable(Map.copyOf(defaults), Map.copyOf(faces));
+            } catch (IOException | RuntimeException error) {
+                throw new ExceptionInInitializerError(error);
+            }
+        }
+
+        boolean knows(String block) { return defaults.containsKey(block); }
+        String property(BlockState state, String name) {
+            return state.properties.getOrDefault(name, defaults.getOrDefault(state.block, Map.of()).get(name));
+        }
+        boolean fullFace(BlockState state, Direction direction) {
+            Map<String, String> baseline = defaults.get(state.block);
+            if (baseline == null) return false;
+            var merged = new TreeMap<>(baseline);
+            merged.putAll(state.properties);
+            String canonical = new BlockState(state.block, merged).format();
+            return faces.getOrDefault(canonical, "").contains(direction.property.substring(0, 1));
+        }
+    }
 
     public static JsonObject compile(String json) {
         if (json.getBytes(StandardCharsets.UTF_8).length > 1_048_576)
@@ -65,6 +140,7 @@ public final class PlanCompiler {
             }
         }
         if (cells.isEmpty()) throw new IllegalArgumentException("Empty build");
+        resolveConnections();
         var spaces = validateSpaces(root.has("spaces") ? root.getAsJsonArray("spaces") : new JsonArray());
         JsonObject result = new JsonObject();
         result.addProperty("schema_version", 1);
@@ -116,6 +192,90 @@ public final class PlanCompiler {
         }
         result.addProperty("hash", hash(result.toString()));
         return result;
+    }
+
+    private BlockState parsed(String state) {
+        return parsedStates.computeIfAbsent(state, BlockState::parse);
+    }
+
+    private Family family(BlockState state) {
+        if (!CONNECTION_FACES.knows(state.block)) return Family.OTHER;
+        if (state.block.endsWith("_pane")) return Family.PANE;
+        if (state.block.equals("minecraft:iron_bars")) return Family.BARS;
+        if (state.block.endsWith("_wall")) return Family.WALL;
+        if (state.block.endsWith("_fence")) return Family.FENCE;
+        if (state.block.endsWith("_stairs")) return Family.STAIRS;
+        return Family.OTHER;
+    }
+
+    private void resolveConnections() {
+        var resolved = new TreeMap<Cell, OwnedBlock>();
+        for (var entry : cells.entrySet()) {
+            Cell cell = entry.getKey(); OwnedBlock owned = entry.getValue(); BlockState original = parsed(owned.state);
+            Family family = family(original);
+            if (family == Family.OTHER) { resolved.put(cell, owned); continue; }
+            var properties = new TreeMap<>(original.properties);
+            if (family == Family.PANE || family == Family.BARS || family == Family.FENCE || family == Family.WALL) {
+                for (Direction direction : Direction.values()) if (!properties.containsKey(direction.property)) {
+                    boolean connected = family == Family.FENCE ? connectsFence(cell, direction) : connectsThinOrWall(cell, direction);
+                    properties.put(direction.property, family == Family.WALL ? (connected ? "low" : "none") : Boolean.toString(connected));
+                }
+                if (family == Family.WALL && !properties.containsKey("up")) properties.put("up", "true");
+            } else if (!properties.containsKey("shape")) properties.put("shape", stairShape(cell, original));
+            String state = new BlockState(original.block, properties).format();
+            resolved.put(cell, state.equals(owned.state) ? owned : new OwnedBlock(state, owned.owner));
+        }
+        cells.clear(); cells.putAll(resolved);
+    }
+
+    private boolean connectsThinOrWall(Cell cell, Direction direction) {
+        OwnedBlock neighbor = cells.get(cell.offset(direction));
+        if (neighbor == null) return false;
+        BlockState state = parsed(neighbor.state); Family family = family(state);
+        return family == Family.PANE || family == Family.BARS || family == Family.WALL || CONNECTION_FACES.fullFace(state, direction);
+    }
+
+    private boolean connectsFence(Cell cell, Direction direction) {
+        OwnedBlock neighbor = cells.get(cell.offset(direction));
+        if (neighbor == null) return false;
+        BlockState state = parsed(neighbor.state);
+        return family(state) == Family.FENCE || CONNECTION_FACES.fullFace(state, direction);
+    }
+
+    private String stairShape(Cell cell, BlockState own) {
+        Direction facing = Direction.facing(CONNECTION_FACES.property(own, "facing"));
+        String half = CONNECTION_FACES.property(own, "half");
+        BlockState front = stair(cell.offset(facing), half);
+        if (front != null) {
+            Direction other = Direction.facing(CONNECTION_FACES.property(front, "facing"));
+            if (perpendicular(facing, other) && differentStair(cell.offset(other.opposite()), own))
+                return other == facing.left() ? "outer_left" : "outer_right";
+        }
+        BlockState back = stair(cell.offset(facing.opposite()), half);
+        if (back != null) {
+            Direction other = Direction.facing(CONNECTION_FACES.property(back, "facing"));
+            if (perpendicular(facing, other) && differentStair(cell.offset(other), own))
+                return other == facing.left() ? "inner_left" : "inner_right";
+        }
+        return "straight";
+    }
+
+    private BlockState stair(Cell cell, String half) {
+        OwnedBlock owned = cells.get(cell); if (owned == null) return null;
+        BlockState state = parsed(owned.state);
+        return family(state) == Family.STAIRS && Objects.equals(half, CONNECTION_FACES.property(state, "half")) ? state : null;
+    }
+
+    private boolean differentStair(Cell cell, BlockState own) {
+        OwnedBlock owned = cells.get(cell); if (owned == null) return true;
+        BlockState state = parsed(owned.state);
+        return family(state) != Family.STAIRS
+                || !Objects.equals(CONNECTION_FACES.property(state, "facing"), CONNECTION_FACES.property(own, "facing"))
+                || !Objects.equals(CONNECTION_FACES.property(state, "half"), CONNECTION_FACES.property(own, "half"));
+    }
+
+    private static boolean perpendicular(Direction first, Direction second) {
+        return first.dx != 0 ? second.dz != 0 : second.dx != 0;
     }
 
     private void operations(JsonArray operations, int[] origin, String owner,

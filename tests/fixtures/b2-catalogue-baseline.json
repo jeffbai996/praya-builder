@@ -1,0 +1,203 @@
+{
+  "capturedAt": "2026-09-19T03:33:13.482Z",
+  "gitHead": "f5c0f4f4ecfbba402aadfa750b238f6e2543fae5",
+  "fixtureCount": 19,
+  "sourceSha256": {
+    "planCompiler": "b169efdc8a6d62fcb8e4cc8cc268916ffb3e231d980673722ca50409a1df8242",
+    "planInput": "a67d34b83afdefdf6763959d7f6dae7804a6d17803d16f717f7eef371396977c",
+    "catalog": "3bd38f611900486da630eee14a04986a46ada3ce195297acdce8908ddd9866b3",
+    "javascriptResolver": "eb40676281ce98d5f9e3c7636ae4910f5c8d8a97c855060bf6e1df7c0617559b"
+  },
+  "fixtures": [
+    {
+      "project": "courtyard",
+      "revision": "r2",
+      "stem": "r2",
+      "candidateHash": "23d5ff81fde2cfe7b757dd52863f646c0928525710f4fd5ccb4297e69f7e045d",
+      "artifactSha256": "f80fd8cd1d49dccb9ce19324cdeb3f105f155fef160f4a4ececae1f0c474c2aa",
+      "planSha256": "da65ea2d032b80433330c05e8bb9b6a37f4c1bbd8985a6a225665c80ea28c733",
+      "blocks": 5006,
+      "implicitConnectionPaletteEntries": []
+    },
+    {
+      "project": "courtyard",
+      "revision": "r1",
+      "stem": "r1",
+      "candidateHash": "a4e1697a982247100dced54e5b00a9954bdb447d6c31a91f7910782b107ff2b4",
+      "artifactSha256": "9ed3bfe05d862a0317c35bf8fb73e2103afb960c6eca24c88a841240a1877433",
+      "planSha256": "71591bd1e0bf408edf1afceec197019426d8c5c92a7992c2799a7d8a40aefef4",
+      "blocks": 5004,
+      "implicitConnectionPaletteEntries": []
+    },
+    {
+      "project": "courtyard",
+      "revision": "r0",
+      "stem": "r0",
+      "candidateHash": "5ec72a2d08522b59f0d76a87aaea96fcfdee9b9115670bdceb3af8cdb5b5d752",
+      "artifactSha256": "feee9145a7988d0358197b1dd18976887dd24613ec5559050638fdeba7a07958",
+      "planSha256": "4a7b2639c9a7999562179db2f64da860af438260f9d3702c14c56c087e474a01",
+      "blocks": 4932,
+      "implicitConnectionPaletteEntries": []
+    },
+    {
+      "project": "terrace",
+      "revision": "r0",
+      "stem": "terrace-r0",
+      "candidateHash": "a613a807615ffbbc4bbb01a96b0d48a505b22a91dfed01341cd0b82b471c1e2f",
+      "artifactSha256": "6ec0070d1f3223ee5cac2436cba6f3057bd50f32944721ec55b1fdf2ee12ce07",
+      "planSha256": "8e65c5c59e35d6ef0858d1c273e02486b3f51a378de1047f1e4854b2f29d9a60",
+      "blocks": 3318,
+      "implicitConnectionPaletteEntries": []
+    },
+    {
+      "project": "library",
+      "revision": "r0",
+      "stem": "library-r0",
+      "candidateHash": "a45f0456734cc974f2745936f0bcb06112ec33c090eda8df29bd2ed93e48f9a6",
+      "artifactSha256": "85de607ee28fed7f403f18db8266a2804bae24a70e46f3482f1ce6bcd31de96e",
+      "planSha256": "3a7f5399690c3ae52a3d7cf8d182c65c3806017710e9506ebaeaa792fcbe81de",
+      "blocks": 2859,
+      "implicitConnectionPaletteEntries": []
+    },
+    {
+      "project": "clinic",
+      "revision": "r1",
+      "stem": "clinic-r1",
+      "candidateHash": "a1d16665985a9a7370d320370a18fc79eb14bdfc4d0bc4d7fe6c0e37545a7def",
+      "artifactSha256": "0dc4ca95301f8136f2baa33a9b8eff155414a13e56bac17473cf0e5c8e726282",
+      "planSha256": "70e2b6694ae99ae8d714fac8e522edcea555a6be7ed61f6a5aafbf441a4ed4f2",
+      "blocks": 3686,
+      "implicitConnectionPaletteEntries": []
+    },
+    {
+      "project": "clinic",
+      "revision": "r0",
+      "stem": "clinic-r0",
+      "candidateHash": "cb1e3add90641622941c64d927bcd0b8a3cdf82a9a3468b48598e26c7148670d",
+      "artifactSha256": "fbea3b62f48635e442274afbb6136c4c8b08630992f4640266134ae304e25305",
+      "planSha256": "48567a43080ef9fd1788e75a772386ba47a6aa4d9b915413b2dc0b12d5c0f4ac",
+      "blocks": 3877,
+      "implicitConnectionPaletteEntries": []
+    },
+    {
+      "project": "market",
+      "revision": "r1",
+      "stem": "market-r1",
+      "candidateHash": "e5130e23df86feac934afaee7d6fd09e07f0e68068ba25e8dceb4637c40954a6",
+      "artifactSha256": "b05d8cb7fe627b81f2209b90f5f0254a655e0e4d66eca69bd2c416e92720bebe",
+      "planSha256": "e977d6e81f9d4262b2210bc3d80c553e0ba0613a1f238dcd7a867cadfd8119ab",
+      "blocks": 3097,
+      "implicitConnectionPaletteEntries": []
+    },
+    {
+      "project": "market",
+      "revision": "r0",
+      "stem": "market-r0",
+      "candidateHash": "951781d286adbb26976baabec4fb09c4fbc777cbeb8470f6bcf9beee7e53261a",
+      "artifactSha256": "a820441bfeba189207c22a8dac8282914bf3bfddbfa87e4b8e1bcb1ac27fcf7b",
+      "planSha256": "8e2994bb58f3c53bcf8e436737f5a573bc1284adde337bf37392b9bf5a538419",
+      "blocks": 3602,
+      "implicitConnectionPaletteEntries": []
+    },
+    {
+      "project": "school",
+      "revision": "r1",
+      "stem": "school-r1",
+      "candidateHash": "a3ef68e45a6fd7d1b556c0ba58771a35aa4d15cc028a20de86b7f0a6070d2d16",
+      "artifactSha256": "6073cf0203941176ee81aa70234fa6371853095bfc4c9818d5d4221629eaaa26",
+      "planSha256": "a467f1db9ee88ce86bce723c07b597ada7fbb5e21be6c23ec6e5d586ff09d259",
+      "blocks": 4638,
+      "implicitConnectionPaletteEntries": []
+    },
+    {
+      "project": "school",
+      "revision": "r0",
+      "stem": "school-r0",
+      "candidateHash": "9c39a0d6f7640be17bdfd97bfc4c1e7e9ea3cb3baba785ebe9e854204155e37f",
+      "artifactSha256": "4c48a08abc06a480f0af34f99c3350886f52745d42e6f575107529ebffb97a1e",
+      "planSha256": "bad7ed51a7f1dae35bf849777758675c57806e0e257ad9105573dcd20695da61",
+      "blocks": 4911,
+      "implicitConnectionPaletteEntries": []
+    },
+    {
+      "project": "postmodern",
+      "revision": "r2",
+      "stem": "postmodern-r2",
+      "candidateHash": "ebf62f62e1c14af29fe255c230e97ed9898499793ff14940af46ec93832e11c9",
+      "artifactSha256": "fd0dbf11be565c97e427f3bfd6e16536d29ec25bfe5f45a8bfe6e64a140ac134",
+      "planSha256": "a704f6ef74bc4642c2f26ef0dec4dc7c4daf1fdb839c25f6e55f145750f8ca90",
+      "blocks": 7948,
+      "implicitConnectionPaletteEntries": []
+    },
+    {
+      "project": "postmodern",
+      "revision": "r1",
+      "stem": "postmodern-r1",
+      "candidateHash": "07fd22963d1bdbd83d0113df40cb943d7ebe74315b21c15ddc869665ae04a863",
+      "artifactSha256": "f40a638523096b720c0df22582212df32a413422d8254d2ad8dedd01722ee7e9",
+      "planSha256": "1d548d527fcd742a97ed86b026d656b116fcf63056ac738e7c30c0d69f381a10",
+      "blocks": 7067,
+      "implicitConnectionPaletteEntries": []
+    },
+    {
+      "project": "postmodern",
+      "revision": "r0",
+      "stem": "postmodern-r0",
+      "candidateHash": "b1ef4e21e2e5a264c582a07b0d46bf461350671b52f9bcf46b314d36b53ea260",
+      "artifactSha256": "f80b6a2d4c467635b331843a39f13a6d7d782f6eb708cbb452401a706010a417",
+      "planSha256": "8266cc12791146632bf017f838ac537c17bb125e507012c7be71f99b8e58b2b3",
+      "blocks": 5835,
+      "implicitConnectionPaletteEntries": []
+    },
+    {
+      "project": "braemar",
+      "revision": "r2",
+      "stem": "braemar-r2",
+      "candidateHash": "bcda88879271b10757765f1f2a88520ba02e948a028715c35257e11b776a0197",
+      "artifactSha256": "2e905e9cd509d533ba5fb1b05f44e30adf8699ee1bf0cfa4eec0efaf0a2c3a28",
+      "planSha256": "f8997eaf048b1672dfffe77e09147d3fdb5d3e591b079f8f2262cd442bf49414",
+      "blocks": 7630,
+      "implicitConnectionPaletteEntries": []
+    },
+    {
+      "project": "braemar",
+      "revision": "r1",
+      "stem": "braemar-r1",
+      "candidateHash": "d7ae97c459bde882d658dbdf3f8d9d360ded713ad87ebddcbc065283b10eb0d7",
+      "artifactSha256": "f5ac9eb034f9fb4210c2b226f09cd361062356be13061d27ca9cbdb8e761a016",
+      "planSha256": "76fbde507829be701637751125cf3493716e821c5cf36bc22558a62cc295b1be",
+      "blocks": 7736,
+      "implicitConnectionPaletteEntries": []
+    },
+    {
+      "project": "braemar",
+      "revision": "r0",
+      "stem": "braemar-r0",
+      "candidateHash": "f91a1687a0c2492e1010c172a537635e34a9ebba530ca2b8def14c0981fe9715",
+      "artifactSha256": "468fef70cee37538823a19017b4146869b6cb9a6ecf7fbb88dd8341f732a5cb8",
+      "planSha256": "cc78d1b6e813a4718dbb04fe9f5a26bb4b123099c3e58582180f690609a8d485",
+      "blocks": 6076,
+      "implicitConnectionPaletteEntries": []
+    },
+    {
+      "project": "mansion",
+      "revision": "r1",
+      "stem": "mansion-r1",
+      "candidateHash": "8bc9964b47422bd4fd7443ebfc23707d0a765bd42ccf16c7fa72a40c641ac9c9",
+      "artifactSha256": "a44f76462a4a163aa968481c1661a60c746023c82cb5cd23b41d77696b731978",
+      "planSha256": "66899346caacbf7f657f036c623781bac124738e66c038f83299bf3bbf5d4e74",
+      "blocks": 8006,
+      "implicitConnectionPaletteEntries": []
+    },
+    {
+      "project": "mansion",
+      "revision": "r0",
+      "stem": "mansion-r0",
+      "candidateHash": "8ffe4a99d56f4a5feb70de878146e4a195b50b3a3444a28e5895159d7150c660",
+      "artifactSha256": "f52f7b650f3c68f81fe2c318fdb76116c2ee8de174c544578175aa660760244e",
+      "planSha256": "35483d2b980230f0c08e5efa5a3cb31850b44f81768f10067ccc703ffaaab7eb",
+      "blocks": 7474,
+      "implicitConnectionPaletteEntries": []
+    }
+  ]
+}

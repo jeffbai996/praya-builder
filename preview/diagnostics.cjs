@@ -17,7 +17,7 @@ const RULES=Object.freeze({
  'roof.uncovered':{version:1,severity:'warning'},
  'light.dark-corridor':{version:1,severity:'info'},
  'sign.orphan':{version:1,severity:'error'},
- 'pane.unresolved':{version:1,severity:'warning'},
+ 'pane.unresolved':{version:2,severity:'warning'},
 });
 const RULE_VERSIONS=Object.freeze(Object.fromEntries(Object.entries(RULES).map(([id,rule])=>[id,rule.version])));
 const key=p=>p.join(',');

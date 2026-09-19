@@ -564,3 +564,24 @@ Evidence:
 
 The current catalogue has **19** revisions across nine projects, rather than the
 17 stated in the handoff. B2 must preserve all 19 exact artifacts.
+
+
+## 2026-09-18 — B2 compiler connection states
+
+- Java resolves omitted pane/bar/wall/fence arms and stair shapes after ownership;
+  explicit authored properties remain authoritative. Full-face registry generation
+  is reproducible from the locked Minecraft 1.21.4 dependencies.
+- All **19 catalogue artifacts** match the pre-B2 candidate hashes and serialized
+  artifact SHA-256 values byte for byte (`check-b2-connections.cjs`). The immutable
+  baseline checksum audit also passed.
+- Five connection-state pytest probes passed, plus Java/JavaScript oracle parity,
+  schematic state round-trip, registry regeneration, Node syntax and diff checks.
+- Full tree at this gate (including concurrent A2 tests): **192 passed, 1 skipped**
+  in 46.57 s. Gradle build passed. The skipped browser check requires its explicit
+  renderer environment; A2 browser acceptance is recorded separately.
+- Point Tower R1 stays at `4ab0a0e77c844e899898d8dd874d465a0f42ed291460d30b6d305dcac23b9c7d`.
+  The generator now emits R2 `94590e608ccf7882b924b601d97dfde98dfb6f7e0c958a409f8c1411dd241b8c`.
+  All 4,079 coordinates, owners, base materials and signs are preserved; 326 thin
+  blocks receive 386 corrected arm properties. Preserving R1's broken connections
+  would contradict the requested resolver correction; see b2-connection-states.md.
+- No world endpoints were used. R2 is a source study, not a placed building.

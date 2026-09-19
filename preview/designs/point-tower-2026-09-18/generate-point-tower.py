@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
-"""Point tower R0 for the Praya first plot (site cap: Y112, so 33 blocks above ground). Emits a plan and posts a draft."""
+"""Point Tower R2 for the Praya first plot. Emits a plan; posts only with --post."""
 import json, sys, urllib.request, os
+from pathlib import Path
 from collections import defaultdict
 
 BASE = os.environ.get("BUILDER_WORKSPACE_URL", "http://127.0.0.1:8091")
@@ -49,9 +50,9 @@ P = {
     "cauldron": "minecraft:water_cauldron[level=3]",
     "table": "minecraft:spruce_trapdoor[facing=north,half=top,open=false,powered=false,waterlogged=false]",
 }
-PANE = {"pane": "minecraft:black_stained_glass_pane", "pane-privacy": "minecraft:light_gray_stained_glass_pane",
-        "pane-clear": "minecraft:glass_pane", "bars": "minecraft:iron_bars"}
-CONNECTS = {"stone", "stone-dark", "frame", "brick", "slab-edge", "timber", "planter", "bookshelf"} | set(PANE)
+PANE = {"pane": "minecraft:black_stained_glass_pane[waterlogged=false]",
+        "pane-privacy": "minecraft:light_gray_stained_glass_pane[waterlogged=false]",
+        "pane-clear": "minecraft:glass_pane[waterlogged=false]", "bars": "minecraft:iron_bars[waterlogged=false]"}
 
 cells, comp_order = {}, []
 def put(comp, x, y, z, role):
@@ -220,17 +221,10 @@ for e in site["blocks"]:
     if 0 <= x < DIMS[0] and 0 <= y < DIMS[1] and 0 <= z < DIMS[2] and inside_built(x, y, z) and (x, y, z) not in cells:
         put("survey-clearance", x, y, z, "air"); cleared += 1
 
-# ---------- pane / bar connection states ----------
-def connects(x, y, z):
-    c = cells.get((x, y, z)); return c is not None and c[0] in CONNECTS
-resolved = {}
-for (x, y, z), (role, comp) in list(cells.items()):
-    if role in PANE:
-        props = {"east": connects(x + 1, y, z), "north": connects(x, y, z - 1), "south": connects(x, y, z + 1), "west": connects(x - 1, y, z)}
-        state = PANE[role] + "[" + ",".join(f"{k}={str(v).lower()}" for k, v in props.items()) + ",waterlogged=false]"
-        key = role + "-" + ("".join(k[0] for k, v in props.items() if v) or "x")
-        resolved[key] = state; cells[(x, y, z)] = (key, comp)
-palette = dict(P); palette.update(resolved)
+# Connection properties are intentionally omitted. PlanCompiler resolves panes
+# and bars after ownership is settled, avoiding the R1 generator's order-dependent
+# one-way arms while keeping every coordinate and component unchanged.
+palette = dict(P); palette.update(PANE)
 used = {r for r, _ in cells.values()}; palette = {k: v for k, v in palette.items() if k in used}
 
 # ---------- emit ----------
@@ -251,14 +245,16 @@ signs = [{"at": [13, 4, CZ0 - 1], "lines": ["----------", "POINT TOWER", "LOBBY"
          {"at": [14, 4, CZ0 - 1], "lines": ["----------", "LIFT + STAIR", "LEVELS 1-6", "----------"]}]
 for s in range(TOWER_STOREYS):
     signs.append({"at": [12, TOWER_BASE + s * STOREY + 3, CZ0], "lines": ["--------", f"LEVEL {s + 1}", "RESIDENCES", "--------"]})
-plan = {"schema_version": 1, "plan_id": "north-plot-point-tower", "revision": "r1", "name": "Point Tower · R1",
-        "description": "Six residential storeys over a lobby podium on the Praya first plot, within the surveyed 33-block height. Pale quartz piers with recessed black panes to the street, brick blades and privacy panes to the rear, charcoal flanks with timber shades, planted west balconies, an east setback terrace and a screened pale crown. The forecourt keeps the street trees. Review only, no placement.",
+plan = {"schema_version": 1, "plan_id": "north-plot-point-tower", "revision": "r2", "name": "Point Tower · R2",
+        "description": "Connection-state successor to R1 with identical building geometry and ownership. Six residential storeys over a lobby podium on the Praya first plot, within the surveyed 33-block height. Pale quartz piers with recessed black panes to the street, brick blades and privacy panes to the rear, charcoal flanks with timber shades, planted west balconies, an east setback terrace and a screened pale crown. The forecourt keeps the street trees. Review only, no placement.",
         "dimensions": {"x": DIMS[0], "y": DIMS[1], "z": DIMS[2]}, "palette": palette, "components": components, "signs": signs}
 print(f"cells={len(cells)} (cleared air {cleared}) components={len(components)} ops={sum(len(c['operations']) for c in components)} palette={len(palette)}", file=sys.stderr)
-json.dump(plan, open("/tmp/tower/plan.json", "w"))
-if "--dry" in sys.argv: sys.exit(0)
+output = Path(__file__).with_name("point-tower-r2.plan.json")
+output.write_text(json.dumps(plan, separators=(",", ":")) + "\n", encoding="utf-8")
+print("plan", output)
+if "--post" not in sys.argv: sys.exit(0)
 body = json.dumps({"plan": plan, "siteId": SITE, "transform": {"origin": ORIGIN, "turns": 0}, "author": {"agent": "claude-bot", "model": "claude-fable-5-1", "effort": "medium"},
-                   "brief": "Point tower study R1 on the Praya first plot (R0 review: rear brick grid replaced by the street pier language with brick blades at the core only; plain parapet; three planted west balconies): six residential storeys over a lobby podium within the 33-block survey cap, recessed street glazing, planted west balconies, east setback, retained forecourt trees. Review only, no placement."}).encode()
+                   "brief": "Point Tower R2 connection-state successor to R1. Geometry and ownership are unchanged; panes and bars are resolved by PlanCompiler. Review only, no placement."}).encode()
 req = urllib.request.Request(f"{BASE}/api/workspace/drafts", data=body, method="POST", headers={"Content-Type": "application/json", "X-Builder-Write": "1"})
 try: resp = json.load(urllib.request.urlopen(req, timeout=120))
 except urllib.error.HTTPError as err: print("HTTP", err.code, err.read().decode()[:2000]); sys.exit(1)
