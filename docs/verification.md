@@ -691,3 +691,12 @@ B4: legacy generate remains available for one release and emits an enable-time w
 - Build label is b20260918.01. Removed executable bits from new data/modules, and removed a temporary part-warning print from the test.
 
 Final deployment: public HTTPS health, parts and bakeoff routes passed from Windows; both pages show b20260918.01. Studio restarted. MCP installed on fragserv, four host tests passed including real registration; service remains inactive. Scratch Studio stopped. No world writes.
+
+
+## 2026-09-20 - R3 and deployment review
+
+Reviewed b01e99f. Saved R3 compiled to the identical 98a3c5aa2b42b81af5f38366bfefcab67a956b505fa43f06cf92e3e006b2848b artifact (4,263 cells). Seven downloaded sheet checksums matched; plans 10/14/18/22/26 and exterior views were inspected. Same-floor traversal found obstructed wet-room approaches on all six checked flat/floor combinations; removing only the corresponding fern in memory restored each route. Saved designs remain unchanged.
+
+Picker regression commit 0853c98 adds exact live-context group/order/history assertions. Node 20 syntax, Git diff checks and live Playwright passed: 39 drafts, 15 current designs, 4 groups, 24 earlier drafts, both deep links retained. No full-suite rerun was required for test/document-only changes.
+
+Remote refs, three matching jar hashes, service configuration/state and startup logs were checked read-only. Live MCP initialization, 19-tool discovery and builder_context passed; tailnet-only exposure confirmed. Production is off; test server was already running and its legacy warning is observed. No world operations or service changes were performed. See docs/handoff-back-to-claude-2.md for findings and limits.
