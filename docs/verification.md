@@ -700,3 +700,15 @@ Reviewed b01e99f. Saved R3 compiled to the identical 98a3c5aa2b42b81af5f38366bfe
 Picker regression commit 0853c98 adds exact live-context group/order/history assertions. Node 20 syntax, Git diff checks and live Playwright passed: 39 drafts, 15 current designs, 4 groups, 24 earlier drafts, both deep links retained. No full-suite rerun was required for test/document-only changes.
 
 Remote refs, three matching jar hashes, service configuration/state and startup logs were checked read-only. Live MCP initialization, 19-tool discovery and builder_context passed; tailnet-only exposure confirmed. Production is off; test server was already running and its legacy warning is observed. No world operations or service changes were performed. See docs/handoff-back-to-claude-2.md for findings and limits.
+
+
+## 2026-09-20 - Proposed surroundings respect the construction write mask
+
+Studio previously overlaid the complete survey, including cells the design replaced or explicitly cleared. The context mesh now excludes exactly the transformed candidate write mask, including air. Unspecified surroundings remain visible. Survey records and artifacts are unchanged. Cache identity includes survey, depth, artifact and transform; the building mesh cache also distinguishes quarter-turns. Context refreshes on candidate/pose changes without resetting the review camera.
+
+- Capture/site-view contract: 14 tests passed, including all four rotations with translated non-square plans, explicit air, preservation of unspecified trees and immutable survey input.
+- Live Point Tower R3 context excludes 443 survey cells, including 304 tree cells; Terraced Residences R3 excludes 802 survey cells, including 398 tree cells.
+- Live browser checks passed initial candidate binding, full-depth mode, switching between those two proposals, zero page errors and desktop/mobile captures. Desktop render visually inspected.
+- Existing STUDIO_POLISH_PASS covers version comparison with retained camera, navigation modes, selection, expanded view, idle rendering, mobile layout and catalogue hand-off.
+- Node syntax and git diff checks passed. Studio restarted; public build label b20260920.01.
+- Read-only test-world inspection found the selected plot still contains terrain rather than placed building geometry. User confirmed the reported trees were in Studio. No world-writing request, placement, Minecraft restart or saved-design mutation occurred.

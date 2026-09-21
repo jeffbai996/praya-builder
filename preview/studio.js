@@ -8,10 +8,10 @@ import {createPartsUI} from './parts-ui.js';
 import {createReviewSheetUI} from './review-sheet-ui.js';
 import {renderSupport} from './support-list.js';
 const $=id=>document.getElementById(id);
-let scene,draft,site,index,projects=[],ticket=0,busy=false,changes=[],contextFloor=0,contextSurface=0,compareHash=null,bridge=null;
+let scene,draft,site,index,projects=[],ticket=0,busy=false,changes=[],contextFloor=0,contextSurface=0,contextTicket=0,contextKey=null,compareHash=null,bridge=null;
 // Meshes are immutable per candidate hash, so floor switching after the first fetch needs no network round trip.
 const meshCache=new Map();
-async function draftMesh(d,ceiling){const key=d.candidate.hash+':'+ceiling;if(meshCache.has(key)){const mesh=meshCache.get(key);meshCache.delete(key);meshCache.set(key,mesh);return mesh;}const mesh=await api(`drafts/${d.id}/mesh?ceiling=${ceiling}`);meshCache.set(key,mesh);if(meshCache.size>8)meshCache.delete(meshCache.keys().next().value);return mesh;}
+async function draftMesh(d,ceiling){const key=d.candidate.hash+':'+(d.transform?.turns||0)+':'+ceiling;if(meshCache.has(key)){const mesh=meshCache.get(key);meshCache.delete(key);meshCache.set(key,mesh);return mesh;}const mesh=await api(`drafts/${d.id}/mesh?ceiling=${ceiling}`);meshCache.set(key,mesh);if(meshCache.size>8)meshCache.delete(meshCache.keys().next().value);return mesh;}
 // Floors: walkable levels from spaces plus slab rows found by block density, cut two blocks above each level like the studies.
 function floorOptions(candidate){
  const rows=new Map();for(const c of candidate.blocks)if(c.block!=='minecraft:air')rows.set(c.y,(rows.get(c.y)||0)+1);
@@ -84,9 +84,19 @@ function renderDesignChoices(current=$('draft-select').value){
 }
 $('draft-history').onclick=()=>{showAllDrafts=!showAllDrafts;renderDesignChoices();};
 async function refresh(){index=await api('context');$('studio-main').hidden=false;if(!index.sites.length)$('fixture-panel').open=true;const sid=$('site-select').value,did=$('draft-select').value;$('site-select').replaceChildren(new Option('No site selected',''),...index.sites.map(s=>new Option(s.name,s.id)));$('site-select').value=sid;renderDesignChoices(did);$('saved-revision').replaceChildren(...index.revisions.map(r=>new Option(r.plan.name+' · '+when(r.createdAt),r.id)));$('continue-revision').disabled=!index.revisions.length;$('job-select').replaceChildren(new Option('Choose a construction job',''),...(index.jobs||[]).map(j=>new Option(label(j.kind)+' · '+label(j.state)+' · '+when(j.createdAt),j.id)));status(`${index.sites.length} sites · ${designChoices().length} designs · ${index.revisions.length} saved versions`);}
-async function selectSite(id){site=id?await api('sites/'+id):null;$('site-select').value=id||'';scene.siteBounds(site);const templateFits=Boolean(site&&site.plot.max[0]-site.plot.min[0]>=32&&site.plot.max[2]-site.plot.min[2]>=32);$('new-proposals').disabled=!templateFits;$('study-site-note').hidden=!site||templateFits;for(const id of ['context-visible','context-depth','impact-visible']){$(id).disabled=!site;$(id).closest('.layer-chip').title=site?'':'Needs a surveyed site';}if(site){await loadSiteView();setCoordinates('origin',site.plot.min);$('site-summary').textContent=`${site.plot.max[0]-site.plot.min[0]} × ${site.plot.max[2]-site.plot.min[2]} plot · ${site.world} · captured ${when(site.capturedAt)}${site.protected.length?' · '+site.protected.length+' protected areas':''}`;}else{await scene.loadContext({sections:[]});$('site-summary').textContent='No site. Designs still work without one; construction needs a survey.';}}
-async function loadSiteView(){if(!site)return;const mesh=await api(`sites/${site.id}/mesh?depth=${$('context-depth').checked?'full':'surface'}`);contextFloor=mesh.floor;contextSurface=mesh.surfaceY;scene.siteBounds({...site,plot:$('context-depth').checked?site.plot:{min:[site.plot.min[0],site.frontage[1]+.05,site.plot.min[2]],max:[site.plot.max[0],site.frontage[1]+.15,site.plot.max[2]]}});await scene.loadContext(mesh);scene.frame(site.dimensions,contextSurface);scene.fit(site.blocks.filter(c=>c.y>=contextFloor));cameraSelection(null);}
-$('context-depth').onchange=()=>action(loadSiteView);
+async function selectSite(id,skipView=false){contextTicket++;contextKey=null;site=id?await api('sites/'+id):null;$('site-select').value=id||'';scene.siteBounds(site);const templateFits=Boolean(site&&site.plot.max[0]-site.plot.min[0]>=32&&site.plot.max[2]-site.plot.min[2]>=32);$('new-proposals').disabled=!templateFits;$('study-site-note').hidden=!site||templateFits;for(const id of ['context-visible','context-depth','impact-visible']){$(id).disabled=!site;$(id).closest('.layer-chip').title=site?'':'Needs a surveyed site';}if(site){if(!skipView)await loadSiteView(null);setCoordinates('origin',site.plot.min);$('site-summary').textContent=`${site.plot.max[0]-site.plot.min[0]} × ${site.plot.max[2]-site.plot.min[2]} plot · ${site.world} · captured ${when(site.capturedAt)}${site.protected.length?' · '+site.protected.length+' protected areas':''}`;}else{await scene.loadContext({sections:[]});$('site-summary').textContent='No site. Designs still work without one; construction needs a survey.';}}
+async function loadSiteView(proposal=draft,{frame=true}={}){
+ if(!site)return;
+ const selectedSite=site,depth=$('context-depth').checked?'full':'surface',d=proposal?.siteId===site.id?proposal:null;
+ const key=JSON.stringify([site.id,site.hash,depth,d?.candidate.hash,d?.transform]);if(key===contextKey)return;
+ const token=++contextTicket,query=new URLSearchParams({depth});if(d){query.set('draft',d.id);query.set('candidate',d.candidate.hash);}
+ const mesh=await api(`sites/${site.id}/mesh?${query}`);if(token!==contextTicket||site!==selectedSite)return;
+ contextFloor=mesh.floor;contextSurface=mesh.surfaceY;
+ scene.siteBounds({...site,plot:depth==='full'?site.plot:{min:[site.plot.min[0],site.frontage[1]+.05,site.plot.min[2]],max:[site.plot.max[0],site.frontage[1]+.15,site.plot.max[2]]}});
+ await scene.loadContext(mesh);if(token!==contextTicket)return;contextKey=key;
+ if(frame){scene.frame(site.dimensions,contextSurface);scene.fit(site.blocks.filter(c=>c.y>=contextFloor));cameraSelection(null);}
+}
+$('context-depth').onchange=()=>action(()=>loadSiteView());
 function localCells(cells){const offset=site?draft.transform.origin.map((v,i)=>v-site.origin[i]):[0,0,0];return cells.map(c=>{let {x,z}=c,w=draft.candidate.dimensions.x,d=draft.candidate.dimensions.z;for(let i=0;i<(draft.transform?.turns||0);i++){[x,z]=[d-1-z,x];[w,d]=[d,w];}return {...c,x:x+offset[0],y:c.y+offset[1],z:z+offset[2]};});}
 function highlight(){const id=$('studio-component').value;scene.select(id?localCells(draft.candidate.blocks.filter(c=>c.component===id)):[]);const overlays=$('diff-visible').checked?localCells(changes):[];if($('impact-visible').checked&&site&&draft.assessment)for(const [cells,kind]of [[draft.assessment.collisions,'change'],[draft.assessment.excavations,'remove']])for(const c of cells)overlays.push({...c,x:c.x-site.origin[0],y:c.y-site.origin[1],z:c.z-site.origin[2],kind});scene.differences(overlays);}
 // Versions: saved artifacts of this draft's project, oldest first, numbered for people.
@@ -119,9 +129,9 @@ async function renderDraft(next,{frame=false}={}){
  const token=++ticket;
  const ceiling=$('studio-ceiling');const wanted=ceiling.value,floors=floorOptions(next.candidate);ceiling.replaceChildren(new Option('Whole building','64'),...floors.map(f=>new Option(f.label,String(f.value))));ceiling.value=[...ceiling.options].some(o=>o.value===wanted)?wanted:'64';
  const mesh=await draftMesh(next,ceiling.value);if(token!==ticket)return;
- if(next.siteId!==site?.id){await selectSite(next.siteId);frame=true;}if(token!==ticket)return;
+ if(next.siteId!==site?.id){await selectSite(next.siteId,true);frame=true;}if(token!==ticket)return;
  if(!draft||draft.candidate.dimensions.x!==next.candidate.dimensions.x||draft.candidate.dimensions.z!==next.candidate.dimensions.z)frame=true;
- if(draft&&(draft.id!==next.id||draft.candidate.hash!==next.candidate.hash))clearPlacementJob();draft=next;await scene.load(mesh);if(token!==ticket)return;
+ if(draft&&(draft.id!==next.id||draft.candidate.hash!==next.candidate.hash))clearPlacementJob();draft=next;await scene.load(mesh);if(token!==ticket)return;await loadSiteView(next,{frame:false});if(token!==ticket)return;
  scene.position(site?draft.transform.origin.map((v,i)=>v-site.origin[i]):[0,0,0]);scene.show();
  if(frame)scene.frame(site?.dimensions||draft.candidate.dimensions,site?contextSurface:0);
  renderDesignChoices(draft.id);$('draft-title').textContent=designName(draft.plan.name);authorChip(draft.author);$('rename-design').hidden=false;$('rename-form').hidden=true;

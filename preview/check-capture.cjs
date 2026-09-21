@@ -59,3 +59,22 @@ test('surface presentation hides deep rock without altering the complete survey'
  const {siteView}=require('./site-view.cjs'),site={blocks:Array.from({length:40},(_,y)=>({x:0,y,z:0,block:'minecraft:stone'}))};
  const view=siteView(site,'surface');assert.equal(view.floor,36);assert.equal(view.blocks.length,4);assert.equal(site.blocks.length,40);assert.equal(siteView(site,'full').blocks.length,40);assert.throws(()=>siteView(site,'other'));
 });
+
+test('proposed surroundings remove only authored writes, including air, at every quarter turn',()=>{
+ const {siteView}=require('./site-view.cjs'),{transformCells}=require('./sites.cjs');
+ const candidate={hash:'fixture',dimensions:{x:3,y:3,z:2},blocks:[{x:0,y:1,z:0,block:'minecraft:air'},{x:2,y:1,z:1,block:'minecraft:stone'}]};
+ for(let turns=0;turns<4;turns++){
+  const transform={origin:[-20,60,30],turns},origin=[-24,55,25];
+  const overwritten=transformCells(candidate,transform).map(c=>({x:c.x-origin[0],y:c.y-origin[1],z:c.z-origin[2],block:'minecraft:oak_leaves'}));
+  const retained={x:0,y:8,z:0,block:'minecraft:oak_log'},site={origin,blocks:[...overwritten,retained]},before=JSON.stringify(site);
+  const view=siteView(site,'full',candidate,transform);
+  assert.equal(view.replacedCells,2);assert.deepEqual(view.blocks,[retained]);assert.equal(JSON.stringify(site),before);assert.equal(siteView(site,'full').blocks.length,3);
+ }
+});
+
+test('an unspecified tree inside the design bounds remains visible rather than implying an unplanned clearance',()=>{
+ const {siteView}=require('./site-view.cjs');
+ const site={origin:[0,0,0],blocks:[{x:1,y:1,z:1,block:'minecraft:oak_log'}]};
+ const candidate={dimensions:{x:3,y:3,z:3},blocks:[{x:0,y:1,z:0,block:'minecraft:air'}]};
+ assert.deepEqual(siteView(site,'full',candidate,{origin:[0,0,0],turns:0}).blocks,site.blocks);
+});

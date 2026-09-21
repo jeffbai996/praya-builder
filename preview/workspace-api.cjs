@@ -163,7 +163,14 @@ function workspaceApi({artifacts,port}){
     send(store.create('sites',importSite(Buffer.from(body.schematic,'base64'),body.metadata)),201);
    }else if(/^sites\/[a-z0-9-]+(?:\/mesh)?$/.test(route)&&req.method==='GET'){
     const [,id,kind]=route.split('/'),site=store.get('sites',id);
-    if(kind==='mesh'){const depth=url.searchParams.get('depth')||'full',key=site.hash+':'+depth;if(!cached.has(key)){const view=siteView(site,depth);if(cached.size>=2)cached.delete(cached.keys().next().value);cached.set(key,{...siteMesh({...site,blocks:view.blocks}),floor:view.floor,surfaceY:view.surfaceY});}send(cached.get(key));}else send(site);
+    if(kind==='mesh'){
+     const depth=url.searchParams.get('depth')||'full',draftId=url.searchParams.get('draft'),draft=draftId?store.get('drafts',draftId):null;
+     if(draft&&draft.siteId!==site.id)throw Error('Design belongs to a different survey');
+     if(draft&&url.searchParams.get('candidate')!==draft.candidate.hash)throw Error('Design changed; reload its surroundings');
+     const key=JSON.stringify([site.hash,depth,draft?.candidate.hash,draft?.transform]);
+     if(!cached.has(key)){const view=siteView(site,depth,draft?.candidate,draft?.transform);if(cached.size>=4)cached.delete(cached.keys().next().value);cached.set(key,{...siteMesh({...site,blocks:view.blocks}),floor:view.floor,surfaceY:view.surfaceY,replacedCells:view.replacedCells,candidateHash:draft?.candidate.hash||null});}
+     send(cached.get(key));
+    }else send(site);
    }else if(route==='drafts'&&req.method==='POST'){
     if(body.catalogue){const a=artifacts.get(body.catalogue);if(!a)throw Error('Unknown catalogue revision');const [project,revision]=body.catalogue.split('/');const stem=project==='courtyard'?revision:`${project}-${revision}`;body.plan=JSON.parse(fs.readFileSync(path.join(__dirname,'generated',stem+'.plan.json'),'utf8'));store.putArtifact(a);body.parentHash=a.hash;}
     send(await service.createDraft(body),201);
