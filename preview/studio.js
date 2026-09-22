@@ -57,7 +57,7 @@ function designChoices(){
  return ordered.filter(d=>{if(seen.has(d.project))return false;seen.add(d.project);return true;}).sort((a,b)=>designName(a.name).localeCompare(designName(b.name)));
 }
 const STUDIO_AUTHOR={agent:'studio',model:'operator'};
-function modelName(id){if(!id)return '';const known={'claude-fable-5-1':'Claude Fable 5.1','claude-opus-5':'Claude Opus 5','claude-sonnet-5':'Claude Sonnet 5','claude-haiku-4-5':'Claude Haiku 4.5','operator':'Operator','unrecorded':'Unrecorded'};if(known[id])return known[id];
+function modelName(id){if(!id)return '';const known={'gpt-6-astra':'GPT-6 Astra','claude-fable-5-1':'Claude Fable 5.1','claude-opus-5':'Claude Opus 5','claude-sonnet-5':'Claude Sonnet 5','claude-haiku-4-5':'Claude Haiku 4.5','operator':'Operator','unrecorded':'Unrecorded'};if(known[id])return known[id];
  return id.split(/[-_]/).map(p=>/^\d+$/.test(p)?p:p[0].toUpperCase()+p.slice(1)).join(' ').replace(/(\d) (\d)/g,'$1.$2');}
 function authorLabel(a){if(!a)return 'Unrecorded';return [modelName(a.model||a.agent),a.effort].filter(Boolean).join(' · ');}
 function authorTag(d){return d.author?' · '+authorLabel(d.author):'';}
