@@ -14,7 +14,7 @@ const IMAGE=/^[a-z0-9-]+\.png$/;
 const clone=value=>JSON.parse(JSON.stringify(value));
 const digest=value=>createHash('sha256').update(JSON.stringify(value)).digest('hex');
 const bytesDigest=value=>createHash('sha256').update(value).digest('hex');
-const rendererVersion='review-sheet-v1';
+const rendererVersion='review-sheet-v2-font-sign-theme';
 
 function artifactHash(ref){
  const value=ref?.artifactHash||ref?.candidateHash||ref?.candidate?.hash||ref?.hash;
@@ -65,7 +65,7 @@ function reviewInputPath(root,hash,review){return path.join(root,'sheets',hash,`
 function reviewDirectory(root,hash,review){return path.join(root,'sheets',hash,review);}
 function validateManifestAt(directory,hash,review,manifest){
  if(!manifest||manifest.artifactHash!==hash||manifest.reviewHash!==review||!Array.isArray(manifest.views)||!manifest.views.length)throw Error('Invalid review sheet manifest');
- const names=new Set();for(const view of manifest.views){safeName(view.file);if(names.has(view.file)||view.url!==route(hash,review,view.file)||!HASH.test(view.sha256||''))throw Error('Invalid review sheet image manifest');names.add(view.file);const bytes=fs.readFileSync(path.join(directory,view.file));if(bytesDigest(bytes)!==view.sha256)throw Error('Review sheet image checksum mismatch');}
+ const names=new Set();for(const view of manifest.views.flatMap(v=>v.dark?[v,v.dark]:[v])){safeName(view.file);if(names.has(view.file)||view.url!==route(hash,review,view.file)||!HASH.test(view.sha256||''))throw Error('Invalid review sheet image manifest');names.add(view.file);const bytes=fs.readFileSync(path.join(directory,view.file));if(bytesDigest(bytes)!==view.sha256)throw Error('Review sheet image checksum mismatch');}
 }
 function validateTransform(value){if(value==null)return null;if(!Array.isArray(value.origin)||value.origin.length!==3||!value.origin.every(Number.isInteger)||!Number.isInteger(value.turns)||value.turns<0||value.turns>3)throw Error('Invalid review transform');return clone(value);}
 
@@ -140,12 +140,12 @@ class ReviewSheetService{
   const file=path.join(directory,'index.json'),manifest=JSON.parse(fs.readFileSync(file,'utf8'));validateManifestAt(directory,hash,review,manifest);return manifest;
  }
  readImage(hash,review,file){
-  safeName(file);const manifest=this.readIndex(hash,review);if(!manifest||!manifest.views.some(view=>view.file===file)){const error=Error('Review sheet image not found');error.status=404;throw error;}return fs.readFileSync(path.join(reviewDirectory(this.store.root,hash,review),file));
+  safeName(file);const manifest=this.readIndex(hash,review);if(!manifest||!manifest.views.some(view=>view.file===file||view.dark?.file===file)){const error=Error('Review sheet image not found');error.status=404;throw error;}return fs.readFileSync(path.join(reviewDirectory(this.store.root,hash,review),file));
  }
  async runWorker(input){
   const file=path.join(input.outputDir,'input.json');atomicJSON(file,input);
   const worker=path.join(__dirname,'review-sheet-worker.cjs');
-  try{await run(process.execPath,[worker,file],{timeout:60000,killSignal:'SIGTERM',maxBuffer:1024*1024});}catch(error){throw Error(`Review sheet render failed: ${(error.stderr||error.message||'worker failed').trim().slice(0,2000)}`);}
+  try{await run(process.execPath,[worker,file],{timeout:180000,killSignal:'SIGTERM',maxBuffer:1024*1024});}catch(error){throw Error(`Review sheet render failed: ${(error.stderr||error.message||'worker failed').trim().slice(0,2000)}`);}
   finally{try{fs.unlinkSync(file);}catch(error){if(error.code!=='ENOENT')throw error;}}
  }
 }

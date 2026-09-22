@@ -18,7 +18,7 @@ function manifestIndex(index){
 function validateManifest(manifest){
   if(!manifest||!HASH.test(manifest.artifactHash||'')||!HASH.test(manifest.reviewHash||'')||!Array.isArray(manifest.views))throw Error('Review sheet returned an invalid manifest');
   const base=`/api/workspace/artifacts/${manifest.artifactHash}/sheet/`;
-  for(const view of manifest.views){
+  for(const view of manifest.views.flatMap(v=>v.dark?[v,v.dark]:[v])){
     let url;try{url=new URL(view?.url,location.href);}catch{throw Error('Review sheet contains an invalid image');}
     const file=url.pathname.slice(base.length);
     if(url.origin!==location.origin||!url.pathname.startsWith(base)||!/^[a-z0-9-]+\.png$/.test(file)||url.searchParams.get('review')!==manifest.reviewHash||[...url.searchParams.keys()].length!==1)throw Error('Review sheet contains an invalid image');
@@ -37,6 +37,9 @@ export function createReviewSheetUI({api,openImage}){
   const status=required('sheet-status'),retry=required('sheet-retry'),gallery=required('sheet-gallery');
   if(tabs.length!==2)throw Error('Review-sheet UI requires summary and review tabs');
 
+  const themedImages=new Set();
+  const dark=()=>['dark','oled'].includes(document.documentElement.dataset.theme);
+  new MutationObserver(()=>{for(const update of themedImages)update();}).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
   let source=null,requestToken=0,retryWork=null,loadedKey=null;
   const selected=()=>tabs.find(tab=>tab.getAttribute('aria-selected')==='true')?.dataset.sheetTab||'summary';
 
@@ -47,7 +50,7 @@ export function createReviewSheetUI({api,openImage}){
   }
 
   function clear(message){
-    gallery.replaceChildren();
+    themedImages.clear();gallery.replaceChildren();
     loadedKey=null;
     retryWork=null;
     setStatus(message);
@@ -55,14 +58,15 @@ export function createReviewSheetUI({api,openImage}){
 
   function show(manifest,key){
     validateManifest(manifest);
+    themedImages.clear();
     const figures=manifest.views.map(view=>{
       if(!view||typeof view.url!=='string')throw Error('Review sheet contains an invalid image');
       const label=caption(view),figure=document.createElement('figure'),link=document.createElement('a');
       const image=document.createElement('img'),text=document.createElement('figcaption');
       link.href=view.url;link.setAttribute('aria-label',`Open ${label}`);
-      image.src=view.url;image.alt=label;image.loading='lazy';image.decoding='async';
+      const update=()=>{const url=dark()&&view.dark?view.dark.url:view.url;image.src=url;link.href=url;};themedImages.add(update);update();image.alt=label;image.loading='lazy';image.decoding='async';
       text.textContent=label;link.append(image);figure.append(link,text);
-      link.addEventListener('click',event=>{event.preventDefault();openImage(view.url,label);});
+      link.addEventListener('click',event=>{event.preventDefault();openImage(link.href,label);});
       return figure;
     });
     gallery.replaceChildren(...figures);loadedKey=key;retryWork=null;

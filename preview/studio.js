@@ -1,3 +1,5 @@
+import {collectDesigns} from './design-library.js';
+import {designChooser} from './design-chooser.js';
 import {placementReadiness,compatibleSites,placementFit,placementErrorMessage} from './placement-readiness.js';
 import {label,componentLabel,coordinates,setCoordinates,record,review,finishChoices,siteInterface} from './studio-interface.js';
 import {createScene} from './scene.js';
@@ -50,40 +52,18 @@ for(const link of document.querySelectorAll('.studio-steps a'))link.addEventList
 window.addEventListener('hashchange',()=>mode(modeFromHash(location.hash)));
 $('empty-site').onclick=()=>{mode('site',{scroll:innerWidth<1024});$('site-select').focus();};
 const designName=name=>name.replace(/ · (?:R\d+|Praya detail pass)$/,'');
-let showAllDrafts=false;
-function designChoices(){
- const byId=new Map(index.drafts.map(d=>[d.id,d])),seen=new Set();
- const ordered=[...[...index.revisions].sort((a,b)=>b.createdAt.localeCompare(a.createdAt)).map(r=>byId.get(r.draftId)).filter(Boolean),...index.drafts];
- return ordered.filter(d=>{if(seen.has(d.project))return false;seen.add(d.project);return true;}).sort((a,b)=>designName(a.name).localeCompare(designName(b.name)));
-}
+let selectedDraftId='';
+function designChoices(){return collectDesigns(index);}
 const STUDIO_AUTHOR={agent:'studio',model:'operator'};
 function modelName(id){if(!id)return '';const known={'gpt-6-astra':'GPT-6 Astra','claude-fable-5-1':'Claude Fable 5.1','claude-opus-5':'Claude Opus 5','claude-sonnet-5':'Claude Sonnet 5','claude-haiku-4-5':'Claude Haiku 4.5','operator':'Operator','unrecorded':'Unrecorded'};if(known[id])return known[id];
  return id.split(/[-_]/).map(p=>/^\d+$/.test(p)?p:p[0].toUpperCase()+p.slice(1)).join(' ').replace(/(\d) (\d)/g,'$1.$2');}
 function authorLabel(a){if(!a)return 'Unrecorded';return [modelName(a.model||a.agent),a.effort].filter(Boolean).join(' · ');}
 function authorTag(d){return d.author?' · '+authorLabel(d.author):'';}
 function authorChip(a){const chip=$('draft-author');if(!chip)return;chip.hidden=!a;chip.textContent=a?authorLabel(a):'';chip.dataset.agent=a?.agent||'';}
-function touchedAt(d){const saves=index.revisions.filter(r=>r.draftId===d.id).map(r=>r.createdAt);return [d.createdAt||'',...saves].sort().at(-1)||'';}
-function whenShort(iso){if(!iso)return '';const t=new Date(iso);return isNaN(t)?'':t.toLocaleDateString([],{month:'short',day:'numeric'});}
-function choiceLabel(d){return designName(d.name)+(d.valid?'':' · needs changes')+(touchedAt(d)?' · '+whenShort(touchedAt(d)):'');}
-function renderDesignChoices(current=$('draft-select').value){
- // Fifteen designs in one alphabetical list stopped being readable (Jeff
- // 2026-09-19). Group by site, newest first inside each group, with the
- // handful touched most recently pinned at the top so the working set is
- // one glance away. Names stay clean; the date is the only decoration.
- const select=$('draft-select'),latest=designChoices().sort((a,b)=>touchedAt(b).localeCompare(touchedAt(a)));
- select.replaceChildren(new Option('Choose a design',''));
- const addGroup=(label,items)=>{if(!items.length)return;const g=document.createElement('optgroup');g.label=label;for(const d of items)g.append(new Option(choiceLabel(d),d.id));select.append(g);};
- const recent=latest.slice(0,4);addGroup('Recent',recent);
- const siteName=id=>(index.sites.find(s=>s.id===id)||{}).name||'Unknown site';
- const bySite=new Map();for(const d of latest){if(recent.includes(d))continue;const key=d.siteId||'';if(!bySite.has(key))bySite.set(key,[]);bySite.get(key).push(d);}
- for(const [sid,items] of [...bySite.entries()].sort((a,b)=>(a[0]?0:1)-(b[0]?0:1)||siteName(a[0]).localeCompare(siteName(b[0]))))addGroup(sid?siteName(sid):'Studies without a site',items);
- const rest=index.drafts.filter(d=>!latest.some(n=>n.id===d.id));
- if(showAllDrafts){addGroup('Earlier versions and working drafts',rest.slice().sort((a,b)=>touchedAt(b).localeCompare(touchedAt(a))));}
- else if(current&&!latest.some(d=>d.id===current)){const d=index.drafts.find(d=>d.id===current);if(d)select.add(new Option(d.name+' · currently open',d.id));}
- select.value=current;$('draft-history').hidden=!rest.length;$('draft-history').textContent=showAllDrafts?'Show current designs':'Show all drafts';$('draft-history').setAttribute('aria-expanded',String(showAllDrafts));
-}
-$('draft-history').onclick=()=>{showAllDrafts=!showAllDrafts;renderDesignChoices();};
-async function refresh(){index=await api('context');$('studio-main').hidden=false;if(!index.sites.length)$('fixture-panel').open=true;const sid=$('site-select').value,did=$('draft-select').value;$('site-select').replaceChildren(new Option('No site selected',''),...index.sites.map(s=>new Option(s.name,s.id)));$('site-select').value=sid;renderDesignChoices(did);$('saved-revision').replaceChildren(...index.revisions.map(r=>new Option(r.plan.name+' · '+when(r.createdAt),r.id)));$('continue-revision').disabled=!index.revisions.length;$('job-select').replaceChildren(new Option('Choose a construction job',''),...(index.jobs||[]).map(j=>new Option(label(j.kind)+' · '+label(j.state)+' · '+when(j.createdAt),j.id)));status(`${index.sites.length} sites · ${designChoices().length} designs · ${index.revisions.length} saved versions`);}
+function renderDesignChoices(current=selectedDraftId){selectedDraftId=current;const d=index.drafts.find(d=>d.id===current);$('current-design-name').textContent=d?designName(d.name):'Choose a design';}
+const chooser=designChooser({getIndex:()=>index,open:(id,revision)=>action(async()=>{await renderDraft(await api('drafts/'+id),{frame:true});if(revision)await sheetUI.showRevision(revision);})});
+$('choose-design').onclick=()=>chooser.show();
+async function refresh(){index=await api('context');$('studio-main').hidden=false;if(!index.sites.length)$('fixture-panel').open=true;const sid=$('site-select').value,did=selectedDraftId;$('site-select').replaceChildren(new Option('No site selected',''),...index.sites.map(s=>new Option(s.name,s.id)));$('site-select').value=sid;renderDesignChoices(did);$('saved-revision').replaceChildren(...index.revisions.map(r=>new Option(r.plan.name+' · '+when(r.createdAt),r.id)));$('continue-revision').disabled=!index.revisions.length;$('job-select').replaceChildren(new Option('Choose a construction job',''),...(index.jobs||[]).map(j=>new Option(label(j.kind)+' · '+label(j.state)+' · '+when(j.createdAt),j.id)));status(`${index.sites.length} sites · ${designChoices().length} designs · ${index.revisions.length} saved versions`);}
 async function selectSite(id,skipView=false){contextTicket++;contextKey=null;site=id?await api('sites/'+id):null;$('site-select').value=id||'';scene.siteBounds(site);const templateFits=Boolean(site&&site.plot.max[0]-site.plot.min[0]>=32&&site.plot.max[2]-site.plot.min[2]>=32);$('new-proposals').disabled=!templateFits;$('study-site-note').hidden=!site||templateFits;for(const id of ['context-visible','context-depth','impact-visible']){$(id).disabled=!site;$(id).closest('.layer-chip').title=site?'':'Needs a surveyed site';}if(site){if(!skipView)await loadSiteView(null);setCoordinates('origin',site.plot.min);$('site-summary').textContent=`${site.plot.max[0]-site.plot.min[0]} × ${site.plot.max[2]-site.plot.min[2]} plot · ${site.world} · captured ${when(site.capturedAt)}${site.protected.length?' · '+site.protected.length+' protected areas':''}`;}else{await scene.loadContext({sections:[]});$('site-summary').textContent='No site. Designs still work without one; construction needs a survey.';}}
 async function loadSiteView(proposal=draft,{frame=true}={}){
  if(!site)return;
@@ -132,6 +112,7 @@ async function renderDraft(next,{frame=false}={}){
  if(next.siteId!==site?.id){await selectSite(next.siteId,true);frame=true;}if(token!==ticket)return;
  if(!draft||draft.candidate.dimensions.x!==next.candidate.dimensions.x||draft.candidate.dimensions.z!==next.candidate.dimensions.z)frame=true;
  if(draft&&(draft.id!==next.id||draft.candidate.hash!==next.candidate.hash))clearPlacementJob();draft=next;await scene.load(mesh);if(token!==ticket)return;await loadSiteView(next,{frame:false});if(token!==ticket)return;
+ const offset=site?draft.transform.origin.map((v,i)=>v-site.origin[i]):[0,0,0];scene.walkStart(site?site.frontage.map((v,i)=>v-site.origin[i]):[draft.candidate.dimensions.x/2,1,0],[offset[0]+draft.candidate.dimensions.x/2,0,offset[2]+draft.candidate.dimensions.z/2]);
  scene.position(site?draft.transform.origin.map((v,i)=>v-site.origin[i]):[0,0,0]);scene.show();
  if(frame)scene.frame(site?.dimensions||draft.candidate.dimensions,site?contextSurface:0);
  renderDesignChoices(draft.id);$('draft-title').textContent=designName(draft.plan.name);authorChip(draft.author);$('rename-design').hidden=false;$('rename-form').hidden=true;
@@ -141,7 +122,7 @@ async function renderDraft(next,{frame=false}={}){
  $('candidate-summary').textContent=`${draft.candidate.blocks.length.toLocaleString()} cells · ${changes.length.toLocaleString()} changes from the compared version · draft version ${draft.version} · ${draft.candidate.hash.slice(0,12)}`;
  review(draft);support();references();sheetUI.setDraft(draft);
  $('save-revision').disabled=!draft.valid;$('undo-draft').disabled=draft.cursor===0;$('redo-draft').disabled=draft.cursor===draft.history.length-1;
- draftControls(true);backLink();document.body.dataset.draft=draft.id;document.body.dataset.ready='true';
+ draftControls(true);materialPreviewState();backLink();document.body.dataset.draft=draft.id;document.body.dataset.ready='true';
  const url=new URL(location.href);url.searchParams.set('draft',draft.id);url.searchParams.delete('catalogue');url.searchParams.delete('review');history.replaceState(null,'',url);
 }
 async function support(){
@@ -155,8 +136,8 @@ function componentSigns(){
  return draft.plan.signs.map((sign,i)=>({...sign,index:i,component:owner.get(sign.at.join(','))})).filter(s=>!id||s.component===id);
 }
 function signTools(){
- const signs=componentSigns();$('sign-tools').hidden=!signs.length;if(!signs.length)return;
- const chosen=$('sign-select').value;$('sign-select').replaceChildren(...signs.map(s=>new Option(`${componentLabel(s.component)} · (${s.at.join(', ')}) · ${s.lines.find(l=>l.trim())||'blank'}`,String(s.index))));
+ const signs=componentSigns();document.querySelector('[data-edit-tab=signs]').disabled=!signs.length;if(!signs.length&&editTool==='signs')editTool='materials';renderEditTool();if(!signs.length)return;
+ const chosen=$('sign-select').value;$('sign-select').replaceChildren(...signs.map(s=>new Option(`${componentLabel(s.component)} · ${s.lines.filter(l=>/[a-z0-9]/i.test(l)).join(' / ')||'Blank sign'}`,String(s.index))));
  $('sign-select').value=signs.some(s=>String(s.index)===chosen)?chosen:String(signs[0].index);
  if(!$('sign-preset').options.length)$('sign-preset').replaceChildren(...presets.map(p=>new Option(p.name,p.id)));
  signFields(true);
@@ -182,6 +163,11 @@ async function references(){
 }
 $('reference-close').onclick=()=>$('reference-dialog').close();
 $('add-references').onclick=()=>action(async()=>{const d=requireDraft(),files=[...$('reference-files').files];if(!files.length)throw Error('Choose one or more PNG or JPEG files');for(const file of files){if(file.size>8*1024*1024)throw Error(file.name+' exceeds 8 MiB');const bytes=new Uint8Array(await file.arrayBuffer());let binary='';for(let i=0;i<bytes.length;i+=8192)binary+=String.fromCharCode(...bytes.subarray(i,i+8192));await api(`drafts/${d.id}/references`,{name:file.name,type:file.type,data:btoa(binary),note:$('reference-note').value});}$('reference-files').value='';$('reference-note').value='';await references();status(files.length+' reference'+(files.length===1?'':'s')+' added.');});
+let editTool='materials';
+function renderEditTool(){for(const button of document.querySelectorAll('[data-edit-tab]'))button.setAttribute('aria-pressed',String(button.dataset.editTab===editTool));$('materials-editor').hidden=editTool!=='materials';$('sign-tools').hidden=editTool!=='signs';$('part-tools').hidden=editTool!=='parts';if(editTool==='parts'){const details=$('part-tools').querySelector('details');if(details)details.open=true;}}
+for(const button of document.querySelectorAll('[data-edit-tab]'))button.onclick=()=>{editTool=button.dataset.editTab;renderEditTool();};
+function materialPreviewState(){const changed=Boolean(draft&&$('material-state').value.trim()&&$('material-state').value!==draft.plan.palette[$('material-role').value]);$('apply-material').disabled=!changed;$('apply-material').textContent=changed?'Preview change':'Choose a replacement';}
+function materialScope(){const area=$('studio-component').value;const role=$('material-role').selectedOptions[0]?.textContent||'this material';$('material-scope').textContent='Replaces '+role.toLowerCase()+' in '+(area?componentLabel(area):'the whole building')+'. Preview first; save a version to keep it.';materialPreviewState();}
 function materials(){
  if(!draft)return;const id=$('studio-component').value,selected=$('material-role').value,roles=new Set();
  const collect=ops=>{for(const role of partsUI.roles(ops))if(role!=='air')roles.add(role);};
@@ -190,17 +176,16 @@ function materials(){
  if(roles.has(selected))$('material-role').value=selected;
  $('material-state').value=draft.plan.palette[$('material-role').value]||'';finishChoices($('material-state').value);
  $('roof-variant-controls').hidden=!/^study-(bar|staggered|court)$/.test(draft.plan.plan_id)||!/^wing-[01]-roof$/.test(id);
- signTools();
+ signTools();materialScope();
 }
 const requireDraft=()=>{if(!draft)throw Error('Open a design first');return draft;};
 function placement(){const origin=coordinates('origin');return {siteId:site?.id,transform:{origin,turns:Number($('turns').value)},brief:$('brief').value};}
-async function chooseSite(id){await selectSite(id);clearPlacementJob();draft=null;sheetUI.setDraft(null);partsUI.setDraft(null);$('draft-select').value='';delete document.body.dataset.draft;document.body.dataset.ready='false';scene.hide();draftControls(false);$('candidate-state').textContent='No design';delete $('candidate-state').dataset.state;$('candidate-summary').textContent='';$('asset-support').replaceChildren();$('sign-tools').hidden=true;$('reference-list').replaceChildren();$('add-references').disabled=true;$('review-metrics').replaceChildren();$('diagnostics').replaceChildren();$('draft-title').textContent=site?'Choose a design for this site':'No design open';authorChip(null);$('rename-design').hidden=true;$('rename-form').hidden=true;$('save-state').hidden=true;$('version-list').replaceChildren();$('compare-summary').textContent='';selection();backLink();const url=new URL(location.href);url.searchParams.delete('draft');if(id)url.searchParams.set('site',id);else url.searchParams.delete('site');history.replaceState(null,'',url);}
+async function chooseSite(id){await selectSite(id);clearPlacementJob();draft=null;sheetUI.setDraft(null);partsUI.setDraft(null);selectedDraftId='';renderDesignChoices('');delete document.body.dataset.draft;document.body.dataset.ready='false';scene.hide();draftControls(false);$('candidate-state').textContent='No design';delete $('candidate-state').dataset.state;$('candidate-summary').textContent='';$('asset-support').replaceChildren();$('sign-tools').hidden=true;$('reference-list').replaceChildren();$('add-references').disabled=true;$('review-metrics').replaceChildren();$('diagnostics').replaceChildren();$('draft-title').textContent=site?'Choose a design for this site':'No design open';authorChip(null);$('rename-design').hidden=true;$('rename-form').hidden=true;$('save-state').hidden=true;$('version-list').replaceChildren();$('compare-summary').textContent='';selection();backLink();const url=new URL(location.href);url.searchParams.delete('draft');if(id)url.searchParams.set('site',id);else url.searchParams.delete('site');history.replaceState(null,'',url);}
 async function continueRevision(r){const d=await api('drafts',{plan:r.plan,parentHash:r.artifactHash,siteId:r.siteId,transform:r.transform,brief:r.brief,author:STUDIO_AUTHOR});await refresh();await renderDraft(d,{frame:true});mode('design');status('New draft opened from the saved version; the saved version is unchanged.');}
 $('rename-design').onclick=()=>{$('rename-input').value=draft.plan.name;$('rename-form').hidden=false;$('rename-design').hidden=true;$('rename-input').focus();$('rename-input').select();};
 $('rename-cancel').onclick=()=>{$('rename-form').hidden=true;$('rename-design').hidden=!draft;};
 $('rename-form').onsubmit=e=>{e.preventDefault();action(async()=>{const d=requireDraft(),name=$('rename-input').value.trim();if(!name)throw Error('Enter a name');if(name===d.plan.name){$('rename-cancel').onclick();return;}status('Renaming…');await renderDraft(await api(`drafts/${d.id}/edit`,{expectedVersion:d.version,plan:{...d.plan,name}}));await refresh();$('rename-form').hidden=true;$('rename-design').hidden=false;status('Renamed to '+name+'. Versions and identity unchanged.');});};
 $('site-select').onchange=()=>action(()=>chooseSite($('site-select').value));
-$('draft-select').onchange=()=>action(async()=>{if($('draft-select').value)await renderDraft(await api('drafts/'+$('draft-select').value));});
 for(const kind of ['flat','slope'])$('fixture-'+kind).onclick=()=>action(async()=>{const saved=await api('fixtures',{kind});await refresh();await chooseSite(saved.id);status('Synthetic '+kind+' test plot ready.');});
 $('catalogue-draft').onclick=()=>action(async()=>{const d=await api('drafts',{...placement(),author:STUDIO_AUTHOR,catalogue:$('catalogue-select').value});await refresh();await renderDraft(d,{frame:true});mode('design');});
 $('import-plan').onclick=()=>action(async()=>{const file=$('plan-file').files[0];if(!file)throw Error('Choose a plan JSON file');const d=await api('drafts',{...placement(),author:{agent:'studio upload',model:'unrecorded'},plan:JSON.parse(await file.text())});await refresh();await renderDraft(d,{frame:true});mode('design');});
@@ -214,12 +199,16 @@ $('submit-revision').onclick=()=>action(async()=>{const d=requireDraft(),file=$(
 $('download-plan').onclick=()=>action(async()=>download(requireDraft().plan,'proposal.plan.json'));
 $('download-schematic').onclick=()=>action(async()=>{const d=requireDraft(),a=document.createElement('a');a.href=`/api/workspace/drafts/${d.id}/schematic`;a.download='proposal.schem';a.click();});
 $('apply-variant').onclick=()=>action(async()=>{const d=requireDraft();await renderDraft(await api(`drafts/${d.id}/edit`,{expectedVersion:d.version,componentId:$('studio-component').value,variant:{name:'roof-canopy',value:$('roof-variant').value}}));});
-$('material-role').onchange=()=>{$('material-state').value=draft.plan.palette[$('material-role').value];finishChoices($('material-state').value);};
+$('material-role').onchange=()=>{$('material-state').value=draft.plan.palette[$('material-role').value];finishChoices($('material-state').value);materialScope();};
 $('studio-component').onchange=()=>{if(draft){materials();highlight();const id=$('studio-component').value;selection(id?componentLabel(id):null);}};$('diff-visible').onchange=()=>{if(draft)highlight();};$('impact-visible').onchange=()=>{if(draft)highlight();};$('context-visible').onchange=()=>scene.contextVisible($('context-visible').checked);
 $('studio-ceiling').onchange=()=>action(async()=>{if(draft)await renderDraft(draft);});
 $('studio-navigation').onchange=()=>{scene.navigation($('studio-navigation').value);$('studio-model').focus({preventScroll:true});};
-$('studio-model').addEventListener('navigationchange',e=>{$('studio-navigation').value=e.detail;$('free-camera-tools').hidden=e.detail!=='free';});
-for(const b of document.querySelectorAll('[data-camera-move]'))b.onclick=()=>{scene.travel(...b.dataset.cameraMove.split(',').map(Number));};
+$('studio-model').addEventListener('navigationchange',e=>{$('studio-navigation').value=e.detail;$('free-camera-tools').hidden=!['free','walk'].includes(e.detail);$('movement-mode-label').textContent=e.detail==='walk'?'Walk':'Free camera';$('reset-walk').hidden=$('walk-jump').hidden=e.detail!=='walk';document.querySelector('.flight-height').hidden=e.detail==='walk';});
+$('walk-jump').onclick=()=>{scene.jumpWalk();$('studio-model').focus({preventScroll:true});};
+$('reset-walk').onclick=()=>{scene.resetWalk();$('studio-model').focus({preventScroll:true});};
+$('studio-model').addEventListener('walkunavailable',()=>status('No clear standing position found. Use Free camera to inspect this design.','warning'));
+$('exit-free-camera').onclick=()=>scene.navigation('orbit');
+for(const b of document.querySelectorAll('[data-camera-move]'))b.onclick=()=>{scene.travel(...b.dataset.cameraMove.split(',').map(Number));$('studio-model').focus({preventScroll:true});};
 function cameraSelection(view){for(const b of document.querySelectorAll('[data-studio-view]'))b.setAttribute('aria-pressed',String(b.dataset.studioView===view));}
 for(const b of document.querySelectorAll('[data-studio-view]'))b.onclick=()=>{scene.view(b.dataset.studioView);cameraSelection(b.dataset.studioView);};
 $('studio-fit').onclick=()=>{cameraSelection(null);if(draft)scene.fit(localCells(draft.candidate.blocks));else if(site)scene.fit(site.blocks.filter(c=>c.y>=contextFloor));};
@@ -254,7 +243,8 @@ $('apply-placement').onclick=()=>action(async()=>{showJob(await api(`constructio
 $('cancel-placement').onclick=()=>action(async()=>{showJob(await api(`construction/jobs/${job.id}/pause`,{}));});
 $('reconcile-placement').onclick=()=>action(async()=>{showJob(await api(`construction/jobs/${job.id}/reconcile`,{}));});
 $('rollback-placement').onclick=()=>action(async()=>{showJob(await api(`construction/jobs/${job.id}/rollback`,{}));status('Rollback preview prepared. Later conflicting edits will be preserved.');});
-$('material-choice').onchange=()=>{$('material-state').value=$('material-choice').value;};
+$('material-choice').onchange=()=>{$('material-state').value=$('material-choice').value;materialPreviewState();};
+$('material-state').addEventListener('input',materialPreviewState);
 $('download-review').onclick=()=>action(async()=>{const d=requireDraft();download({diagnostics:d.diagnostics,assessment:d.assessment,access:d.access,surveyHash:d.surveyHash,artifactHash:d.candidate.hash},'design-review.json');});
 $('download-placement').onclick=()=>{if(job)download(job,'placement-record.json');};
 $('download-handoff').onclick=()=>action(async()=>{const d=requireDraft();await refresh();const revision=index.revisions.find(r=>r.draftId===d.id&&r.artifactHash===d.candidate.hash&&r.surveyHash===d.surveyHash);if(!revision)throw Error('Save this version before exporting a placement package');download(await api('revisions/'+revision.id+'/handoff'),'placement-package.json');status('Saved version and exact survey packaged for placement review.');});
@@ -279,8 +269,8 @@ function updatePlacement(){
  const state=placementReadiness(draft,site,bridge,index?.revisions||[]);
  if(state.ready&&placementIssue?.draftId===draft.id&&placementIssue.hash===draft.candidate.hash&&placementIssue.worldId===bridge.worldId){state.kind='preview-blocked';state.title='Placement preview is blocked';state.message=placementIssue.message;}
  $('placement-readiness').dataset.state=state.kind;$('placement-readiness-title').textContent=state.title;$('placement-readiness-message').textContent=state.message;
- $('placement-teaser-title').textContent=state.kind==='ready'?'Ready for placement review':'Build this design';
- $('placement-teaser').textContent=state.kind==='world-mismatch'?`Uses ${site.world} · connected to ${bridge.world}. Prepare a copy to continue.`:state.title;
+ $('placement-teaser-title').textContent=state.kind==='ready'?'Ready to preview placement':'Placement setup';
+ $('placement-teaser').textContent=state.kind==='world-mismatch'?`This design uses ${site.world}. Prepare a copy for ${bridge.world} in Build.`:state.title;
  $('placement-world').textContent=bridge?.connected?bridge.world:'Not connected';$('placement-source').textContent=site?`${site.name} · ${site.world}`:'No site attached';
  $('prepare-placement').disabled=!state.ready||busy;$('placement-save').hidden=state.kind!=='unsaved';$('placement-save').disabled=busy;
  $('placement-copy-form').hidden=!draft||!['no-site','world-mismatch','identity-mismatch'].includes(state.kind);
@@ -313,3 +303,10 @@ draftControls(false);
 window.studioStatus=()=>({ready:document.body.dataset.ready==='true',draft:draft?.id,mode:$('studio-main').dataset.mode,metrics:scene?.metrics(),camera:scene?.camera(),changes:changes.length});
 const siteControls=siteInterface({api,action,status,refresh,selectSite:chooseSite});
 action(start).finally(()=>{$('studio-main').inert=false;$('studio-main').setAttribute('aria-busy','false');});
+
+// Reflect physical movement keys without handling or changing camera input.
+const flightKeys=[...document.querySelectorAll('[data-camera-key]')];
+$('studio-model').addEventListener('keydown',event=>{if(['free','walk'].includes($('studio-model').dataset.navigation))for(const key of flightKeys)if(key.dataset.cameraKey===event.code)key.classList.add('key-held');});
+window.addEventListener('keyup',event=>{for(const key of flightKeys)if(key.dataset.cameraKey===event.code)key.classList.remove('key-held');});
+const clearFlightKeys=()=>flightKeys.forEach(key=>key.classList.remove('key-held'));
+$('studio-model').addEventListener('blur',clearFlightKeys);$('studio-model').addEventListener('navigationchange',clearFlightKeys);window.addEventListener('blur',clearFlightKeys);

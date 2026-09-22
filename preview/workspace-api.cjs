@@ -25,12 +25,13 @@ function readBody(req){return new Promise((resolve,reject)=>{
 function siteMesh(site){
  const tiles=new Map();
  for(const c of site.blocks){const origin=[c.x,c.y,c.z].map(v=>Math.floor(v/16)*16),key=origin.join(',');if(!tiles.has(key))tiles.set(key,{origin,blocks:[]});tiles.get(key).blocks.push({...c,x:c.x-origin[0],y:c.y-origin[1],z:c.z-origin[2]});}
- const sections=[];
+ const sections=[],colliders=[];
  for(const {origin,blocks} of tiles.values()){
   const mesh=meshArtifact({hash:site.hash,dimensions:{x:16,y:16,z:16},blocks},16);
+  for(const box of mesh.colliders||[])colliders.push(box.map((v,i)=>v+origin[i%3]));
   for(const part of mesh.sections)sections.push({...part,sx:part.sx+origin[0],sy:part.sy+origin[1],sz:part.sz+origin[2]});
  }
- return {hash:site.hash,sections,ceiling:site.dimensions.y};
+ return {hash:site.hash,sections,colliders,ceiling:site.dimensions.y};
 }
 function workspaceApi({artifacts,port}){
  const store=new FileStore(process.env.BUILDER_WORKSPACE_DIR||path.join(__dirname,'.workspace'));

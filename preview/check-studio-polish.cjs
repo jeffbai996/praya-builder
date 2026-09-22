@@ -14,7 +14,7 @@ async function main(){
  const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH,headless:true,args:['--no-sandbox','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
  try{
   const page=await browser.newPage({viewport:{width:1440,height:1000}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
-  const chooseDraft=async id=>{if(!(await page.locator('#draft-select option').evaluateAll((opts,id)=>opts.some(o=>o.value===id),id)))await page.locator('#draft-history').click();await page.selectOption('#draft-select',id);};
+  const chooseDraft=async id=>{await page.locator('#choose-design').click();const d=index.drafts.find(d=>d.id===id);await page.locator('#chooser-search').fill(d.name.replace(/ · (?:R\d+|Praya detail pass)$/,''));const target=page.locator(`[data-draft-id="${id}"]`).first();if(!(await target.isVisible()))await page.locator('#chooser-list details').first().locator('summary').click();await target.click();};
   const settled=()=>page.waitForFunction(()=>document.body.dataset.ready==='true'&&document.body.dataset.busy==='false');
   await page.goto(base+'/studio?draft='+withVersions.id);await settled();
   // Default is design mode with the model, one design selector and a saved/unsaved indicator; the process lives in explicit modes.
@@ -56,7 +56,7 @@ async function main(){
    await chooseDraft(signed.id);await settled();
    const support=await page.locator('#asset-support li').allTextContents();assert.ok(support.some(t=>/wall signs with text/.test(t)&&/✓?\s*Preview/.test(t)),'support rows: '+support);
    assert.ok(!support.some(t=>/custom heads/.test(t)&&/Bridge placement(?! ·)/.test(t)&&!/✗/.test(t)));
-   assert.equal(await page.locator('#sign-tools').isVisible(),true);
+   await page.locator('[data-edit-tab=signs]').click();assert.equal(await page.locator('#sign-tools').isVisible(),true);
    const signCount=await page.locator('#sign-select option').count();assert.ok(signCount>=1);
    await page.selectOption('#sign-preset','centered');assert.equal(await page.locator('#apply-sign').isDisabled(),true,'blank preset cannot compile placeholder text');
    assert.match(await page.locator('#sign-preview').textContent(),/^\s*$/);

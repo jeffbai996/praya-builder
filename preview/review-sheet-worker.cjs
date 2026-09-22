@@ -32,7 +32,9 @@ async function main(){
    if(rendered?.hash!==artifact.hash||typeof rendered.png!=='string'||!rendered.png.startsWith('data:image/png;base64,'))throw Error(`Renderer returned an invalid image for ${view.id}`);
    const bytes=Buffer.from(rendered.png.slice('data:image/png;base64,'.length),'base64');if(bytes.length<8||bytes.subarray(1,4).toString('ascii')!=='PNG')throw Error(`Renderer returned invalid PNG bytes for ${view.id}`);
    write(path.join(outputDir,view.file),bytes);
-   manifestViews.push({...view,url:route(artifact.hash,review.reviewHash,view.file),sha256:hash(bytes),pngHash:rendered.pngHash||hash(bytes),markers:rendered.markerItems||[],diagnosticCount:rendered.diagnosticCount??diagnostics.length,labels:rendered.labels||null,projection:rendered.projection||null});
+   const darkRendered=await page.evaluate(async payload=>{const {renderReviewView}=await import('/review-sheet-render.js');return renderReviewView(payload);},{mesh,view,dimensions:artifact.dimensions,diagnostics,components:artifact.components||[],name:review.reviewLabel||artifact.name,theme:'dark'});
+   const darkFile=view.file.replace('.png','-dark.png'),darkBytes=Buffer.from(darkRendered.png.split(',')[1],'base64');write(path.join(outputDir,darkFile),darkBytes);
+   manifestViews.push({...view,dark:{file:darkFile,url:route(artifact.hash,review.reviewHash,darkFile),sha256:hash(darkBytes)},url:route(artifact.hash,review.reviewHash,view.file),sha256:hash(bytes),pngHash:rendered.pngHash||hash(bytes),markers:rendered.markerItems||[],diagnosticCount:rendered.diagnosticCount??diagnostics.length,labels:rendered.labels||null,projection:rendered.projection||null});
   }
   write(path.join(outputDir,'index.json'),Buffer.from(JSON.stringify({schemaVersion:1,artifactHash:artifact.hash,reviewHash:review.reviewHash,rendererVersion,diagnosticsVersion:review.diagnosticsVersion,diagnosticsSource:review.diagnosticsSource,views:manifestViews},null,2)+'\n'));
  }finally{await browser?.close();browser=null;}

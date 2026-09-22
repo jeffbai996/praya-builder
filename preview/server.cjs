@@ -40,6 +40,7 @@ const files = new Map([
   ['/', ['index.html','text/html']], ['/style.css',['style.css','text/css']],
   ['/app.js',['app.js','text/javascript']], ['/scene.js',['scene.js','text/javascript']],
   ['/review-state.js',['review-state.js','text/javascript']],
+  ['/design-chooser.js',['design-chooser.js','text/javascript']],
   ['/design-library.js',['design-library.js','text/javascript']],
   ['/register-thumbnails.js',['register-thumbnails.js','text/javascript']],
   ['/thumbnail-render.html',['thumbnail-render.html','text/html']],
@@ -54,6 +55,9 @@ const files = new Map([
   ['/fonts/urbanist-latin.woff2',['fonts/urbanist-latin.woff2','font/woff2']],
   ['/vendor/three/build/three.module.js',['node_modules/three/build/three.module.js','text/javascript']],
   ['/vendor/three/examples/jsm/controls/OrbitControls.js',['node_modules/three/examples/jsm/controls/OrbitControls.js','text/javascript']],
+  ['/walk-physics.js',['walk-physics.js','text/javascript']],
+  ['/sign-render.js',['sign-render.js','text/javascript']],
+  ['/sign-font.png',[`node_modules/prismarine-viewer/public/textures/${VERSION}/font/ascii.png`,'image/png']],
   ['/texture.png',[`node_modules/prismarine-viewer/public/textures/${VERSION}.png`,'image/png']],
 ]);
 const meshes = new Map();

@@ -17,10 +17,10 @@ async function main(){
  const page=await browser.newPage({viewport:{width:1440,height:1080}});const errors=[];page.on('pageerror',e=>errors.push(e.message));
  try{
   await page.goto(base+'/studio');await page.locator('#studio-main').waitFor({state:'visible'});
-  const initialDrafts=await page.locator('#draft-select option').count();
+  const initialDrafts=await page.evaluate(async()=>(await(await fetch('/api/workspace/context')).json()).drafts.length);
   await page.locator('.studio-steps a[data-mode=site]').click();if(!await page.locator('#fixture-panel').evaluate(e=>e.open))await page.locator('#fixture-panel summary').click();await page.locator('#fixture-slope').click();await page.waitForFunction(()=>document.querySelector('#site-select').value&&document.body.dataset.busy==='false');
   await page.locator('#new-proposals').click();await page.waitForFunction(()=>document.body.dataset.ready==='true'&&document.body.dataset.busy==='false',null,{timeout:90000});
-  assert.equal(await page.locator('#draft-select option').count(),initialDrafts+3);assert.match(await page.locator('#candidate-state').textContent(),/Ready to review/);
+  assert.equal(await page.evaluate(async()=>(await(await fetch('/api/workspace/context')).json()).drafts.length),initialDrafts+3);assert.match(await page.locator('#candidate-state').textContent(),/Ready to review/);
   const draftId=await page.getAttribute('body','data-draft');
   await page.locator('#studio-component').selectOption('home-1-1-envelope');await page.locator('#material-role').selectOption('brick');await page.locator('#material-choice').selectOption('minecraft:gray_terracotta');
   const before=await(await fetch(`${base}/api/workspace/drafts/${draftId}`)).json();

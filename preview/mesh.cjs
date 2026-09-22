@@ -75,13 +75,14 @@ function meshArtifact(artifact, ceiling=64) {
   if(!Number.isInteger(ceiling)||ceiling<0||ceiling>64) throw Error('Cutaway outside limits');
   const world = new World(VERSION);
   for(let x=-16;x<=width+16;x+=16) for(let z=-16;z<=depth+16;z+=16) world.addColumn(x,z,new Chunk().toJson());
-  const stateCache = new Map();
+  const stateCache = new Map(),colliders=[];
   for(const cell of artifact.blocks) {
     if(![cell.x,cell.y,cell.z].every(Number.isInteger) || cell.x<0||cell.x>=width||cell.y<0||cell.y>=height||cell.z<0||cell.z>=depth)
       throw Error('Cell outside artifact');
     if(!stateCache.has(cell.block)) stateCache.set(cell.block,stateBlock(cell.block));
-    if(cell.y>=ceiling) continue;
     const block = stateCache.get(cell.block);
+    if(!block.name.endsWith('_door'))for(const box of block.shapes||[])colliders.push(box.map((v,i)=>v+[cell.x,cell.y,cell.z][i%3]));
+    if(cell.y>=ceiling) continue;
     const pos = new Vec3(cell.x,cell.y,cell.z);
     world.setBlockStateId(pos,block.stateId);
     world.getColumn(Math.floor(cell.x/16)*16,Math.floor(cell.z/16)*16)
@@ -98,6 +99,6 @@ function meshArtifact(artifact, ceiling=64) {
     sections.push(Object.fromEntries(Object.entries(geometry).map(([key,value])=>[key,ArrayBuffer.isView(value)?Array.from(value):value])));
   }
   const signs=(artifact.signs||[]).filter(s=>s.at[1]<ceiling).map(s=>({...s,block:artifact.blocks.find(c=>c.x===s.at[0]&&c.y===s.at[1]&&c.z===s.at[2])?.block}));
-  return {rendererVersion:VERSION,hash:artifact.hash,ceiling,sections,signs,warnings:[]};
+  return {rendererVersion:VERSION,hash:artifact.hash,ceiling,sections,signs,colliders,warnings:[]};
 }
 module.exports={meshArtifact,stateBlock,VERSION};

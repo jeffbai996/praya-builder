@@ -1,3 +1,5 @@
+import {createWalker} from './walk-physics.js';
+import {signObject} from './sign-render.js';
 import * as THREE from '/vendor/three/build/three.module.js';
 import {OrbitControls} from '/vendor/three/examples/jsm/controls/OrbitControls.js';
 
@@ -13,24 +15,27 @@ export function createScene(canvas) {
   const camera=new THREE.PerspectiveCamera(40,1,.1,300);
   const controls=new OrbitControls(camera,canvas);controls.enableDamping=true;controls.dampingFactor=.09;
   controls.minDistance=2;controls.maxDistance=240;controls.maxPolarAngle=Math.PI*.49;
-  let navigationMode='orbit',lookDrag=null,lastTick=performance.now();
-  const held=new Set(),motionKeys=new Set(['KeyW','KeyA','KeyS','KeyD','KeyQ','KeyE','ShiftLeft','ShiftRight']);
+  let navigationMode='orbit',lookDrag=null,lastTick=performance.now(),walker=null,walkStart=[0,1,0],walkHome=null,walkTarget=[16,0,16];
+  const firstPerson=()=>navigationMode==='free'||navigationMode==='walk';
+  function rebuildWalk(){const boxes=[...(context.userData.colliders||[]),...(building.userData.colliders||[]).map(b=>b.map((v,i)=>v+building.position.toArray()[i%3]))];walker=createWalker(boxes);if(navigationMode==='walk')resetWalk();}
+  function resetWalk(){walkHome=walker?.reset(walkStart);if(!walkHome)return false;camera.position.set(walkHome[0],walkHome[1]+1.62,walkHome[2]);camera.lookAt(walkTarget[0],camera.position.y,walkTarget[2]);syncFreeTarget();invalidate();return true;}
+  const held=new Set(),motionKeys=new Set(['KeyW','KeyA','KeyS','KeyD','KeyQ','KeyE','Space','ShiftLeft','ShiftRight']);
   const forward=new THREE.Vector3(),rightward=new THREE.Vector3(),delta=new THREE.Vector3();
   canvas.style.userSelect='none';canvas.style.webkitUserSelect='none';
   function syncFreeTarget(){camera.getWorldDirection(forward);controls.target.copy(camera.position).addScaledVector(forward,10);}
   function navigation(mode){
-    if(!['orbit','pan','free'].includes(mode))return;
+    if(!['orbit','pan','free','walk'].includes(mode))return;
     // Flush the last orbit gesture before handing the camera to free movement.
     const damping=controls.enableDamping;controls.enableDamping=false;
-    if(navigationMode!=='free')controls.update();
-    held.clear();lookDrag=null;navigationMode=mode;controls.enabled=mode!=='free';controls.enableDamping=damping;
+    if(!firstPerson())controls.update();
+    held.clear();lookDrag=null;navigationMode=mode;controls.enabled=!firstPerson();controls.enableDamping=damping;
     controls.mouseButtons.LEFT=mode==='pan'?THREE.MOUSE.PAN:THREE.MOUSE.ROTATE;
     controls.touches.ONE=mode==='pan'?THREE.TOUCH.PAN:THREE.TOUCH.ROTATE;
-    if(mode==='free')syncFreeTarget();
+    if(mode==='walk'&&!resetWalk()){navigationMode='orbit';mode='orbit';controls.enabled=true;canvas.dispatchEvent(new CustomEvent('walkunavailable'));}if(firstPerson())syncFreeTarget();
     canvas.dataset.navigation=mode;canvas.dispatchEvent(new CustomEvent('navigationchange',{detail:mode}));invalidate();
   }
   function travel(x,y,z,distance=2){
-    camera.getWorldDirection(forward);rightward.crossVectors(forward,camera.up).normalize();
+    camera.getWorldDirection(forward);if(navigationMode==='walk'){forward.y=0;forward.normalize();rightward.crossVectors(forward,camera.up).normalize();delta.copy(rightward).multiplyScalar(x).addScaledVector(forward,z);if(delta.lengthSq())delta.normalize().multiplyScalar(distance);const p=walker.tick(0,delta.x,delta.z);camera.position.set(p[0],p[1]+1.62,p[2]);syncFreeTarget();invalidate();return;}rightward.crossVectors(forward,camera.up).normalize();
     delta.set(0,y,0).addScaledVector(rightward,x).addScaledVector(forward,z);
     if(delta.lengthSq())delta.normalize().multiplyScalar(distance);
     camera.position.add(delta);controls.target.add(delta);invalidate();
@@ -38,7 +43,7 @@ export function createScene(canvas) {
   canvas.addEventListener('pointerdown',e=>{
     if(e.button!==0&&e.button!==2)return;
     e.preventDefault();canvas.focus({preventScroll:true});window.getSelection()?.removeAllRanges();
-    if(navigationMode==='free'){canvas.setPointerCapture(e.pointerId);lookDrag={id:e.pointerId,x:e.clientX,y:e.clientY};}
+    if(firstPerson()){canvas.setPointerCapture(e.pointerId);lookDrag={id:e.pointerId,x:e.clientX,y:e.clientY};}
   });
   canvas.addEventListener('pointermove',e=>{
     if(!lookDrag||lookDrag.id!==e.pointerId)return;
@@ -51,7 +56,7 @@ export function createScene(canvas) {
   const stopMotion=()=>{held.clear();stopLook();};canvas.addEventListener('blur',stopMotion);window.addEventListener('blur',stopMotion);
   document.addEventListener('visibilitychange',()=>{if(document.hidden)stopMotion();});
   canvas.addEventListener('keydown',e=>{
-    if(navigationMode!=='free'||e.altKey||e.ctrlKey||e.metaKey)return;
+    if(!firstPerson()||e.altKey||e.ctrlKey||e.metaKey)return;
     if(e.key==='Escape'){e.preventDefault();e.stopPropagation();navigation('orbit');return;}
     if(motionKeys.has(e.code)){e.preventDefault();e.stopPropagation();held.add(e.code);}
   });
@@ -59,8 +64,9 @@ export function createScene(canvas) {
   canvas.addEventListener('wheel',e=>{if(navigationMode==='free'){e.preventDefault();travel(0,0,-Math.sign(e.deltaY),e.shiftKey?4:1);}}, {passive:false});
   function freeTick(now){
     const dt=Math.min((now-lastTick)/1000,.05);lastTick=now;
-    if(navigationMode!=='free'||document.activeElement!==canvas||document.hidden)return;
+    if(!firstPerson()||document.activeElement!==canvas||document.hidden)return;
     const x=Number(held.has('KeyD'))-Number(held.has('KeyA')),y=Number(held.has('KeyE'))-Number(held.has('KeyQ')),z=Number(held.has('KeyW'))-Number(held.has('KeyS'));
+    if(navigationMode==='walk'){camera.getWorldDirection(forward);forward.y=0;forward.normalize();rightward.crossVectors(forward,camera.up).normalize();delta.copy(rightward).multiplyScalar(x).addScaledVector(forward,z);if(delta.lengthSq())delta.normalize().multiplyScalar(dt*(held.has('ShiftLeft')||held.has('ShiftRight')?7:4.3));const p=walker.tick(dt,delta.x,delta.z,held.has('Space'));if(p[1]<(walkHome?.[1]??0)-20)resetWalk();else{camera.position.set(p[0],p[1]+1.62,p[2]);syncFreeTarget();invalidate();}return;}
     if(x||y||z)travel(x,y,z,dt*(held.has('ShiftLeft')||held.has('ShiftRight')?24:7));
   }
   const hemisphere=new THREE.HemisphereLight(0xe8f2ff,0x8c8b73,.8);scene.add(hemisphere);
@@ -140,7 +146,7 @@ export function createScene(canvas) {
   async function load(mesh,group=building) {
     const texture=await texturePromise;
     material??=new THREE.MeshLambertMaterial({map:texture,vertexColors:true,transparent:true,alphaTest:.1});
-    clear(group);
+    clear(group);group.userData.colliders=mesh.colliders||[];
     for(const part of mesh.sections) {
       const geometry=new THREE.BufferGeometry();
       for(const [name,key,size] of [['position','positions',3],['normal','normals',3],['color','colors',3],['uv','uvs',2]])
@@ -148,20 +154,7 @@ export function createScene(canvas) {
       geometry.setIndex(part.indices);geometry.computeBoundingSphere();
       const object=new THREE.Mesh(geometry,material);object.position.set(part.sx,part.sy,part.sz);object.castShadow=true;object.receiveShadow=true;group.add(object);
     }
-    for(const sign of mesh.signs||[]){
-      const label=document.createElement('canvas');label.width=384;label.height=192;
-      const ctx=label.getContext('2d');ctx.clearRect(0,0,384,192);ctx.fillStyle='#171411';ctx.font='26px monospace';ctx.textAlign='center';ctx.textBaseline='middle';
-      sign.lines.forEach((line,i)=>ctx.fillText(line,192,30+i*43,360));
-      const map=new THREE.CanvasTexture(label);map.minFilter=THREE.LinearFilter;
-      const object=new THREE.Mesh(new THREE.PlaneGeometry(.96,.48),new THREE.MeshBasicMaterial({map,transparent:true,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-1}));
-      const facing=/facing=(north|south|east|west)/.exec(sign.block)?.[1]||'north';
-      const [x,y,z]=sign.at;object.position.set(x+.5,y+.5,z+.5);
-      if(facing==='north'){object.position.z=z+.873;object.rotation.y=Math.PI;}
-      if(facing==='south'){object.position.z=z+.127;}
-      if(facing==='east'){object.position.x=x+.127;object.rotation.y=Math.PI/2;}
-      if(facing==='west'){object.position.x=x+.873;object.rotation.y=-Math.PI/2;}
-      object.userData.sign=true;group.add(object);
-    }
+    for(const sign of mesh.signs||[])group.add(await signObject(sign));
     invalidate();
   }
   function select(cells) {
@@ -186,7 +179,7 @@ export function createScene(canvas) {
   function snapshot(width,height){renderer.render(scene,camera);const output=document.createElement('canvas');output.width=width;output.height=height;const ctx=output.getContext('2d');const scale=Math.max(width/canvas.width,height/canvas.height),w=canvas.width*scale,h=canvas.height*scale;ctx.drawImage(canvas,(width-w)/2,(height-h)/2,w,h);return output.toDataURL('image/jpeg',.7);}
   function png(label){renderer.render(scene,camera);const output=document.createElement('canvas');output.width=canvas.width;output.height=canvas.height+64;const ctx=output.getContext('2d');ctx.drawImage(canvas,0,0);ctx.fillStyle='#f7f8f3';ctx.fillRect(0,canvas.height,output.width,64);ctx.fillStyle='#29493e';ctx.font='16px sans-serif';ctx.fillText(label,24,canvas.height+38);return output;}
   canvas.addEventListener('keydown',event=>{
-    if(event.defaultPrevented||navigationMode==='free')return;
+    if(event.defaultPrevented||firstPerson())return;
     const offsets={ArrowLeft:-.12,ArrowRight:.12};
     if(event.key in offsets){const v=camera.position.clone().sub(controls.target);v.applyAxisAngle(new THREE.Vector3(0,1,0),offsets[event.key]);camera.position.copy(controls.target).add(v);}
     else if(['+','=','-'].includes(event.key)){camera.position.sub(controls.target).multiplyScalar(event.key==='-'?1.1:.9).add(controls.target);}
@@ -200,6 +193,6 @@ export function createScene(canvas) {
     floor.visible=!oled;
     grid.material.opacity=oled?.055:dark?.13:.3;invalidate();
   }
-  return {navigation,navigationMode:()=>navigationMode,travel,load,siteBounds,loadContext:mesh=>load(mesh,context),contextVisible:value=>{context.visible=value;siteLines.visible=value;invalidate();},position:offset=>{building.position.fromArray(offset);invalidate();},view,frame,fit,lighting,gridVisible:value=>{grid.visible=value;invalidate();},presentation:()=>({lighting:lightingMode,grid:grid.visible}),select,differences,pick,png,snapshot,theme,hide:()=>{building.visible=false;invalidate();},show:()=>{building.visible=true;invalidate();},
+  return {navigation,navigationMode:()=>navigationMode,travel,load,siteBounds,loadContext:mesh=>load(mesh,context),contextVisible:value=>{context.visible=value;siteLines.visible=value;invalidate();},position:offset=>{building.position.fromArray(offset);rebuildWalk();invalidate();},walkStart:(point,target)=>{walkStart=point;walkTarget=target||walkTarget;},resetWalk,jumpWalk:()=>{if(navigationMode==='walk'){const p=walker.tick(.016,0,0,true);camera.position.set(p[0],p[1]+1.62,p[2]);syncFreeTarget();invalidate();}},view,frame,fit,lighting,gridVisible:value=>{grid.visible=value;invalidate();},presentation:()=>({lighting:lightingMode,grid:grid.visible}),select,differences,pick,png,snapshot,theme,hide:()=>{building.visible=false;invalidate();},show:()=>{building.visible=true;invalidate();},
     camera:()=>[...camera.position.toArray(),...controls.target.toArray()],metrics:()=>({frames,elapsed:performance.now()-started,triangles:renderer.info.render.triangles})};
 }

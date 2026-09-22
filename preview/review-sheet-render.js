@@ -1,3 +1,4 @@
+import {signObject} from './sign-render.js';
 import * as THREE from '/vendor/three/build/three.module.js';
 
 const WIDTH=960,SCENE_HEIGHT=640,LABEL_HEIGHT=120,HEIGHT=SCENE_HEIGHT+LABEL_HEIGHT;
@@ -18,7 +19,8 @@ const exteriorDirections={
   perspective:[37,26,-49],front:[0,9,-63],side:[49,15,0],rear:[0,12,60],roof:[0,68,.01],street:[15,-1,-33],
 };
 const elevationDirections={north:[0,0,-1],east:[1,0,0],south:[0,0,1],west:[-1,0,0]};
-let renderer,atlas,queue=Promise.resolve();
+let renderer,atlas,queue=Promise.resolve(),fontReady;const materials=new Map();
+function labelFont(){return fontReady??=(async()=>{const face=new FontFace('Urbanist','url(/fonts/urbanist-latin.woff2)',{weight:'400 700'});await face.load();document.fonts.add(face);})();}
 
 function textureAtlas(){
   return atlas??=new Promise((resolve,reject)=>new THREE.TextureLoader().load('/texture.png',texture=>{
@@ -110,7 +112,7 @@ function relevantDiagnostics(diagnostics,view,ceiling){
 
 function drawMarkers(ctx,camera,diagnostics){
   const sorted=[...diagnostics].sort((a,b)=>(severityOrder[a.severity]??9)-(severityOrder[b.severity]??9)||a.at[1]-b.at[1]||a.at[2]-b.at[2]||a.at[0]-b.at[0]||String(a.rule).localeCompare(String(b.rule))).slice(0,MAX_MARKERS);
-  const items=[];ctx.save();ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='bold 12px system-ui, sans-serif';
+  const items=[];ctx.save();ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='bold 12px Urbanist, sans-serif';
   for(let i=0;i<sorted.length;i++){
     const diagnostic=sorted[i],projected=new THREE.Vector3(diagnostic.at[0]+.5,diagnostic.at[1]+.5,diagnostic.at[2]+.5).project(camera);
     const x=(projected.x+1)*WIDTH/2,y=(1-projected.y)*SCENE_HEIGHT/2;if(x<0||x>WIDTH||y<0||y>SCENE_HEIGHT)continue;
@@ -139,16 +141,16 @@ function markerLegend(items,total){
   return text+(total>items.length?` · ${total-items.length} not shown`:'');
 }
 
-function compose(sceneCanvas,{name,view,components,diagnostics,camera,ceiling}){
+function compose(sceneCanvas,{name,view,components,diagnostics,camera,ceiling,dark=false}){
   const output=document.createElement('canvas');output.width=WIDTH;output.height=HEIGHT;const ctx=output.getContext('2d',{alpha:false});
   ctx.fillStyle='#e8e8e6';ctx.fillRect(0,0,WIDTH,HEIGHT);ctx.drawImage(sceneCanvas,0,0,WIDTH,SCENE_HEIGHT);
   const levelDiagnostics=relevantDiagnostics(diagnostics,view,ceiling),markerItems=view.kind==='plan'?drawMarkers(ctx,camera,levelDiagnostics):[];
-  ctx.fillStyle='#f7f8f3';ctx.fillRect(0,SCENE_HEIGHT,WIDTH,LABEL_HEIGHT);ctx.fillStyle='#c9cec8';ctx.fillRect(0,SCENE_HEIGHT,WIDTH,1);
-  ctx.textBaseline='alphabetic';ctx.textAlign='left';ctx.fillStyle='#183f34';ctx.font='600 24px system-ui, sans-serif';
+  ctx.fillStyle=dark?'#171b1e':'#f7f8f3';ctx.fillRect(0,SCENE_HEIGHT,WIDTH,LABEL_HEIGHT);ctx.fillStyle=dark?'#343c40':'#c9cec8';ctx.fillRect(0,SCENE_HEIGHT,WIDTH,1);
+  ctx.textBaseline='alphabetic';ctx.textAlign='left';ctx.fillStyle=dark?'#e4eeeb':'#183f34';ctx.font='600 24px Urbanist, sans-serif';
   const viewLabel=safeText(view.label||(view.kind==='plan'?`Level ${view.floor}`:view.id),120),title=fitText(ctx,`${safeText(name,160)} · ${viewLabel}`,660);ctx.fillText(title,24,SCENE_HEIGHT+39);
-  ctx.textAlign='right';ctx.font='600 15px system-ui, sans-serif';ctx.fillStyle='#4c5e58';const summary=fitText(ctx,diagnosticSummary(levelDiagnostics),250);ctx.fillText(summary,WIDTH-24,SCENE_HEIGHT+37);
-  ctx.textAlign='left';ctx.font='14px system-ui, sans-serif';ctx.fillStyle='#58645f';const legend=fitText(ctx,componentLegend(components,levelDiagnostics),590);ctx.fillText(legend,24,SCENE_HEIGHT+88);
-  ctx.fillStyle='#475a54';const markers=fitText(ctx,markerLegend(markerItems,levelDiagnostics.length),310);ctx.fillText(markers,626,SCENE_HEIGHT+88);
+  ctx.textAlign='right';ctx.font='600 15px Urbanist, sans-serif';ctx.fillStyle=dark?'#aebdb9':'#4c5e58';const summary=fitText(ctx,diagnosticSummary(levelDiagnostics),250);ctx.fillText(summary,WIDTH-24,SCENE_HEIGHT+37);
+  ctx.textAlign='left';ctx.font='14px Urbanist, sans-serif';ctx.fillStyle=dark?'#aebdb9':'#58645f';const legend=fitText(ctx,componentLegend(components,levelDiagnostics),590);ctx.fillText(legend,24,SCENE_HEIGHT+88);
+  ctx.fillStyle=dark?'#aebdb9':'#475a54';const markers=fitText(ctx,markerLegend(markerItems,levelDiagnostics.length),310);ctx.fillText(markers,626,SCENE_HEIGHT+88);
   return {output,markerItems,diagnosticCount:levelDiagnostics.length,labels:{title,summary,legend,markers}};
 }
 
@@ -164,20 +166,20 @@ function projectionMetadata(camera,ceiling){
 
 async function render(input){
   const normalized={diagnostics:[],components:[],name:'Untitled design',...input};validate(normalized);
-  const {mesh,view,dimensions,diagnostics,components,name}=normalized;
+  const {mesh,view,dimensions,diagnostics,components,name}=normalized;const dark=normalized.theme==='dark';await labelFont();
   const ceiling=view.kind==='plan'?(Number.isInteger(view.ceiling)?view.ceiling:view.floor+2):(Number.isInteger(view.ceiling)?view.ceiling:(Number.isInteger(mesh.ceiling)?mesh.ceiling:null));
   if(view.kind==='plan'&&(ceiling<=view.floor||ceiling>dimensions.y+1))throw Error('Invalid plan cut ceiling');
   const engine=webgl();engine.localClippingEnabled=view.kind==='plan';
   const clipping=view.kind==='plan'?[new THREE.Plane(new THREE.Vector3(0,-1,0),ceiling)]:[];
-  const material=new THREE.MeshLambertMaterial({map:await textureAtlas(),vertexColors:true,transparent:true,alphaTest:.1,clippingPlanes:clipping,clipShadows:false});
-  const scene=new THREE.Scene(),group=geometryGroup(mesh,material);scene.background=new THREE.Color(0xe8e8e6);scene.add(group);
+  const key=view.kind==='plan'?'plan':'exterior';let material=materials.get(key);if(!material){material=new THREE.MeshLambertMaterial({map:await textureAtlas(),vertexColors:true,transparent:true,alphaTest:.1,clippingPlanes:clipping,clipShadows:false});materials.set(key,material);}else material.clippingPlanes=clipping;
+  const scene=new THREE.Scene(),group=geometryGroup(mesh,material);scene.background=new THREE.Color(dark?0x101416:0xe8e8e6);for(const sign of mesh.signs||[])group.add(await signObject(sign));scene.add(group);
   scene.add(new THREE.HemisphereLight(0xe8f2ff,0x8c8b73,1.1));const sun=new THREE.DirectionalLight(0xffffff,.75);sun.position.set(-25,55,-15);scene.add(sun);
   try{
     const camera=chooseCamera(group,view,dimensions,ceiling);engine.render(scene,camera);
-    const composed=compose(engine.domElement,{name,view,components,diagnostics,camera,ceiling});const png=composed.output.toDataURL('image/png');
+    const composed=compose(engine.domElement,{name,view,components,diagnostics,camera,ceiling,dark});const png=composed.output.toDataURL('image/png');
     return {png,hash:mesh.hash,pngHash:await pngDigest(png),ceiling,kind:view.kind,projection:projectionMetadata(camera,view.kind==='plan'?ceiling:null),markers:composed.markerItems.length,markerItems:composed.markerItems,diagnosticCount:composed.diagnosticCount,labels:composed.labels};
   }finally{
-    for(const object of group.children)object.geometry.dispose();material.dispose();engine.renderLists.dispose();engine.localClippingEnabled=false;
+    for(const object of group.children){object.geometry.dispose();if(object.userData.sign){object.material.map.dispose();object.material.dispose();}}engine.renderLists.dispose();engine.localClippingEnabled=false;
   }
 }
 
