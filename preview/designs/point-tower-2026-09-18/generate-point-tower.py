@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Point Tower R2 for the Praya first plot. Emits a plan; posts only with --post.
+"""Point Tower R4 for the Praya first plot. Emits a plan; posts only with --post.
 
 The original design and R1/R2 architectural authorship are Claude/Fable's; a later
 operator regenerating or posting the source must provide their own run provenance.
@@ -9,7 +9,7 @@ from pathlib import Path
 from collections import defaultdict
 
 BASE = os.environ.get("BUILDER_WORKSPACE_URL", "http://127.0.0.1:8091")
-SITE = "123209e7-10ec-4b90-bd77-312645d79af2"
+SITE = os.environ.get("BUILDER_SITE_ID", "d0cb06e1-dbe8-48aa-a22f-dccbfe04d4e0")
 ORIGIN = [-272, 79, -477]
 DIMS = (27, 33, 15)
 
@@ -50,7 +50,7 @@ P = {
     "bed-head": "minecraft:blue_bed[facing=south,occupied=false,part=head]",
     "carpet": "minecraft:light_gray_carpet",
     "bookshelf": "minecraft:bookshelf",
-    "smoker": "minecraft:smoker[facing=north,lit=false]",
+    "smoker": "minecraft:polished_blackstone",  # decorative cooker housing; no inventory data
     "cauldron": "minecraft:water_cauldron[level=3]",
     "table": "minecraft:spruce_trapdoor[facing=north,half=top,open=false,powered=false,waterlogged=false]",
 }
@@ -171,7 +171,7 @@ for s in range(TOWER_STOREYS):
     for fx0, fx1 in flats:
         west = fx0 == TX0 + 1
         far = fx0 if west else fx1 - 1                      # bed against the outer flank, away from the door
-        put(f"flat-fitout-{s}", far, y0, 8, "bed-head"); put(f"flat-fitout-{s}", far, y0, 9, "bed-foot"); put(f"flat-fitout-{s}", far, y0, 10, "bookshelf")
+        put(f"flat-fitout-{s}", far, y0, 8, "bed-foot"); put(f"flat-fitout-{s}", far, y0, 9, "bed-head"); put(f"flat-fitout-{s}", far, y0, 10, "bookshelf")
         sx = far + 2 if west else far - 2
         put(f"flat-fitout-{s}", sx, y0, 9, "seat-s"); put(f"flat-fitout-{s}", sx, y0, 10, "table"); put(f"flat-fitout-{s}", sx + (1 if west else -1), y0, 10, "carpet")
         # R3: a real wet room in the outer rear corner (R1/R2 had none). Two
@@ -189,8 +189,22 @@ for s in range(TOWER_STOREYS):
         put(f"wet-room-{s}", bx0 + 1 if west else bx0, y0, TZ1 - 2, "carpet")                 # shower tray
         kx = fx0 + 3 if west else fx1 - 6                    # kitchen run along the rear wall, beside the wet room
         box(f"flat-fitout-{s}", kx, y0, TZ1 - 2, kx + 3, y0 + 1, TZ1 - 1, "counter")
-        put(f"flat-fitout-{s}", kx + (1 if west else 0), y0, TZ1 - 3, "smoker"); put(f"flat-fitout-{s}", kx + (2 if west else 1), y0, TZ1 - 3, "cauldron")
-        put(f"flat-fitout-{s}", kx + (0 if west else 2), y0, TZ1 - 4, "fern")
+        put(f"flat-fitout-{s}", kx + (1 if west else 0), y0, TZ1 - 2, "smoker"); put(f"flat-fitout-{s}", kx + (2 if west else 1), y0, TZ1 - 2, "cauldron")
+        # Keep the wet-room approach and worktop free of projecting planters.
+    # Rear circulation stays clear at floor level; a ceiling light serves it.
+    put(f"rear-lighting-{s}", 11, y0 + 2, 12, "lantern-hang")
+    if single:
+        put(f"upper-study-{s}", 7, y0 + 2, 8, "lantern-hang")
+        # One dwelling: keep x17 as the route to the east study and terrace door.
+        put(f"upper-study-{s}", 18, y0, 8, "counter")
+        put(f"upper-study-{s}", 18, y0 + 1, 8, "lantern")
+        put(f"upper-study-{s}", 18, y0, 9, "bookshelf")
+        put(f"upper-dining-{s}", 15, y0, 13, "table")
+        for x in (14, 16): put(f"upper-dining-{s}", x, y0, 13, "seat-n")
+    # Small projecting sills reinforce the existing punched-window rhythm.
+    for z in (8, 11):
+        put(f"east-window-sills-{s}", x1, base, z, "frame-slab-top")
+        if not balcony: put(f"west-window-sills-{s}", TX0 - 1, base, z, "frame-slab-top")
     put(f"wayfinding-{s}", 12, y0 + 2, CZ0, "sign-s")
     put(f"corridor-light-{s}", 14, y0 + 2, CZ0, "lantern-hang")
 
@@ -299,11 +313,11 @@ signs = [{"at": [14, 4, CZ0], "lines": ["----------", "POINT TOWER", "LOBBY", "-
          {"at": [15, 4, CZ0], "lines": ["----------", "LIFT + STAIR", "LEVELS 1-6", "----------"]}]
 for s in range(TOWER_STOREYS):
     signs.append({"at": [12, TOWER_BASE + s * STOREY + 3, CZ0], "lines": ["--------", f"LEVEL {s + 1}", "RESIDENCES", "--------"]})
-plan = {"schema_version": 2, "plan_id": "north-plot-point-tower", "revision": "r3", "name": "Point Tower · R3",
-        "description": "R3 interior pass on the R2 tower: every flat gains a wet room in its outer rear corner with basin, shower tray and light; kitchens move along the rear wall to keep door approaches clear; balcony lanterns; timber shade over the setback terrace door. Six residential storeys over a lobby podium on the Praya first plot, within the 33-block survey cap. Review only, no placement.",
+plan = {"schema_version": 2, "plan_id": "north-plot-point-tower", "revision": "r4", "name": "Point Tower · R4",
+        "description": "R4: clear wet-room approaches, rear circulation lighting, furnished upper study and dining spaces, and projecting flank window sills. Six residential storeys on the selected isolated test plot. R3 remains unchanged.",
         "dimensions": {"x": DIMS[0], "y": DIMS[1], "z": DIMS[2]}, "palette": palette, "components": components, "signs": signs}
 print(f"cells={len(cells)} (cleared air {cleared}) components={len(components)} ops={sum(len(c['operations']) for c in components)} palette={len(palette)}", file=sys.stderr)
-output = Path(__file__).with_name("point-tower-r3.plan.json")
+output = Path(__file__).with_name("point-tower-r4.plan.json")
 lines = ["{"]
 for key in ("schema_version", "plan_id", "revision", "name", "description", "dimensions", "palette"):
     lines.append(f'  {json.dumps(key)}: {json.dumps(plan[key], separators=(",", ":"))},')
@@ -327,7 +341,7 @@ except json.JSONDecodeError as error: raise SystemExit(f"invalid author JSON: {e
 if not isinstance(author, dict) or not author: raise SystemExit("author must be a non-empty JSON object")
 parent = sys.argv[sys.argv.index("--parent") + 1] if "--parent" in sys.argv else None
 body = json.dumps({"plan": plan, "siteId": SITE, "transform": {"origin": ORIGIN, "turns": 0}, "author": author, **({"parentHash": parent} if parent else {}),
-                   "brief": "Point Tower R3: wet rooms in every flat, kitchens relocated to clear door approaches, balcony lanterns, terrace door shade. Review only, no placement."}).encode()
+                   "brief": "Point Tower R4: clear interior routes, furnished upper dwelling, rear lighting and flank details; isolated test-world trial."}).encode()
 req = urllib.request.Request(f"{BASE}/api/workspace/drafts", data=body, method="POST", headers={"Content-Type": "application/json", "X-Builder-Write": "1"})
 try: resp = json.load(urllib.request.urlopen(req, timeout=120))
 except urllib.error.HTTPError as err: print("HTTP", err.code, err.read().decode()[:2000]); sys.exit(1)

@@ -32,7 +32,7 @@ public final class TestWorldBridge implements AutoCloseable {
     private final boolean readOnly;
     private final int[] minimum, maximum;
     private static final Gson JSON = new Gson();
-    private static final Set<String> ALLOWED = Set.of("AIR","CAVE_AIR","VOID_AIR","STONE","STONE_BRICKS","DIRT","GRASS_BLOCK","GOLD_BLOCK","SMOOTH_QUARTZ","QUARTZ_BLOCK","GRAY_CONCRETE","LIGHT_GRAY_CONCRETE","WHITE_CONCRETE","BIRCH_PLANKS","DARK_OAK_PLANKS","STRIPPED_OAK_WOOD","OAK_LOG","GLASS","OAK_LEAVES","SEA_LANTERN","BOOKSHELF","WHITE_WOOL","GREEN_TERRACOTTA","GRAY_TERRACOTTA","SMOOTH_QUARTZ_SLAB","QUARTZ_STAIRS","DARK_OAK_STAIRS","GLASS_PANE","BRICKS","WHITE_STAINED_GLASS_PANE","LIGHT_GRAY_STAINED_GLASS_PANE","CAULDRON","POLISHED_ANDESITE_SLAB","POLISHED_BLACKSTONE","OAK_SLAB","LIGHT_GRAY_CARPET","WHITE_CARPET","LANTERN","OAK_TRAPDOOR","OAK_DOOR","POLISHED_DEEPSLATE","SMOOTH_STONE","SMOOTH_STONE_SLAB");
+    private static final Set<String> ALLOWED = Set.of("AIR","CAVE_AIR","VOID_AIR","STONE","STONE_BRICKS","DIRT","GRASS_BLOCK","GOLD_BLOCK","SMOOTH_QUARTZ","QUARTZ_BLOCK","GRAY_CONCRETE","LIGHT_GRAY_CONCRETE","WHITE_CONCRETE","BIRCH_PLANKS","DARK_OAK_PLANKS","STRIPPED_OAK_WOOD","OAK_LOG","GLASS","OAK_LEAVES","SEA_LANTERN","BOOKSHELF","WHITE_WOOL","GREEN_TERRACOTTA","GRAY_TERRACOTTA","SMOOTH_QUARTZ_SLAB","QUARTZ_STAIRS","DARK_OAK_STAIRS","GLASS_PANE","BRICKS","WHITE_STAINED_GLASS_PANE","LIGHT_GRAY_STAINED_GLASS_PANE","CAULDRON","POLISHED_ANDESITE_SLAB","POLISHED_BLACKSTONE","OAK_SLAB","LIGHT_GRAY_CARPET","WHITE_CARPET","LANTERN","OAK_TRAPDOOR","OAK_DOOR","POLISHED_DEEPSLATE","SMOOTH_STONE","SMOOTH_STONE_SLAB","BIRCH_LEAVES","BLACK_STAINED_GLASS_PANE","BLUE_BED","DANDELION","DEEPSLATE_TILES","IRON_BARS","POLISHED_DIORITE","POPPY","SHORT_GRASS","SMOOTH_QUARTZ_STAIRS","SPRUCE_DOOR","SPRUCE_LEAVES","SPRUCE_LOG","SPRUCE_SLAB","SPRUCE_STAIRS","SPRUCE_TRAPDOOR","STRIPPED_SPRUCE_LOG","WATER_CAULDRON");
 
     public TestWorldBridge(JavaPlugin plugin) throws IOException {
         this.plugin = plugin;
@@ -75,8 +75,17 @@ public final class TestWorldBridge implements AutoCloseable {
     private static void safe(BlockData data) {
         String n=data.getMaterial().name();
         if(!n.endsWith("_WALL_SIGN")&&!ALLOWED.contains(n))throw new IllegalArgumentException("Block not in tested placement allowlist: "+n);
-        if(n.contains("WATER")||n.contains("LAVA")||n.contains("SAND")||n.equals("GRAVEL")||n.contains("CONCRETE_POWDER")||n.contains("REDSTONE")||n.contains("PISTON")||n.contains("TNT")||n.contains("FIRE")||n.contains("PORTAL")||n.contains("COMMAND")||n.contains("STRUCTURE")||n.contains("SCULK")||n.contains("SPAWNER")||n.contains("OBSERVER")||n.contains("DISPENSER")||n.contains("DROPPER")||n.contains("HOPPER")||n.contains("CHEST")||n.contains("BARREL")||n.contains("FURNACE")||n.contains("SMOKER")||(n.contains("SIGN")&&!n.endsWith("_WALL_SIGN"))||n.contains("BANNER")||n.contains("SHULKER")||n.contains("LECTERN")||n.contains("CAMPFIRE")||n.contains("BEE")||n.contains("BREWING"))throw new IllegalArgumentException("Block outside isolated placement policy: "+n);
+        if((n.contains("WATER")&&!n.equals("WATER_CAULDRON"))||n.contains("LAVA")||n.contains("SAND")||n.equals("GRAVEL")||n.contains("CONCRETE_POWDER")||n.contains("REDSTONE")||n.contains("PISTON")||n.contains("TNT")||n.contains("FIRE")||n.contains("PORTAL")||n.contains("COMMAND")||n.contains("STRUCTURE")||n.contains("SCULK")||n.contains("SPAWNER")||n.contains("OBSERVER")||n.contains("DISPENSER")||n.contains("DROPPER")||n.contains("HOPPER")||n.contains("CHEST")||n.contains("BARREL")||n.contains("FURNACE")||n.contains("SMOKER")||(n.contains("SIGN")&&!n.endsWith("_WALL_SIGN"))||n.contains("BANNER")||n.contains("SHULKER")||n.contains("LECTERN")||n.contains("CAMPFIRE")||n.contains("BEE")||n.contains("BREWING"))throw new IllegalArgumentException("Block outside isolated placement policy: "+n);
+        if(data.getAsString().contains("occupied=true"))throw new IllegalArgumentException("Occupied beds cannot be changed");
         if(data.getAsString().contains("waterlogged=true"))throw new IllegalArgumentException("Waterlogged writes are disabled");
+    }
+    static void checkExisting(org.bukkit.block.BlockState existing) {
+        if (!(existing instanceof TileState tile) || existing instanceof org.bukkit.block.Sign) return;
+        // Bed color/part/facing/occupancy are represented by the block state.
+        // Preserve custom data rather than treating it as an empty bed.
+        if (existing instanceof org.bukkit.block.Bed && tile.getPersistentDataContainer().isEmpty()
+                && !existing.getBlockData().getAsString().contains("occupied=true")) return;
+        throw new IllegalArgumentException("Existing block-entity data is outside placement policy");
     }
     private JsonObject process(String route,JsonObject input) throws Exception {
         World world=world();JsonObject out=new JsonObject();
@@ -96,7 +105,7 @@ public final class TestWorldBridge implements AutoCloseable {
         }
         ArrayList<BlockData> intended=new ArrayList<>(),before=new ArrayList<>();
         ArrayList<JsonElement> signAfter=new ArrayList<>(),signBefore=new ArrayList<>();
-        for(JsonElement value:cells){JsonObject c=value.getAsJsonObject();BlockData a=Bukkit.createBlockData(c.get("block").getAsString()),b=Bukkit.createBlockData(c.get("before").getAsString());safe(a);safe(b);intended.add(a);before.add(b);signAfter.add(SignData.checked(c.get("sign"),a.getMaterial().name().endsWith("_WALL_SIGN")));signBefore.add(SignData.checked(c.get("beforeSign"),b.getMaterial().name().endsWith("_WALL_SIGN")));var existing=world.getBlockAt(integer(c,"x"),integer(c,"y"),integer(c,"z")).getState();if(existing instanceof TileState && !(existing instanceof org.bukkit.block.Sign))throw new IllegalArgumentException("Existing block-entity data is outside placement policy");}
+        for(JsonElement value:cells){JsonObject c=value.getAsJsonObject();BlockData a=Bukkit.createBlockData(c.get("block").getAsString()),b=Bukkit.createBlockData(c.get("before").getAsString());safe(a);safe(b);intended.add(a);before.add(b);signAfter.add(SignData.checked(c.get("sign"),a.getMaterial().name().endsWith("_WALL_SIGN")));signBefore.add(SignData.checked(c.get("beforeSign"),b.getMaterial().name().endsWith("_WALL_SIGN")));var existing=world.getBlockAt(integer(c,"x"),integer(c,"y"),integer(c,"z")).getState();checkExisting(existing);}
         if(route.equals("/validate")){out.addProperty("valid",true);return out;}
         int applied=0;long started=System.nanoTime();
         try(var edit=WorldEdit.getInstance().newEditSession(BukkitAdapter.adapt(world))) {
