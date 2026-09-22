@@ -13,6 +13,8 @@
   --canvas:#242424; --warning:#d8b96d; --shadow:none;
 }
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-size:13px}
+/* Native popup menus need opaque colors even when the closed select is transparent. */
+select option,select optgroup{background-color:var(--panel);color:var(--text)}
 [hidden]{display:none!important}button,input,select,textarea{font:inherit}button,a,select{touch-action:manipulation}
 button{cursor:pointer}button:disabled{opacity:.45;cursor:not-allowed}a{color:inherit}
 button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,canvas:focus-visible,a:focus-visible{outline:3px solid #c3993e;outline-offset:3px}
