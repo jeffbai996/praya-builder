@@ -142,7 +142,7 @@ async function renderDraft(next,{frame=false}={}){
  review(draft);support();references();sheetUI.setDraft(draft);
  $('save-revision').disabled=!draft.valid;$('undo-draft').disabled=draft.cursor===0;$('redo-draft').disabled=draft.cursor===draft.history.length-1;
  draftControls(true);backLink();document.body.dataset.draft=draft.id;document.body.dataset.ready='true';
- const url=new URL(location.href);url.searchParams.set('draft',draft.id);url.searchParams.delete('catalogue');history.replaceState(null,'',url);
+ const url=new URL(location.href);url.searchParams.set('draft',draft.id);url.searchParams.delete('catalogue');url.searchParams.delete('review');history.replaceState(null,'',url);
 }
 async function support(){
  const rows=await api(`drafts/${draft.id}/support${bridge?.connected&&bridge.capabilities?.signData===1?'?signData=1':''}`);
@@ -236,7 +236,7 @@ async function bridgeStatus(){try{bridge=await api('construction/status');}catch
 async function start(){await refresh();const query=new URL(location.href).searchParams;const id=query.get('draft')||(!query.has('map')&&!query.has('catalogue')?index.drafts[0]?.id:null);
  // Nothing to design yet: open on the site tools so the first action is obvious. Decide before site tools run so a map error still lands in site mode.
  mode(query.has('map')||(!id&&!query.has('catalogue')&&!query.has('site')&&!location.hash)?'site':modeFromHash(location.hash));
- await siteControls.start();projects=await(await fetch('/api/projects')).json();$('catalogue-select').replaceChildren(...projects.flatMap(p=>p.revisions.map(r=>new Option(p.name+' / '+r.label,p.id+'/'+r.id))));if(query.has('catalogue'))await openCatalogue(query.get('catalogue'));else if(query.has('site')&&!query.has('draft'))await chooseSite(query.get('site'));else if(id)await renderDraft(await api('drafts/'+id),{frame:true});const jobId=new URL(location.href).searchParams.get('job');if(jobId){showJob(await api('construction/jobs/'+jobId));mode('construction');}await bridgeStatus();}
+ await siteControls.start();projects=await(await fetch('/api/projects')).json();$('catalogue-select').replaceChildren(...projects.flatMap(p=>p.revisions.map(r=>new Option(p.name+' / '+r.label,p.id+'/'+r.id))));if(query.has('catalogue'))await openCatalogue(query.get('catalogue'));else if(query.has('site')&&!query.has('draft'))await chooseSite(query.get('site'));else if(id)await renderDraft(await api('drafts/'+id),{frame:true});const reviewId=query.get('review');if(reviewId){const revision=index.revisions.find(r=>r.id===reviewId);if(!revision||revision.draftId!==id)throw Error('Saved version does not belong to this draft');await sheetUI.showRevision(reviewId);const reviewUrl=new URL(location.href);reviewUrl.searchParams.set('review',reviewId);history.replaceState(null,'',reviewUrl);status('Reviewing saved version '+revision.plan.revision.toUpperCase()+'. The editable model is the current working draft.');}const jobId=new URL(location.href).searchParams.get('job');if(jobId){showJob(await api('construction/jobs/'+jobId));mode('construction');}await bridgeStatus();}
 let pointerStart;
 $('studio-model').addEventListener('pointerdown',e=>{pointerStart=[e.clientX,e.clientY];});
 $('studio-model').addEventListener('click',e=>{

@@ -40,6 +40,7 @@ const files = new Map([
   ['/', ['index.html','text/html']], ['/style.css',['style.css','text/css']],
   ['/app.js',['app.js','text/javascript']], ['/scene.js',['scene.js','text/javascript']],
   ['/review-state.js',['review-state.js','text/javascript']],
+  ['/design-library.js',['design-library.js','text/javascript']],
   ['/register-thumbnails.js',['register-thumbnails.js','text/javascript']],
   ['/thumbnail-render.html',['thumbnail-render.html','text/html']],
   ['/review-sheet-render.js',['review-sheet-render.js','text/javascript']],
