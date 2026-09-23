@@ -11,6 +11,33 @@ Deployed 2026-09-23. The existing URL, `https://fragserv.tailab4af9.ts.net:8448/
 - The host, storage mount, and map service must be available. Stopping Minecraft does not stop this service.
 - Saved markers remain available offline. Player requests proxy to BlueMap when available and return an empty object when it is stopped, avoiding stale player locations.
 
+## Map UI update
+
+The map theme uses the Fragify/Fragflix dark palette and self-hosted Plus Jakarta
+Sans and Anthropic Sans fonts. Flat **Map**, perspective **3D**, and **Fly** modes
+remain available. The Builder integration is collapsed to a small **Builder**
+button until opened. The two-corner Studio handoff is unchanged.
+
+The generated `streets`, `street-pins`, and `mrt` marker sets are retired. The
+sign scan and marker generator remain as historical source material; do not run
+`map-tools/gen_markers.py` to republish those layers. Street geometry will need
+a separate verified or manually drawn source. No new street lines are inferred
+from signs in this update.
+
+From a checkout on the Minecraft host, inspect and then apply the map update:
+
+```sh
+python3 tools/install-praya-map.py /home/jbai/minecraft/praya /home/jbai/.local/share/praya-map
+python3 tools/install-praya-map.py /home/jbai/minecraft/praya /home/jbai/.local/share/praya-map --apply
+```
+
+The installer backs up changed files with `.before-map-theme-20260923`, then
+updates the BlueMap webapp config, current settings, saved marker data, UI
+assets, page metadata, and the independent viewer context. It does not modify
+world files or restart a service. Reload the browser to receive the change.
+The licensed Anthropic Sans font is copied from the existing local console
+installation at apply time; it is not stored in Git.
+
 ## Runtime
 
 - `praya-map.service`, enabled in the FragServ WSL user session, has no dependency on either Minecraft unit.
@@ -18,7 +45,9 @@ Deployed 2026-09-23. The existing URL, `https://fragserv.tailab4af9.ts.net:8448/
 - The plugin's built-in webserver remains on 8100, avoiding port contention when Minecraft starts.
 - Nginx 1.24.0-2ubuntu7.18 was downloaded from the configured Ubuntu package repository and extracted under `/home/jbai/.local/share/praya-map/runtime`; it is not a system-wide apt installation. Update this extracted package explicitly for future Nginx security updates.
 - Config: `/home/jbai/.local/share/praya-map/nginx.conf`; overlay: `map-context.js` in that directory. Source copies are under `ops/praya-map/`.
-- The context label is injected into the served HTML. BlueMap's generated files and Minecraft world files are not modified.
+- The context label is injected into the served HTML. The UI update modifies
+  BlueMap's webroot and configuration, with backups; Minecraft world files are
+  not modified.
 - Compressed texture/PRBM files use `gzip_static always`; missing tiles return 204. PHP, hidden files and backup files are not served.
 - Read-only server status comes from the production console at 5009. Console unavailability does not prevent map browsing.
 

@@ -5,9 +5,10 @@ visual context, not a substitute for a current survey of actual blocks.
 
 ## Working path
 
-1. Choose **Select a plot** on BlueMap and click opposite corners. The outline
-   follows the map camera. **Design selected plot** opens studio with those exact
-   integer bounds. **Design here** also supports the map center. Camera Y is not ground level.
+1. Open **Builder** on the map, choose **Select a plot**, and click opposite
+   corners. The outline follows the map camera. **Design selected plot** opens
+   Studio with those exact integer bounds. **Open Studio** also supports the map
+   center. Camera Y is not ground level.
 2. Name the plot, choose its width/depth, and set the bottom Y and capture height.
    Mark the street entrance and protected areas in the plot plan, then save.
    This record survives reload, but is not yet a block survey.
@@ -50,6 +51,11 @@ The installer preserves existing scripts, snapshots affected files once and
 updates BlueMap's webapp configuration plus current settings file. Reload the
 map page. No game restart or world modification is required. BlueMap documents
 this extension point in its [custom scripts guide](https://bluemap.bluecolored.de/community/Customisation.html).
+
+The Praya map theme is managed separately by `tools/install-praya-map.py`.
+It retains the same Builder handoff, adds the map UI stylesheet and font files,
+and removes the retired street and MRT marker sets from both BlueMap's config
+and the saved marker file. Run without `--apply` to inspect the exact changes.
 
 | Route under `/api/workspace/` | Purpose |
 | --- | --- |

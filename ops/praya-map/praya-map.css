@@ -1,0 +1,174 @@
+@font-face {
+  font-family: "Plus Jakarta Sans";
+  src: url("praya-map-fonts/plus-jakarta-sans-latin-400-normal.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 400 549;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Plus Jakarta Sans";
+  src: url("praya-map-fonts/plus-jakarta-sans-latin-600-normal.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 550 699;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Plus Jakarta Sans";
+  src: url("praya-map-fonts/plus-jakarta-sans-latin-700-normal.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 700 900;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Anthropic Sans";
+  src: url("praya-map-fonts/AnthropicSansVariable-TextRegular.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+}
+
+:root,
+:root .theme-light,
+:root .theme-contrast {
+  font-family: "Anthropic Sans", "Plus Jakarta Sans", system-ui, sans-serif;
+  --theme-bg: #17181c;
+  --theme-bg-hover: #26282e;
+  --theme-bg-light: #31343a;
+  --theme-fg: #f5f5f7;
+  --theme-fg-light: #b5b5bd;
+  --theme-switch-button-on: #a6e22e;
+}
+
+#app {
+  font-family: "Anthropic Sans", "Plus Jakarta Sans", system-ui, sans-serif;
+  letter-spacing: -0.01em;
+}
+
+#app .control-bar {
+  height: 40px;
+  margin: 12px;
+  width: calc(100% - 24px);
+  filter: none;
+  gap: 3px;
+}
+#app .control-bar > :not(:first-child) { border-left: 0; }
+#app .control-bar .space { background: transparent; }
+#app .svg-button,
+#app .number-input,
+#app .position-input {
+  border-radius: 9px;
+  box-shadow: 0 2px 12px #0005;
+}
+#app .svg-button {
+  min-width: 40px;
+  min-height: 40px;
+  border: 1px solid #ffffff16;
+}
+#app .svg-button:hover { border-color: #ffffff30; }
+#app .svg-button.active { color: #a6e22e; }
+#app .svg-button.active svg { fill: #a6e22e; }
+#app .svg-button svg { height: 23px; }
+#app .number-input,
+#app .position-input { min-height: 40px; border: 1px solid #ffffff16; }
+#app .number-input label { display: flex; align-items: center; height: 100%; min-width: 0; }
+#app .number-input input { flex: 1; width: 0; min-width: 0; height: auto; padding: 0 8px 0 2px; font: 600 13px "Plus Jakarta Sans", sans-serif; }
+#app .number-input .label { flex: none; width: auto; padding: 0 0 0 11px; color: #b5b5bd; font-size: 12px; }
+#app .controls-switch { gap: 3px; }
+#app .controls-switch .svg-button { min-width: 46px; }
+#app .controls-switch .svg-button svg { display: none; }
+#app .controls-switch .svg-button::after { position: absolute; inset: 0; display: grid; place-items: center; font: 700 12px "Plus Jakarta Sans", sans-serif; }
+#app .controls-switch .svg-button:nth-child(1)::after { content: "3D"; }
+#app .controls-switch .svg-button:nth-child(2)::after { content: "Map"; }
+#app .controls-switch .svg-button:nth-child(3)::after { content: "Fly"; }
+#app #zoom-buttons {
+  right: 12px;
+  bottom: 12px;
+  width: 40px;
+  margin: 0;
+  gap: 3px;
+  filter: none;
+}
+#app .side-menu {
+  background: #17181c;
+  border-right: 1px solid #ffffff16;
+  box-shadow: 16px 0 48px #0008;
+  filter: none;
+}
+#app .side-menu > .title {
+  font: 700 15px/40px "Plus Jakarta Sans", sans-serif;
+  letter-spacing: -0.025em;
+  border-color: #ffffff16;
+}
+#app .side-menu .content { font-size: 14px; }
+#app input,
+#app select,
+#app button { font-family: "Anthropic Sans", "Plus Jakarta Sans", system-ui, sans-serif; }
+#app input:focus-visible,
+#app button:focus-visible,
+#app .svg-button:focus-visible,
+#builder-open-panel:focus-visible,
+#builder-studio-panel :focus-visible {
+  outline: 2px solid #a6e22e;
+  outline-offset: 2px;
+}
+
+#builder-open-panel,
+#builder-studio-panel {
+  position: fixed;
+  left: 16px;
+  z-index: 10002;
+  box-sizing: border-box;
+  font-family: "Anthropic Sans", "Plus Jakarta Sans", system-ui, sans-serif;
+  color: #f5f5f7;
+  background: #17181cef;
+  border: 1px solid #ffffff24;
+  box-shadow: 0 8px 28px #0008;
+  backdrop-filter: blur(14px);
+}
+#builder-open-panel {
+  bottom: 16px;
+  padding: 10px 15px;
+  border-radius: 9px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+#builder-open-panel::before { content: ""; display: inline-block; width: 7px; height: 7px; margin-right: 9px; border-radius: 2px; background: #a6e22e; }
+#builder-open-panel:hover { background: #26282e; }
+#builder-studio-panel {
+  bottom: 66px;
+  width: min(340px, calc(100vw - 32px));
+  padding: 16px;
+  border-radius: 12px;
+  font-size: 13px;
+  line-height: 1.45;
+}
+#builder-studio-panel[hidden] { display: none; }
+#builder-studio-panel .builder-panel-header,
+#builder-studio-panel .builder-panel-actions { display: flex; align-items: center; gap: 10px; }
+#builder-studio-panel .builder-panel-header { justify-content: space-between; }
+#builder-studio-panel strong { font: 700 15px "Plus Jakarta Sans", sans-serif; }
+#builder-close-panel { padding: 0; color: #b5b5bd; background: none; border: 0; cursor: pointer; font: inherit; }
+#builder-close-panel:hover { color: #f5f5f7; }
+#builder-selection-note { margin: 12px 0 15px; color: #b5b5bd; }
+#builder-studio-panel .builder-panel-actions { flex-wrap: wrap; }
+#builder-select-plot,
+#builder-studio-link { padding: 9px 11px; border-radius: 8px; font: 700 12px "Plus Jakarta Sans", sans-serif; text-decoration: none; }
+#builder-select-plot { color: #101114; background: #a6e22e; border: 1px solid #a6e22e; cursor: pointer; }
+#builder-select-plot:hover { background: #b8ed55; }
+#builder-studio-link { color: #f5f5f7; border: 1px solid #ffffff30; }
+#builder-studio-link:hover { background: #26282e; }
+#builder-studio-link[aria-disabled="true"] { color: #85858c; cursor: not-allowed; }
+
+@media (max-width: 575.98px) {
+  #app .control-bar { margin: 0; width: 100%; height: 44px; gap: 0; border-bottom: 1px solid #ffffff20; background: #17181cf2; }
+  #app .control-bar .svg-button,
+  #app .control-bar .number-input,
+  #app .control-bar .position-input { min-height: 43px; border: 0; border-radius: 0; box-shadow: none; }
+  #app .control-bar .svg-button { min-width: 43px; }
+  #app .control-bar .controls-switch { display: flex; position: fixed; bottom: 12px; left: 50%; transform: translateX(-50%); gap: 3px; }
+  #app .control-bar .controls-switch .svg-button { min-width: 43px; border: 1px solid #ffffff16; border-radius: 9px; box-shadow: 0 2px 12px #0005; }
+  #app #zoom-buttons { right: 12px; bottom: 12px; }
+  #builder-open-panel { left: 12px; bottom: 12px; }
+  #builder-studio-panel { left: 12px; bottom: 62px; width: min(340px, calc(100vw - 24px)); }
+}
