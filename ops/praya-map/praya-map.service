@@ -1,0 +1,20 @@
+[Unit]
+Description=Praya saved BlueMap web viewer
+After=network.target
+StartLimitIntervalSec=60
+StartLimitBurst=3
+
+[Service]
+Type=simple
+ExecStartPre=/usr/bin/test -f /home/jbai/minecraft/praya/bluemap/web/index.html
+ExecStartPre=/home/jbai/.local/share/praya-map/runtime/usr/sbin/nginx -t -p /home/jbai/.local/share/praya-map/ -c /home/jbai/.local/share/praya-map/nginx.conf
+ExecStart=/home/jbai/.local/share/praya-map/runtime/usr/sbin/nginx -p /home/jbai/.local/share/praya-map/ -c /home/jbai/.local/share/praya-map/nginx.conf -g "daemon off;"
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=on-failure
+RestartSec=5
+MemoryMax=128M
+NoNewPrivileges=true
+UMask=0077
+
+[Install]
+WantedBy=default.target
