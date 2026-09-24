@@ -1,6 +1,6 @@
 import {collectDesigns} from './design-library.js';
 import {designChooser} from './design-chooser.js';
-import {placementReadiness,compatibleSites,placementFit,placementErrorMessage} from './placement-readiness.js';
+import {placementReadiness,compatibleSites,placementFit,parcelPosition,placementErrorMessage} from './placement-readiness.js';
 import {label,componentLabel,coordinates,setCoordinates,record,review,finishChoices,siteInterface} from './studio-interface.js';
 import {createScene} from './scene.js';
 import {readTheme,saveTheme,bindThemeToggle} from './review-state.js';
@@ -52,7 +52,7 @@ for(const link of document.querySelectorAll('.studio-steps a'))link.addEventList
 window.addEventListener('hashchange',()=>mode(modeFromHash(location.hash)));
 $('empty-site').onclick=()=>{mode('site',{scroll:innerWidth<1024});$('site-select').focus();};
 const designName=name=>name.replace(/ · (?:R\d+|Praya detail pass)$/,'');
-let selectedDraftId='';
+let selectedDraftId='',targetSiteId=null,pendingSiteDesign=null;
 function designChoices(){return collectDesigns(index);}
 const STUDIO_AUTHOR={agent:'studio',model:'operator'};
 function modelName(id){if(!id)return '';const known={'gpt-6-astra':'GPT-6 Astra','claude-fable-5-1':'Claude Fable 5.1','claude-opus-5':'Claude Opus 5','claude-sonnet-5':'Claude Sonnet 5','claude-haiku-4-5':'Claude Haiku 4.5','operator':'Operator','unrecorded':'Unrecorded'};if(known[id])return known[id];
@@ -61,7 +61,48 @@ function authorLabel(a){if(!a)return 'Unrecorded';return [modelName(a.model||a.a
 function authorTag(d){return d.author?' · '+authorLabel(d.author):'';}
 function authorChip(a){const chip=$('draft-author');if(!chip)return;chip.hidden=!a;chip.textContent=a?authorLabel(a):'';chip.dataset.agent=a?.agent||'';}
 function renderDesignChoices(current=selectedDraftId){selectedDraftId=current;const d=index.drafts.find(d=>d.id===current);$('current-design-name').textContent=d?designName(d.name):'Choose a design';}
-const chooser=designChooser({getIndex:()=>index,open:(id,revision)=>action(async()=>{await renderDraft(await api('drafts/'+id),{frame:true});if(revision)await sheetUI.showRevision(revision);})});
+const chooser=designChooser({getIndex:()=>index,open:(id,revision)=>action(()=>openDesign(id,revision))});
+// An explicitly selected parcel is a destination, not a property to replace when browsing designs.
+async function openDesign(id,revision){
+ const source=await api('drafts/'+id);
+ if(targetSiteId&&source.siteId!==targetSiteId){
+  pendingSiteDesign={source,target:site,revision};
+  $('site-design-title').textContent='Use '+designName(source.plan.name)+' here';
+  $('site-design-target').textContent=site.name;
+  $('site-design-note').textContent=revision?'This is a saved-version review. Open the original to review it, or choose a working draft to create a placement copy.':'Creates a separate draft on this parcel. Review its terrain, protected areas and entrance before saving.';
+  $('site-design-original').textContent=revision?'Review original version':'Open original site';
+  const positions=[0,1,2,3].map(turns=>parcelPosition(source.candidate,site,turns));
+  const position=positions.find(t=>placementFit(source.candidate,site,t).fits)||positions[0];
+  ['x','y','z'].forEach((axis,i)=>$('site-design-'+axis).value=position.origin[i]);
+  $('site-design-turns').value=String(position.turns);$('site-design-error').hidden=true;
+  siteDesignFit();$('site-design-dialog').showModal();return;
+ }
+ await renderDraft(source,{frame:true});if(revision)await sheetUI.showRevision(revision);
+}
+function siteDesignPosition(){return {origin:['x','y','z'].map(axis=>$('site-design-'+axis).value.trim()===''?NaN:Number($('site-design-'+axis).value)),turns:Number($('site-design-turns').value)};}
+function siteDesignFit(){
+ if(!pendingSiteDesign)return;
+ const {source,target,revision}=pendingSiteDesign,fit=placementFit(source.candidate,target,siteDesignPosition());
+ $('site-design-fit').textContent=fit.message;$('site-design-fit').dataset.state=fit.fits?'fits':'blocked';
+ $('site-design-create').disabled=!fit.fits||Boolean(revision)||busy;
+}
+for(const axis of ['x','y','z'])$('site-design-'+axis).addEventListener('input',siteDesignFit);
+$('site-design-turns').onchange=()=>{
+ const position=parcelPosition(pendingSiteDesign.source.candidate,pendingSiteDesign.target,Number($('site-design-turns').value));
+ ['x','y','z'].forEach((axis,i)=>$('site-design-'+axis).value=position.origin[i]);siteDesignFit();
+};
+$('site-design-cancel').onclick=()=>$('site-design-dialog').close();
+$('site-design-dialog').addEventListener('close',()=>{pendingSiteDesign=null;});
+$('site-design-original').onclick=()=>action(async()=>{
+ const {source,revision}=pendingSiteDesign;targetSiteId=null;
+ await renderDraft(await api('drafts/'+source.id),{frame:true});if(revision)await sheetUI.showRevision(revision);
+ $('site-design-dialog').close();
+});
+$('site-design-form').onsubmit=event=>{event.preventDefault();action(async()=>{
+ const {source,target,revision}=pendingSiteDesign;if(revision)throw Error('Choose a working draft to create a placement copy.');
+ const fit=placementFit(source.candidate,target,siteDesignPosition());if(!fit.fits)throw Error(fit.message);
+ try{await createPlacementCopy(source,target,siteDesignPosition());$('site-design-dialog').close();}catch(error){$('site-design-error').textContent=placementErrorMessage(error.message);$('site-design-error').hidden=false;throw error;}
+});};
 $('choose-design').onclick=()=>chooser.show();
 async function refresh(){index=await api('context');$('studio-main').hidden=false;if(!index.sites.length)$('fixture-panel').open=true;const sid=$('site-select').value,did=selectedDraftId;$('site-select').replaceChildren(new Option('No site selected',''),...index.sites.map(s=>new Option(s.name,s.id)));$('site-select').value=sid;renderDesignChoices(did);$('saved-revision').replaceChildren(...index.revisions.map(r=>new Option(r.plan.name+' · '+when(r.createdAt),r.id)));$('continue-revision').disabled=!index.revisions.length;$('job-select').replaceChildren(new Option('Choose a construction job',''),...(index.jobs||[]).map(j=>new Option(label(j.kind)+' · '+label(j.state)+' · '+when(j.createdAt),j.id)));status(`${index.sites.length} sites · ${designChoices().length} designs · ${index.revisions.length} saved versions`);}
 async function selectSite(id,skipView=false){contextTicket++;contextKey=null;site=id?await api('sites/'+id):null;$('site-select').value=id||'';scene.siteBounds(site);const templateFits=Boolean(site&&site.plot.max[0]-site.plot.min[0]>=32&&site.plot.max[2]-site.plot.min[2]>=32);$('new-proposals').disabled=!templateFits;$('study-site-note').hidden=!site||templateFits;for(const id of ['context-visible','context-depth','impact-visible']){$(id).disabled=!site;$(id).closest('.layer-chip').title=site?'':'Needs a surveyed site';}if(site){if(!skipView)await loadSiteView(null);setCoordinates('origin',site.plot.min);$('site-summary').textContent=`${site.plot.max[0]-site.plot.min[0]} × ${site.plot.max[2]-site.plot.min[2]} plot · ${site.world} · captured ${when(site.capturedAt)}${site.protected.length?' · '+site.protected.length+' protected areas':''}`;}else{await scene.loadContext({sections:[]});$('site-summary').textContent='No site. Designs still work without one; construction needs a survey.';}}
@@ -123,7 +164,7 @@ async function renderDraft(next,{frame=false}={}){
  review(draft);support();references();sheetUI.setDraft(draft);
  $('save-revision').disabled=!draft.valid;$('undo-draft').disabled=draft.cursor===0;$('redo-draft').disabled=draft.cursor===draft.history.length-1;
  draftControls(true);materialPreviewState();backLink();document.body.dataset.draft=draft.id;document.body.dataset.ready='true';
- const url=new URL(location.href);url.searchParams.set('draft',draft.id);url.searchParams.delete('catalogue');url.searchParams.delete('review');history.replaceState(null,'',url);
+ const url=new URL(location.href);url.searchParams.set('draft',draft.id);if(targetSiteId===draft.siteId)url.searchParams.set('site',targetSiteId);else{targetSiteId=null;url.searchParams.delete('site');}url.searchParams.delete('catalogue');url.searchParams.delete('review');history.replaceState(null,'',url);
 }
 async function support(){
  const rows=await api(`drafts/${draft.id}/support${bridge?.connected&&bridge.capabilities?.signData===1?'?signData=1':''}`);
@@ -180,7 +221,7 @@ function materials(){
 }
 const requireDraft=()=>{if(!draft)throw Error('Open a design first');return draft;};
 function placement(){const origin=coordinates('origin');return {siteId:site?.id,transform:{origin,turns:Number($('turns').value)},brief:$('brief').value};}
-async function chooseSite(id){await selectSite(id);clearPlacementJob();draft=null;sheetUI.setDraft(null);partsUI.setDraft(null);selectedDraftId='';renderDesignChoices('');delete document.body.dataset.draft;document.body.dataset.ready='false';scene.hide();draftControls(false);$('candidate-state').textContent='No design';delete $('candidate-state').dataset.state;$('candidate-summary').textContent='';$('asset-support').replaceChildren();$('sign-tools').hidden=true;$('reference-list').replaceChildren();$('add-references').disabled=true;$('review-metrics').replaceChildren();$('diagnostics').replaceChildren();$('draft-title').textContent=site?'Choose a design for this site':'No design open';authorChip(null);$('rename-design').hidden=true;$('rename-form').hidden=true;$('save-state').hidden=true;$('version-list').replaceChildren();$('compare-summary').textContent='';selection();backLink();const url=new URL(location.href);url.searchParams.delete('draft');if(id)url.searchParams.set('site',id);else url.searchParams.delete('site');history.replaceState(null,'',url);}
+async function chooseSite(id){await selectSite(id);targetSiteId=id||null;clearPlacementJob();draft=null;sheetUI.setDraft(null);partsUI.setDraft(null);selectedDraftId='';renderDesignChoices('');delete document.body.dataset.draft;document.body.dataset.ready='false';scene.hide();draftControls(false);$('candidate-state').textContent='No design';delete $('candidate-state').dataset.state;$('candidate-summary').textContent='';$('asset-support').replaceChildren();$('sign-tools').hidden=true;$('reference-list').replaceChildren();$('add-references').disabled=true;$('review-metrics').replaceChildren();$('diagnostics').replaceChildren();$('draft-title').textContent=site?'Choose a design for this site':'No design open';authorChip(null);$('rename-design').hidden=true;$('rename-form').hidden=true;$('save-state').hidden=true;$('version-list').replaceChildren();$('compare-summary').textContent='';selection();backLink();const url=new URL(location.href);url.searchParams.delete('draft');url.searchParams.delete('review');url.searchParams.delete('catalogue');if(id)url.searchParams.set('site',id);else url.searchParams.delete('site');history.replaceState(null,'',url);}
 async function continueRevision(r){const d=await api('drafts',{plan:r.plan,parentHash:r.artifactHash,siteId:r.siteId,transform:r.transform,brief:r.brief,author:STUDIO_AUTHOR});await refresh();await renderDraft(d,{frame:true});mode('design');status('New draft opened from the saved version; the saved version is unchanged.');}
 $('rename-design').onclick=()=>{$('rename-input').value=draft.plan.name;$('rename-form').hidden=false;$('rename-design').hidden=true;$('rename-input').focus();$('rename-input').select();};
 $('rename-cancel').onclick=()=>{$('rename-form').hidden=true;$('rename-design').hidden=!draft;};
@@ -225,7 +266,7 @@ async function bridgeStatus(){try{bridge=await api('construction/status');}catch
 async function start(){await refresh();const query=new URL(location.href).searchParams;const id=query.get('draft')||(!query.has('map')&&!query.has('catalogue')?index.drafts[0]?.id:null);
  // Nothing to design yet: open on the site tools so the first action is obvious. Decide before site tools run so a map error still lands in site mode.
  mode(query.has('map')||(!id&&!query.has('catalogue')&&!query.has('site')&&!location.hash)?'site':modeFromHash(location.hash));
- await siteControls.start();projects=await(await fetch('/api/projects')).json();$('catalogue-select').replaceChildren(...projects.flatMap(p=>p.revisions.map(r=>new Option(p.name+' / '+r.label,p.id+'/'+r.id))));if(query.has('catalogue'))await openCatalogue(query.get('catalogue'));else if(query.has('site')&&!query.has('draft'))await chooseSite(query.get('site'));else if(id)await renderDraft(await api('drafts/'+id),{frame:true});const reviewId=query.get('review');if(reviewId){const revision=index.revisions.find(r=>r.id===reviewId);if(!revision||revision.draftId!==id)throw Error('Saved version does not belong to this draft');await sheetUI.showRevision(reviewId);const reviewUrl=new URL(location.href);reviewUrl.searchParams.set('review',reviewId);history.replaceState(null,'',reviewUrl);status('Reviewing saved version '+revision.plan.revision.toUpperCase()+'. The editable model is the current working draft.');}const jobId=new URL(location.href).searchParams.get('job');if(jobId){showJob(await api('construction/jobs/'+jobId));mode('construction');}await bridgeStatus();}
+ await siteControls.start();projects=await(await fetch('/api/projects')).json();$('catalogue-select').replaceChildren(...projects.flatMap(p=>p.revisions.map(r=>new Option(p.name+' / '+r.label,p.id+'/'+r.id))));if(query.has('catalogue'))await openCatalogue(query.get('catalogue'));else if(query.has('site')){await chooseSite(query.get('site'));if(query.has('draft'))await openDesign(id,query.get('review'));}else if(id)await renderDraft(await api('drafts/'+id),{frame:true});const reviewId=query.get('review');if(reviewId&&draft){const revision=index.revisions.find(r=>r.id===reviewId);if(!revision||revision.draftId!==id)throw Error('Saved version does not belong to this draft');await sheetUI.showRevision(reviewId);const reviewUrl=new URL(location.href);reviewUrl.searchParams.set('review',reviewId);history.replaceState(null,'',reviewUrl);status('Reviewing saved version '+revision.plan.revision.toUpperCase()+'. The editable model is the current working draft.');}const jobId=query.get('job');if(jobId&&draft){showJob(await api('construction/jobs/'+jobId));mode('construction');}await bridgeStatus();}
 let pointerStart;
 $('studio-model').addEventListener('pointerdown',e=>{pointerStart=[e.clientX,e.clientY];});
 $('studio-model').addEventListener('click',e=>{
@@ -257,15 +298,16 @@ function copyPosition(){return {origin:['placement-x','placement-y','placement-z
 function setCopyPosition(){
  const target=index?.sites.find(s=>s.id===$('placement-site').value);if(!target||!draft)return;
  const samePlot=site&&JSON.stringify(site.plot)===JSON.stringify(target.plot);
- const origin=samePlot&&draft.transform?draft.transform.origin:[target.plot.min[0],Math.max(target.plot.min[1],target.frontage[1]-1),target.plot.min[2]];
+ const origin=samePlot&&draft.transform?draft.transform.origin:parcelPosition(draft.candidate,target,0).origin;
  ['placement-x','placement-y','placement-z'].forEach((id,i)=>$(id).value=origin[i]);$('placement-turns').value=samePlot&&draft.transform?draft.transform.turns:0;copyFit();
 }
 function copyFit(){
- const target=index?.sites.find(s=>s.id===$('placement-site').value),fit=draft?placementFit(draft.candidate,target,copyPosition()):{fits:false,message:'Choose a design.'};
+ const target=index?.sites.find(s=>s.id===$('placement-site').value),fit=draft?placementFit(draft.candidate,target,copyPosition(),bridge):{fits:false,message:'Choose a design.'};
  $('placement-fit').textContent=target?fit.message:'No matching survey yet. Capture a site from the connected server in Site.';
  $('placement-fit').dataset.state=fit.fits?'fits':'blocked';$('create-placement-copy').disabled=!fit.fits||!bridge?.connected||bridge.capabilities?.placement===0||busy;
 }
 function updatePlacement(){
+ siteDesignFit();
  const state=placementReadiness(draft,site,bridge,index?.revisions||[]);
  if(state.ready&&placementIssue?.draftId===draft.id&&placementIssue.hash===draft.candidate.hash&&placementIssue.worldId===bridge.worldId){state.kind='preview-blocked';state.title='Placement preview is blocked';state.message=placementIssue.message;}
  $('placement-readiness').dataset.state=state.kind;$('placement-readiness-title').textContent=state.title;$('placement-readiness-message').textContent=state.message;
@@ -273,7 +315,7 @@ function updatePlacement(){
  $('placement-teaser').textContent=state.kind==='world-mismatch'?`This design uses ${site.world}. Prepare a copy for ${bridge.world} in Build.`:state.title;
  $('placement-world').textContent=bridge?.connected?bridge.world:'Not connected';$('placement-source').textContent=site?`${site.name} · ${site.world}`:'No site attached';
  $('prepare-placement').disabled=!state.ready||busy;$('placement-save').hidden=state.kind!=='unsaved';$('placement-save').disabled=busy;
- $('placement-copy-form').hidden=!draft||!['no-site','world-mismatch','identity-mismatch'].includes(state.kind);
+ $('placement-copy-form').hidden=!draft||!['no-site','world-mismatch','identity-mismatch','area-mismatch'].includes(state.kind);
  const choices=compatibleSites(index?.sites||[],bridge),key=draft?.id+':'+choices.map(s=>s.id).join(',');
  if(key!==copyKey){copyKey=key;$('placement-site').replaceChildren(...(choices.length?choices.map(s=>new Option(s.name,s.id)):[new Option('No matching surveyed site','')]));setCopyPosition();}copyFit();
  if(job&&job.state==='prepared')$('apply-placement').disabled=!bridge?.connected||job.worldId!==bridge.worldId||busy;
@@ -283,15 +325,18 @@ for(const id of ['placement-x','placement-y','placement-z','placement-turns'])$(
 $('placement-copy-form').onsubmit=event=>{event.preventDefault();action(async()=>{
  const source=requireDraft(),target=index.sites.find(s=>s.id===$('placement-site').value),transform=copyPosition();
  await bridgeStatus();if(!compatibleSites([target].filter(Boolean),bridge).length)throw Error('The selected site no longer matches the connected server. Refresh and choose a matching survey.');
- const fit=placementFit(source.candidate,target,transform);if(!fit.fits)throw Error(fit.message);
+ const fit=placementFit(source.candidate,target,transform,bridge);if(!fit.fits)throw Error(fit.message);
+ await createPlacementCopy(source,target,transform);
+ });};
+async function createPlacementCopy(source,target,transform){
  const current=await api('drafts/'+source.id);if(current.version!==source.version||current.candidate.hash!==source.candidate.hash)throw Error('The original design changed. Reload it before preparing a copy.');
  status('Preparing placement copy…');
  // Continue this design's version history on the target site, while leaving the source draft intact.
  const latest=await api('context'),targetRevision=latest.revisions.filter(r=>r.project===source.plan.plan_id+':'+target.id).sort((a,b)=>b.createdAt.localeCompare(a.createdAt))[0];
  const copy=await api('drafts',{author:source.author||STUDIO_AUTHOR,plan:{...source.plan,name:source.plan.name.slice(0,100)+' · Placement copy'},parentHash:targetRevision?.artifactHash||source.candidate.hash,siteId:target.id,transform,brief:source.brief});
- await refresh();await renderDraft(copy,{frame:true});mode('construction');
+ await refresh();targetSiteId=target.id;clearPlacementJob();await renderDraft(copy,{frame:true});mode('construction');
  status(copy.valid?'Placement copy ready. Save this version, then preview placement.':'Placement copy needs changes. Review the findings before saving.',copy.valid?'neutral':'warning');
- });};
+}
 function clearPlacementJob(){job=null;placementIssue=null;clearTimeout(pollTimer);$('job-select').value='';$('placement-summary').replaceChildren();$('placement-progress').value=0;$('placement-outcome').textContent='Preview the saved design to prepare a new placement.';for(const id of ['apply-placement','cancel-placement','reconcile-placement','rollback-placement','download-placement'])$(id).disabled=true;const url=new URL(location.href);url.searchParams.delete('job');history.replaceState(null,'',url);}
 function draftControls(enabled){
  for(const id of ['apply-material','apply-variant','prepare-request','submit-revision','download-plan','download-schematic','download-review','download-handoff','prepare-placement'])$(id).disabled=!enabled;

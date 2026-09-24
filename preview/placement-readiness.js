@@ -8,16 +8,18 @@ export function placementReadiness(draft,site,bridge,revisions=[]){
  if(!site)return state('no-site','Choose a placement site',`Prepare a copy of this design on a surveyed site in ${bridge.world}.`);
  if(site.world!==bridge.world)return state('world-mismatch','This design is on another world',`The design uses ${site.world}; the connected server is ${bridge.world}. Prepare a placement copy below.`);
  if(!site.worldId||site.worldId!==bridge.worldId)return state('identity-mismatch','This survey belongs to another world copy','Choose a survey captured from the connected server. Matching world names alone are not enough.');
+ const fit=placementFit(draft.candidate,site,draft.transform,bridge);
+ if(!fit.fits)return state('area-mismatch','Design is outside the placement area',fit.message+' Prepare a copy on an available site below.');
  if(!draft.valid)return state('invalid','The design needs changes',draft.diagnostics?.filter(d=>!d.severity||d.severity==='error').slice(0,2).map(d=>d.message||d.reason||String(d)).join(' · ')||'Review the site fit and design findings before saving.');
  if(!revisions.some(r=>r.draftId===draft.id&&r.artifactHash===draft.candidate.hash&&r.surveyHash===draft.surveyHash))return state('unsaved','Save this placement version','Save the design on this site, then preview the changes before placing.');
  return state('ready','Ready to preview',`Preview the exact changes in ${bridge.world} before placing any blocks.`);
 }
-export function compatibleSites(sites,bridge){return bridge?.connected?sites.filter(s=>s.world===bridge.world&&s.worldId&&s.worldId===bridge.worldId&&s.plot.min.every((n,i)=>n>=bridge.minimum[i])&&s.plot.max.every((n,i)=>n<=bridge.maximum[i])):[];}
-export function placementFit(candidate,site,transform){
- if(!site||!transform.origin.every(Number.isSafeInteger)||!Number.isInteger(transform.turns)||transform.turns<0||transform.turns>3)return {fits:false,message:'Choose a site and whole-block position.'};
- const min=[Infinity,Infinity,Infinity],max=[-Infinity,-Infinity,-Infinity];
- for(const c of candidate.blocks){let x=c.x,z=c.z,w=candidate.dimensions.x,d=candidate.dimensions.z;for(let i=0;i<transform.turns;i++){[x,z]=[d-1-z,x];[w,d]=[d,w];}const p=[x+transform.origin[0],c.y+transform.origin[1],z+transform.origin[2]];for(let i=0;i<3;i++){min[i]=Math.min(min[i],p[i]);max[i]=Math.max(max[i],p[i]+1);}}
+export function compatibleSites(sites,bridge){return bridge?.connected?sites.filter(s=>s.world===bridge.world&&s.worldId&&s.worldId===bridge.worldId&&s.plot.min.every((n,i)=>n<bridge.maximum[i])&&s.plot.max.every((n,i)=>n>bridge.minimum[i])):[];}
+export function placementFit(candidate,site,transform,bridge){
+ if(!site||!candidate?.blocks?.length||transform?.origin?.length!==3||!transform.origin.every(Number.isSafeInteger)||!Number.isInteger(transform.turns)||transform.turns<0||transform.turns>3)return {fits:false,message:'Choose a site and whole-block position.'};
+ const {min,max}=placementBounds(candidate,transform);
  const fits=min.every((n,i)=>n>=site.plot.min[i])&&max.every((n,i)=>n<=site.plot.max[i]);
+ if(fits&&bridge?.connected&&(!min.every((n,i)=>n>=bridge.minimum[i])||!max.every((n,i)=>n<=bridge.maximum[i])))return {fits:false,message:'The building extends outside the connected server’s permitted construction area. Move it inside that area or select another surveyed plot.'};
  return {fits,message:fits?'Fits the plot bounds. The copy will also be checked for protected areas and access.':`Outside this plot. Design write area: ${max[0]-min[0]} × ${max[2]-min[2]}, ${max[1]-min[1]} high; plot: ${site.plot.max[0]-site.plot.min[0]} × ${site.plot.max[2]-site.plot.min[2]}, ${site.plot.max[1]-site.plot.min[1]} high. Adjust the position or rotation, or use a larger surveyed plot.`};
 }
 
@@ -26,4 +28,15 @@ export function placementErrorMessage(message){
  const block=/Block not in tested placement allowlist: ([A-Z0-9_]+)/.exec(message);
  if(block)return `Placement is blocked by ${block[1].toLowerCase().replaceAll('_',' ')}. The bridge does not yet support changing or restoring this block. The placement adapter needs support for it before this design can be placed here.`;
  return message;
+}
+
+// Bounds include every compiled write, including explicit air, but exclude unspecified plan margins.
+export function placementBounds(candidate,transform){
+ const min=[Infinity,Infinity,Infinity],max=[-Infinity,-Infinity,-Infinity];
+ for(const c of candidate.blocks){let x=c.x,z=c.z,w=candidate.dimensions.x,d=candidate.dimensions.z;for(let i=0;i<transform.turns;i++){[x,z]=[d-1-z,x];[w,d]=[d,w];}const p=[x+transform.origin[0],c.y+transform.origin[1],z+transform.origin[2]];for(let i=0;i<3;i++){min[i]=Math.min(min[i],p[i]);max[i]=Math.max(max[i],p[i]+1);}}
+ return {min,max};
+}
+export function parcelPosition(candidate,site,turns=0){
+ const {min,max}=placementBounds(candidate,{origin:[0,0,0],turns});
+ return {turns,origin:[0,1,2].map(i=>i===1?Math.max(site.plot.min[1],site.frontage[1]-1)-min[i]:site.plot.min[i]+Math.floor((site.plot.max[i]-site.plot.min[i]-(max[i]-min[i]))/2)-min[i])};
 }

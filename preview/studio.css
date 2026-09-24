@@ -113,7 +113,7 @@ body[data-busy=true][data-ready=true] .drawing-veil{display:flex}
  .studio-body .layer-chip>span{font-size:12px;min-height:42px}
  .studio-views{padding:8px;gap:2px}.studio-body .studio-views button{flex:1;padding:8px 6px;font-size:11px;min-height:42px}.view-tools{margin-left:0;flex-basis:100%;justify-content:flex-end}
  .studio-viewport{height:50vh;min-height:300px}.selection-line{padding:14px 14px 4px}.studio-outcomes{padding:8px 14px 16px}
- .studio-body input:not([type=checkbox]),.studio-body select,.studio-body textarea{font-size:16px}
+ .studio-body input:not([type=checkbox]),.studio-body select,.studio-body textarea{font-size:13px;line-height:1.5}
  .review-metrics{gap:8px}.review-metrics strong{font-size:13px}.review-metrics span{font-size:10px}
  .model-expanded .studio-drawing{inset:5px}
 }
@@ -344,3 +344,11 @@ body[data-busy=true][data-ready=true] .drawing-veil{display:flex}
 .sheet-gallery figcaption{font-family:'Urbanist',sans-serif;font-weight:500}
 .edit-history{border-top:1px solid var(--line);padding-top:12px}
 #studio-model[data-navigation=walk]{cursor:grab}#studio-model[data-navigation=walk]:active{cursor:grabbing}
+
+/* Keep inspector fields proportional to their labels, including native file controls. */
+.studio-controls input[type=file]::file-selector-button{font:inherit;color:var(--text);background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:6px 10px;margin-right:8px;cursor:pointer}
+#site-design-dialog{width:min(520px,calc(100vw - 24px));max-height:85dvh;background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:12px;padding:20px}
+#site-design-dialog::backdrop{background:#0009}
+#site-design-target{font-weight:600;margin:4px 0 16px}
+#site-design-fit{padding:12px;border-left:3px solid var(--accent);background:var(--surface);font-size:13px;line-height:1.6}
+#site-design-dialog .inline-actions{flex-wrap:wrap}
