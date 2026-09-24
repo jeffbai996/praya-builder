@@ -114,7 +114,7 @@
       localFloor = min(localFloor, metaToHeight(texture(textureImage, posToMetaUV(position.xz + vec2(-24.0, 24.0)))));
       localFloor = min(localFloor, metaToHeight(texture(textureImage, posToMetaUV(position.xz + vec2(24.0, -24.0)))));
       localFloor = min(localFloor, metaToHeight(texture(textureImage, posToMetaUV(position.xz + vec2(-24.0, -24.0)))));
-      rawHeight = min(rawHeight, localFloor + 18.0);
+      rawHeight = min(rawHeight, localFloor + 4.0);
     }
     vPosition.y = rawHeight + 1.0 - position.x * 0.0001 - position.z * 0.0002;`;
   const patchTile = model => {
@@ -130,11 +130,38 @@
     const app = window.bluemap;
     if (!app?.mapViewer?.events) { setTimeout(installSmoothing, 150); return; }
     const viewer = app.mapViewer;
+    let flyDetailOriginal = null;
+    let flyDetailApplied = null;
+    let flyDetailSuppressed = false;
     viewer.events.addEventListener('bluemapTileLoaded', event => {
       if (viewer.map?.data?.id === 'world') patchTile(event.detail?.tile?.model);
     });
     viewer.events.addEventListener('bluemapRenderFrame', () => {
-      smoothing.value = viewer.map?.data?.id === 'world' && app.appState.controls.state !== 'flat' ? 1 : 0;
+      const mainWorld = viewer.map?.data?.id === 'world';
+      const flying = mainWorld && app.appState.controls.state === 'free';
+      smoothing.value = mainWorld && app.appState.controls.state !== 'flat' ? 1 : 0;
+      if (!flying) flyDetailSuppressed = false;
+      if (flying && flyDetailApplied === null && !flyDetailSuppressed) {
+        const detailTarget = window.innerWidth >= 800 ? 500 : 250;
+        const currentDetail = viewer.data.loadedHiresViewDistance;
+        if (currentDetail < detailTarget) {
+          flyDetailOriginal = currentDetail;
+          flyDetailApplied = detailTarget;
+          viewer.data.loadedHiresViewDistance = detailTarget;
+          viewer.updateLoadedMapArea();
+        }
+      } else if (flyDetailApplied !== null && !flying) {
+        if (viewer.data.loadedHiresViewDistance === flyDetailApplied) {
+          viewer.data.loadedHiresViewDistance = flyDetailOriginal;
+          viewer.updateLoadedMapArea();
+        }
+        flyDetailOriginal = null;
+        flyDetailApplied = null;
+      } else if (flyDetailApplied !== null && viewer.data.loadedHiresViewDistance !== flyDetailApplied) {
+        flyDetailOriginal = null;
+        flyDetailApplied = null;
+        flyDetailSuppressed = true;
+      }
     });
     if (viewer.map?.data?.id === 'world') {
       for (const manager of viewer.map.lowresTileManager) manager.scene.traverse(patchTile);

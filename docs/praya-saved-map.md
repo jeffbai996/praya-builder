@@ -21,9 +21,12 @@ button until opened. The two-corner Studio handoff is unchanged.
 The production status can be expanded, moved, minimized, or hidden. Its position
 and visibility are stored in the browser; the small info button restores a
 hidden status. The context script also limits isolated low-resolution height
-peaks in the main world's 3D and Fly views. BlueMap represents distant terrain
-as a heightfield, so buildings beyond the high-resolution tile radius remain
-simplified. The shader adjustment does not alter rendered tiles or world data.
+peaks in the main world's 3D and Fly views. Fly temporarily loads high-resolution
+tiles to 500 blocks on desktop and 250 on narrow screens; leaving Fly restores
+the previous distance. A manual slider change while flying takes precedence.
+BlueMap represents distant terrain as a heightfield, so buildings beyond the
+high-resolution tile radius remain simplified. The shader adjustment does not
+alter rendered tiles or world data.
 
 The generated `streets`, `street-pins`, and `mrt` marker sets are retired. The
 sign scan and marker generator remain as historical source material; do not run
