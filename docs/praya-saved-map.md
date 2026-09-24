@@ -24,6 +24,11 @@ sign scan and marker generator remain as historical source material; do not run
 a separate verified or manually drawn source. No new street lines are inferred
 from signs in this update.
 
+As deployed, Builder Studio on port 8463 is configured for `praya-test` with no
+production `mapUrl`. The map can draw and link a plot selection, but Studio
+rejects its import. Keep that test-world binding intact; a separate production
+Studio connection is needed before the handoff can be accepted.
+
 From a checkout on the Minecraft host, inspect and then apply the map update:
 
 ```sh
