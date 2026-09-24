@@ -1,0 +1,15 @@
+[Unit]
+Description=Maintain Praya BlueMap distance tiles
+After=praya-map.service
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 /home/jbai/.local/share/praya-map/build-distance-tiles.py /home/jbai/minecraft/praya/bluemap/web/maps/world/tiles /home/jbai/.local/share/praya-map/distance-tiles --watch --workers 4
+Restart=on-failure
+RestartSec=10
+MemoryMax=1G
+NoNewPrivileges=true
+UMask=0077
+
+[Install]
+WantedBy=default.target

@@ -98,48 +98,16 @@
     .then(data => { status.textContent = data.ready ? 'Server online. Terrain updates as rendering completes.' : 'Server offline or starting. Saved terrain is available.'; })
     .catch(() => { status.textContent = 'Server status unavailable. Saved terrain is available.'; });
 
-  // BlueMap's low-resolution tiles are heightfields. Tall buildings can become
-  // long triangles when viewed from the side, so limit isolated height peaks.
-  const smoothing = { value: 0 };
-  const oldHeight = 'vPosition.y = metaToHeight(meta) + 1.0 - position.x * 0.0001 - position.z * 0.0002;';
-  const smoothedHeight = `
-    float rawHeight = metaToHeight(meta);
-    if (prayaSmoothing > 0.5) {
-      float localFloor = rawHeight;
-      localFloor = min(localFloor, metaToHeight(texture(textureImage, posToMetaUV(position.xz + vec2(24.0, 0.0)))));
-      localFloor = min(localFloor, metaToHeight(texture(textureImage, posToMetaUV(position.xz + vec2(-24.0, 0.0)))));
-      localFloor = min(localFloor, metaToHeight(texture(textureImage, posToMetaUV(position.xz + vec2(0.0, 24.0)))));
-      localFloor = min(localFloor, metaToHeight(texture(textureImage, posToMetaUV(position.xz + vec2(0.0, -24.0)))));
-      localFloor = min(localFloor, metaToHeight(texture(textureImage, posToMetaUV(position.xz + vec2(24.0, 24.0)))));
-      localFloor = min(localFloor, metaToHeight(texture(textureImage, posToMetaUV(position.xz + vec2(-24.0, 24.0)))));
-      localFloor = min(localFloor, metaToHeight(texture(textureImage, posToMetaUV(position.xz + vec2(24.0, -24.0)))));
-      localFloor = min(localFloor, metaToHeight(texture(textureImage, posToMetaUV(position.xz + vec2(-24.0, -24.0)))));
-      rawHeight = min(rawHeight, localFloor + 4.0);
-    }
-    vPosition.y = rawHeight + 1.0 - position.x * 0.0001 - position.z * 0.0002;`;
-  const patchTile = model => {
-    const material = model?.material;
-    if (model?.userData?.tileType !== 'lowres' || !material?.vertexShader?.includes(oldHeight)) return;
-    material.vertexShader = material.vertexShader
-      .replace('varying vec3 vPosition;', 'uniform float prayaSmoothing;\nvarying vec3 vPosition;')
-      .replace(oldHeight, smoothedHeight);
-    material.uniforms.prayaSmoothing = smoothing;
-    material.needsUpdate = true;
-  };
-  const installSmoothing = () => {
+  const installFlyDetail = () => {
     const app = window.bluemap;
-    if (!app?.mapViewer?.events) { setTimeout(installSmoothing, 150); return; }
+    if (!app?.mapViewer?.events) { setTimeout(installFlyDetail, 150); return; }
     const viewer = app.mapViewer;
     let flyDetailOriginal = null;
     let flyDetailApplied = null;
     let flyDetailSuppressed = false;
-    viewer.events.addEventListener('bluemapTileLoaded', event => {
-      if (viewer.map?.data?.id === 'world') patchTile(event.detail?.tile?.model);
-    });
     viewer.events.addEventListener('bluemapRenderFrame', () => {
       const mainWorld = viewer.map?.data?.id === 'world';
       const flying = mainWorld && app.appState.controls.state === 'free';
-      smoothing.value = mainWorld && app.appState.controls.state !== 'flat' ? 1 : 0;
       if (!flying) flyDetailSuppressed = false;
       if (flying && flyDetailApplied === null && !flyDetailSuppressed) {
         const detailTarget = window.innerWidth >= 800 ? 500 : 250;
@@ -163,9 +131,6 @@
         flyDetailSuppressed = true;
       }
     });
-    if (viewer.map?.data?.id === 'world') {
-      for (const manager of viewer.map.lowresTileManager) manager.scene.traverse(patchTile);
-    }
   };
-  installSmoothing();
+  installFlyDetail();
 })();
