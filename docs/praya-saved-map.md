@@ -18,6 +18,13 @@ Sans and Anthropic Sans fonts. Flat **Map**, perspective **3D**, and **Fly** mod
 remain available. The Builder integration is collapsed to a small **Builder**
 button until opened. The two-corner Studio handoff is unchanged.
 
+The production status can be expanded, moved, minimized, or hidden. Its position
+and visibility are stored in the browser; the small info button restores a
+hidden status. The context script also limits isolated low-resolution height
+peaks in the main world's 3D and Fly views. BlueMap represents distant terrain
+as a heightfield, so buildings beyond the high-resolution tile radius remain
+simplified. The shader adjustment does not alter rendered tiles or world data.
+
 The generated `streets`, `street-pins`, and `mrt` marker sets are retired. The
 sign scan and marker generator remain as historical source material; do not run
 `map-tools/gen_markers.py` to republish those layers. Street geometry will need
