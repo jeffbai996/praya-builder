@@ -1,0 +1,88 @@
+[
+  {
+    "name": "terraced-sandbox",
+    "draft": "b6406130-ba8e-49af-8703-7b1a8849d07b",
+    "revision": "020104ad-c090-4fbb-b06e-fe130de9aadf",
+    "artifactHash": "dd66602cb8e7ec7cff42544223810dacbed7de57f91b5dc5272178731e1f7cde",
+    "siteId": "d0cb06e1-dbe8-48aa-a22f-dccbfe04d4e0",
+    "surveyHash": "fd9b6b8293cbd3aa3778655dc1e6dafbd646e5fb4ba89765195d91b26300d1b6",
+    "transform": {
+      "origin": [
+        -272,
+        79,
+        -477
+      ],
+      "turns": 0
+    },
+    "blocks": 4616,
+    "access": {
+      "model": "voxel-walk-v2",
+      "checked": true,
+      "openableDoors": 22,
+      "reachedCells": 1832,
+      "issues": [],
+      "limitations": "Full-block support approximation; doors assumed openable. Player physics and resource-pack appearance require in-game inspection."
+    },
+    "diagnostics": {
+      "walk.headroom": 48,
+      "light.dark-corridor": 1,
+      "pane.unresolved": 4
+    }
+  },
+  {
+    "name": "parcel-c-courtyard",
+    "draft": "a354d91d-caa6-40af-b31e-c2ef02323c88",
+    "revision": "f99f60b3-56e0-4299-883c-93a6654ea6ea",
+    "artifactHash": "f8d48c91ae79f6197c9557447af891595536a856f1d7f3d3fe154f1886614763",
+    "siteId": "5764a59a-8e68-482a-98de-1758524de196",
+    "surveyHash": "28a0fcc05c7f1b78ead3f707d60769d6eb86b0cdbc2369541b5dceb849fd3ac0",
+    "transform": {
+      "origin": [
+        -303,
+        63,
+        410
+      ],
+      "turns": 1
+    },
+    "blocks": 5832,
+    "access": {
+      "model": "voxel-walk-v2",
+      "checked": true,
+      "openableDoors": 27,
+      "reachedCells": 1501,
+      "issues": [],
+      "limitations": "Full-block support approximation; doors assumed openable. Player physics and resource-pack appearance require in-game inspection."
+    },
+    "diagnostics": {
+      "light.dark-corridor": 1
+    }
+  },
+  {
+    "name": "alder-house",
+    "draft": "a98cc0ea-361d-4278-a192-6be60249a307",
+    "revision": "0b30619e-a38c-4fff-a3bb-8ec630087a3c",
+    "artifactHash": "056c7139614e9cd75461bf3762a7675a5d46f6640069e16e369544d6a7ef34c0",
+    "siteId": "34dc1bab-e949-45b8-94df-28b81d1cf38d",
+    "surveyHash": "704263c2bdfca50055d9e4d708d08b500a84009207eb7271e423a06eaaede91d",
+    "transform": {
+      "origin": [
+        -240,
+        78,
+        -477
+      ],
+      "turns": 0
+    },
+    "blocks": 3772,
+    "access": {
+      "model": "voxel-walk-v2",
+      "checked": true,
+      "openableDoors": 24,
+      "reachedCells": 1091,
+      "issues": [],
+      "limitations": "Full-block support approximation; doors assumed openable. Player physics and resource-pack appearance require in-game inspection."
+    },
+    "diagnostics": {
+      "light.dark-corridor": 1
+    }
+  }
+]

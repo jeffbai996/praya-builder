@@ -96,10 +96,11 @@ export function createScene(canvas) {
   let material;
   const presets={perspective:[53,34,-33],front:[16,17,-47],side:[65,23,16],rear:[16,20,76],roof:[16,76,16.01],street:[31,6,-17]};
   let center=[16,16],viewScale=1,currentView='perspective',baseY=0;
-  function view(name) {
+  function view(name,cells=null) {
     navigation('orbit');currentView=name;const [x,y,z]=presets[name],targetY=name==='street'?7:8;
     camera.position.set(center[0]+(x-16)*viewScale,baseY+targetY+(y-targetY)*viewScale,center[1]+(z-16)*viewScale);
     controls.target.set(center[0],baseY+targetY,center[1]);controls.update();invalidate();
+    if(cells?.length&&name!=='street')fit(cells);
   }
   // Fit once per project, not per revision: comparisons retain their camera.
   function frame(dimensions,groundY=0){center=[dimensions.x/2,dimensions.z/2];baseY=groundY;viewScale=Math.max(1,dimensions.x/32,dimensions.z/32);view(currentView);}

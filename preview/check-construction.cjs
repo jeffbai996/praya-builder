@@ -27,3 +27,13 @@ test('a captured survey cannot target a replacement world with the same name',as
  bridge.read=async()=>{throw Error('Must reject before reading');};
  try{await assert.rejects(service.prepare(draft.id,{artifactHash:'artifact',idempotencyKey:'new-world'}),/world identity/);}finally{fs.rmSync(store.root,{recursive:true,force:true});}
 });
+
+test('material preflight lists design and restoration gaps before any world reads',async()=>{
+ const {service,store,bridge}=setup();
+ const site=store.create('sites',{world:'builder-isolated',worldId:'test-world',origin:[0,60,0],dimensions:{x:3,y:3,z:3},plot:{min:[0,60,0],max:[3,63,3]},protected:[],blocks:[{x:0,y:0,z:0,block:'minecraft:birch_log[axis=y]'}],hash:'survey'});
+ const candidate={hash:'artifact',dimensions:{x:3,y:3,z:3},blocks:[{x:0,y:0,z:0,block:'minecraft:potted_fern'},{x:1,y:0,z:0,block:'minecraft:smoker[facing=north,lit=false]'}]};
+ const draft=store.create('drafts',{valid:true,siteId:site.id,candidate,transform:{origin:[0,60,0],turns:0}});store.create('revisions',{artifactHash:'artifact'});
+ bridge.status=async()=>({world:'builder-isolated',worldId:'test-world',placementMaterials:['AIR']});
+ bridge.read=async()=>{throw Error('Unexpected world read');};
+ try{await assert.rejects(service.prepare(draft.id,{artifactHash:'artifact',idempotencyKey:'materials'}),/birch log, potted fern, smoker/);assert.equal(store.list('jobs').length,0);}finally{fs.rmSync(store.root,{recursive:true,force:true});}
+});

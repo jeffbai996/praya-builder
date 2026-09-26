@@ -251,7 +251,7 @@ $('studio-model').addEventListener('walkunavailable',()=>status('No clear standi
 $('exit-free-camera').onclick=()=>scene.navigation('orbit');
 for(const b of document.querySelectorAll('[data-camera-move]'))b.onclick=()=>{scene.travel(...b.dataset.cameraMove.split(',').map(Number));$('studio-model').focus({preventScroll:true});};
 function cameraSelection(view){for(const b of document.querySelectorAll('[data-studio-view]'))b.setAttribute('aria-pressed',String(b.dataset.studioView===view));}
-for(const b of document.querySelectorAll('[data-studio-view]'))b.onclick=()=>{scene.view(b.dataset.studioView);cameraSelection(b.dataset.studioView);};
+for(const b of document.querySelectorAll('[data-studio-view]'))b.onclick=()=>{scene.view(b.dataset.studioView,draft?localCells(draft.candidate.blocks):site?.blocks.filter(c=>c.y>=contextFloor));cameraSelection(b.dataset.studioView);};
 $('studio-fit').onclick=()=>{cameraSelection(null);if(draft)scene.fit(localCells(draft.candidate.blocks));else if(site)scene.fit(site.blocks.filter(c=>c.y>=contextFloor));};
 function expand(value){document.body.classList.toggle('model-expanded',value);$('studio-expand').setAttribute('aria-pressed',String(value));$('studio-expand').textContent=value?'Exit':'Expand';$('studio-expand').focus();}
 $('studio-expand').onclick=()=>expand(!document.body.classList.contains('model-expanded'));

@@ -9,7 +9,7 @@ public final class PlacementPolicyProbe {
  static void accepted(String material,String state)throws Exception{Method m=TestWorldBridge.class.getDeclaredMethod("safe",BlockData.class);m.setAccessible(true);try{m.invoke(null,proxy(BlockData.class,n->n.equals("getMaterial")?Material.valueOf(material):state));}catch(InvocationTargetException e){throw (Exception)e.getCause();}}
  static void rejected(String material,String state)throws Exception{try{accepted(material,state);throw new AssertionError("Accepted "+material);}catch(IllegalArgumentException expected){}}
  public static void main(String[]args)throws Exception{
-  for(String name:new String[]{"POPPY","DANDELION","SHORT_GRASS","BLUE_BED","WATER_CAULDRON","IRON_BARS","SPRUCE_DOOR"})accepted(name,"minecraft:"+name.toLowerCase());
+  for(String name:new String[]{"POPPY","DANDELION","SHORT_GRASS","BLUE_BED","WATER_CAULDRON","IRON_BARS","SPRUCE_DOOR","BIRCH_LOG","BIRCH_SLAB","BLACK_CONCRETE","BROWN_TERRACOTTA","COBBLESTONE_WALL","CYAN_CARPET","DARK_OAK_TRAPDOOR","IRON_BLOCK","POLISHED_BLACKSTONE_SLAB","POTTED_FERN","QUARTZ_SLAB","RAIL","STONE_BUTTON","TRIPWIRE_HOOK"})accepted(name,"minecraft:"+name.toLowerCase());
   rejected("BLUE_BED","minecraft:blue_bed[occupied=true]");rejected("WATER","minecraft:water");rejected("SMOKER","minecraft:smoker");rejected("TNT","minecraft:tnt");rejected("OAK_SLAB","minecraft:oak_slab[waterlogged=true]");
   PersistentDataContainer empty=proxy(PersistentDataContainer.class,n->true),custom=proxy(PersistentDataContainer.class,n->false);
   TestWorldBridge.checkExisting(proxy(Bed.class,n->n.equals("getBlockData")?proxy(BlockData.class,k->"minecraft:blue_bed[occupied=false]"):empty));

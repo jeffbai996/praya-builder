@@ -1,8 +1,8 @@
 // External agents share the same transport and validation as the studio.
 const fs=require('node:fs'),path=require('node:path');
 const base=process.env.BUILDER_WORKSPACE_URL||'http://127.0.0.1:8091';
-async function request(route,body){
- const response=await fetch(new URL('/api/workspace/'+route,base),{method:body===undefined?'GET':'POST',headers:{'X-Builder-Write':'1','Content-Type':'application/json'},body,signal:AbortSignal.timeout(120000)});
+async function request(route,body,timeout=120000){
+ const response=await fetch(new URL('/api/workspace/'+route,base),{method:body===undefined?'GET':'POST',headers:{'X-Builder-Write':'1','Content-Type':'application/json'},body,signal:AbortSignal.timeout(timeout)});
  const output=await response.text();let data;try{data=JSON.parse(output);}catch{throw Error('Workspace returned an invalid JSON response ('+response.status+')');}
  if(!response.ok)throw Error(data.error||'Workspace request failed ('+response.status+')');return data;
 }
@@ -16,7 +16,8 @@ async function review(id,directory){
   const suffix=context.sheet.reviewHash?'?review='+context.sheet.reviewHash:'';
   if(context.sheet.reviewHash&&!/^[a-f0-9]{64}$/.test(context.sheet.reviewHash))throw Error('Invalid review identity');
   if(context.sheet.index!==prefix+'index.json'+suffix)throw Error('Unexpected review sheet path');
-  const manifest=await request(context.sheet.index.slice('/api/workspace/'.length));
+  // The serialized renderer allows four queued jobs with a 180-second worker limit.
+  const manifest=await request(context.sheet.index.slice('/api/workspace/'.length),undefined,750000);
   for(const view of manifest.views||[]){
    if(!/^[a-z0-9-]+\.png$/.test(view.file)||view.url!==prefix+view.file+suffix)throw Error('Unexpected sheet image path');
    const response=await fetch(new URL(view.url,base),{signal:AbortSignal.timeout(65000)});

@@ -42,6 +42,15 @@ class ConstructionService{
    if(!change){change={...placed,before:placed.block};assessment.changes.push(change);}
    change.sign=authoredSign(sign.lines);
   }
+  // Check both directions: rollback must be able to restore the surveyed materials.
+  if(Array.isArray(status.placementMaterials)){
+   const allowed=new Set(status.placementMaterials),unsupported=new Set();
+   for(const c of assessment.changes)for(const block of [c.block,c.before]){
+    const material=block.split(':').pop().split('[')[0].toUpperCase();
+    if(!allowed.has(material)&&!material.endsWith('_WALL_SIGN'))unsupported.add(material.toLowerCase().replaceAll('_',' '));
+   }
+   if(unsupported.size)throw Error('Placement needs bridge support for: '+[...unsupported].sort().join(', ')+'. The world has not been changed.');
+  }
   const current=await this.read(assessment.changes,status.worldId);
   if(current.some((state,i)=>stateBlock(snapshot(state).block).stateId!==stateBlock(assessment.changes[i].before).stateId))throw Error('Survey is stale at the proposed changes; import a fresh survey');
   assessment.changes=assessment.changes.map((c,i)=>({...c,before:snapshot(current[i]).block,beforeSign:snapshot(current[i]).sign||null}));
