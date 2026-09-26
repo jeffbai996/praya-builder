@@ -1,3 +1,4 @@
+from plan_io import write_plan
 """Adapt the existing Point Tower to Parcel C without moving its upper storeys."""
 import json,urllib.request,collections,pathlib,sys
 import os
@@ -75,7 +76,7 @@ def cuboids(entries):
 groups=collections.defaultdict(dict)
 for p,(m,c) in cells.items():groups[c][p]=m
 out={**plan,'plan_id':plan['plan_id'],'revision':'courtyard-r1','name':'Point Tower · Parcel C courtyard','description':'Point Tower with an east entrance court, a planted west courtyard, and a north street arcade. Upper-storey geometry retained in place. No basement or parking excavation.','dimensions':dict(zip('xyz',dims)),'palette':palette,'components':[{'id':c,'role':c.replace('-',' '),'origin':[0,0,0],'operations':cuboids(entries)} for c,entries in groups.items()],'signs':[{**s,'at':[s['at'][0],s['at'][1],s['at'][2]+5]} for s in plan.get('signs',[])]}
-pathlib.Path(__file__).with_name('parcel-c-courtyard.plan.json').write_text(json.dumps(out,indent=2)+'\n')
+write_plan(pathlib.Path(__file__).with_name('parcel-c-courtyard.plan.json'),out)
 print('PLAN',len(cells),'cells',len(groups),'components; upper storeys preserved',len(upper))
 if '--post' in sys.argv:
  record=(pathlib.Path(__file__).resolve().parents[2]/'.workspace'/'parcel-c-courtyard-0925.json')

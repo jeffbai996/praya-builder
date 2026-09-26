@@ -1,3 +1,4 @@
+from plan_io import write_plan
 """Alder House: a seven-storey compact tower for the surveyed Terraced east plot."""
 import json,collections,pathlib,urllib.request,sys
 import os
@@ -129,7 +130,7 @@ groups=collections.defaultdict(dict)
 for p,(m,c) in cells.items():groups[c][p]=m
 plan={'schema_version':1,'plan_id':'alder-house','revision':'r1','name':'Alder House','description':'Seven-storey modern tower beside Terraced Residences. Six compact apartments above a shared lobby, continuous stairs to a planted roof terrace, pale vertical fins, bronze blades and recessed balconies.','dimensions':dict(zip('xyz',DIMS)),'palette':P,'components':[{'id':c,'role':c.replace('-',' '),'origin':[0,0,0],'operations':cuboids(v)} for c,v in groups.items()],'signs':signs}
 plan['spaces']=[{'id':f'landing-{level}','min':[4,b+1,8],'max':[9,b+3,9]} for level,b in enumerate([1,5,9,13,17,21,25])]+[{'id':'roof-landing','min':[6,30,8],'max':[9,32,9]}]
-pathlib.Path(__file__).with_name('alder-house.plan.json').write_text(json.dumps(plan,indent=2)+'\n');print('PLAN',len(cells),len(groups))
+write_plan(pathlib.Path(__file__).with_name('alder-house.plan.json'),plan);print('PLAN',len(cells),len(groups))
 if '--post' in sys.argv:
  record=(pathlib.Path(__file__).resolve().parents[2]/'.workspace'/'alder-house-0925.json')
  if record.exists():
