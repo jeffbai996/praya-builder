@@ -104,6 +104,12 @@ for x,z in [(6,9),(6,10),(5,10)]:put('stair-opening',x,29,z,'air')
 box('roof-garden',11,30,12,16,31,13,'leaves');box('roof-seating',12,30,5,15,31,6,'seat-south')
 put('roof-table',13,30,7,'table');put('roof-lighting',15,30,10,'lamp')
 box('roof-plant',4,30,12,8,31,13,'dark')
+# Rear elevation: pale floor bands and window jambs continue the front framing.
+# Preserve every coordinate and component identity; bronze blades remain accents.
+for (x,y,z),(material,component) in list(cells.items()):
+ if z==13 and material=='stone' and (y in (5,9,13,17,21,25,29) or (x in (7,13) and 5<=y<29)):
+  cells[x,y,z]=('frame',component)
+
 # Survey clearance and grounded foundations stay inside the selected plot.
 site=api('sites/'+SITE)
 for e in site['blocks']:

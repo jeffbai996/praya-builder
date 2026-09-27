@@ -60,8 +60,8 @@
   {
     "name": "alder-house",
     "draft": "a98cc0ea-361d-4278-a192-6be60249a307",
-    "revision": "0b30619e-a38c-4fff-a3bb-8ec630087a3c",
-    "artifactHash": "056c7139614e9cd75461bf3762a7675a5d46f6640069e16e369544d6a7ef34c0",
+    "revision": "5c80eaa5-3317-4837-826e-f844e543a190",
+    "artifactHash": "3f9385b49639cd57755f6fb9a05c626c221a7e97a8b7b249702bae2e6badacc5",
     "siteId": "34dc1bab-e949-45b8-94df-28b81d1cf38d",
     "surveyHash": "704263c2bdfca50055d9e4d708d08b500a84009207eb7271e423a06eaaede91d",
     "transform": {
@@ -83,6 +83,7 @@
     },
     "diagnostics": {
       "light.dark-corridor": 1
-    }
+    },
+    "previousRevision": "0b30619e-a38c-4fff-a3bb-8ec630087a3c"
   }
 ]

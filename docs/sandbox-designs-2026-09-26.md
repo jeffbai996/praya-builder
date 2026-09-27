@@ -48,3 +48,7 @@ node preview/designs/sandbox-lots-2026-09-25/check-browser.cjs
 These are operational checks against the recorded local workspace, not portable fixture tests. The two Python generators in the same directory use the pinned survey/source IDs through the common API. Without `--post`, they only regenerate their plan files. With `--post`, they update the recorded working drafts; immutable saved versions are retained. `BUILDER_WORKSPACE_URL` selects the service. The JSON plan files can be compiled independently of that service.
 
 Next review gate: inspect Terraced in Sandbox and the two saved proposals in Studio. Place Alder only after design acceptance. Parcel C placement first requires deliberately switching the bridge back to its separately bounded interchange area and refreshing affected survey cells.
+
+## Alder House rear revision — 2026-09-27
+
+User requested more white on the rear elevation. Replaced 117 rear deepslate cells with smooth quartz in floor bands, window jambs and the roof edge. Bronze blades remain. Coordinates, component ownership, signs, all other elevations and access results are unchanged. Saved successor `5c80eaa5-3317-4837-826e-f844e543a190`, artifact `3f9385b49639cd57755f6fb9a05c626c221a7e97a8b7b249702bae2e6badacc5`. The previous saved version remains available. Rear view rendered and inspected; no world placement was performed.
