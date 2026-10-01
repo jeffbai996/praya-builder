@@ -114,4 +114,4 @@ class DesignService{
  }
  request(id,input){const draft=this.store.get('drafts',id);this.version(draft,input.expectedVersion);if(typeof input.instruction!=='string'||!input.instruction.trim()||input.instruction.length>6000)throw Error('A bounded revision instruction is required');if(input.componentId&&!draft.plan.components.some(c=>c.id===input.componentId))throw Error('Unknown component');return this.store.create('requests',{schemaVersion:1,draftId:id,baselineHash:draft.candidate.hash,expectedVersion:draft.version,componentId:input.componentId||null,instruction:input.instruction});}
 }
-module.exports={DesignService,compilePlan,diff};
+module.exports={DesignService,compilePlan,diff,authorOf};

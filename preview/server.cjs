@@ -10,6 +10,7 @@ const {materialIcon} = require('./material-icons.cjs');
 const {exportSchematic,exportManifest} = require('./schematic.cjs');
 const {STYLE_VERSION,readThumbnail}=require('./thumbnails.cjs');
 const {workspaceApi}=require('./workspace-api.cjs');
+const {roadworkApi}=require('./roadwork-api.cjs');
 const {assetSupport}=require('./asset-support.cjs');
 const port = Number(process.env.PREVIEW_PORT || 8091);
 if(!Number.isInteger(port)||port<1024||port>65535) throw Error('Invalid PREVIEW_PORT');
@@ -30,9 +31,13 @@ for(const project of projects) for(const {id:revision} of project.revisions) {
 const iconNames=new Set([...artifacts.values()].flatMap(artifact=>artifact.blocks.map(block=>block.block.split('[')[0].replace('minecraft:',''))));
 const icons=new Map();
 const workspace=workspaceApi({artifacts,port});
+const roadwork=roadworkApi({port});
 const files = new Map([
+  ['/places',['places.html','text/html']], ['/places.js',['places.js','text/javascript']], ['/places.css',['places.css','text/css']],
+  ['/roadwork-shapes.js',['roadwork-shapes.js','text/javascript']],
   ['/favicon.svg',['favicon.svg','image/svg+xml']],
   ['/transport',['transport.html','text/html']], ['/transport.js',['transport.js','text/javascript']], ['/transport.css',['transport.css','text/css']],
+  ['/roadwork-view.js',['roadwork-view.js','text/javascript']],
   ['/placement-readiness.js',['placement-readiness.js','text/javascript']],
   ['/plot-editor.js',['plot-editor.js','text/javascript']], ['/capture-controls.js',['capture-controls.js','text/javascript']],
   ['/studio-interface.js',['studio-interface.js','text/javascript']], ['/sign-presets.js',['sign-presets.js','text/javascript']], ['/version-thumbs.js',['version-thumbs.js','text/javascript']], ['/support-list.js',['support-list.js','text/javascript']],
@@ -42,6 +47,7 @@ const files = new Map([
   ['/review-state.js',['review-state.js','text/javascript']],
   ['/design-chooser.js',['design-chooser.js','text/javascript']],
   ['/design-library.js',['design-library.js','text/javascript']],
+  ['/project-register.js',['project-register.js','text/javascript']],
   ['/register-thumbnails.js',['register-thumbnails.js','text/javascript']],
   ['/thumbnail-render.html',['thumbnail-render.html','text/html']],
   ['/review-sheet-render.js',['review-sheet-render.js','text/javascript']],
@@ -69,6 +75,7 @@ const server=http.createServer(async(req,res)=> {
   if(!hosts.has(req.headers.host)) {res.writeHead(403);res.end('Host not allowed');return;}
   let requestURL;
   try{requestURL=new URL(req.url,`http://127.0.0.1:${port}`);}catch{res.writeHead(400);res.end('Invalid request URL');return;}
+  if(await roadwork.handle(req,res,requestURL))return;
   if(await workspace.handle(req,res,requestURL))return;
   if(req.method!=='GET'&&req.method!=='HEAD') {res.writeHead(405);res.end('Read-only viewer');return;}
   try {

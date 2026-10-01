@@ -39,7 +39,7 @@
 @media(max-width:1050px){.transport-head{grid-template-columns:270px 1fr}.transport-title{display:block}.head-actions a{display:none}}
 @media(max-width:700px){.transport-head{grid-template-columns:1fr auto;padding:10px 12px;border-bottom-width:3px}.transport-title{display:none}.transport-brand strong:after{display:none}.transport-brand small{font-size:7px}.workflow-tabs{padding:0 8px}.workflow-tabs:before{display:none}.scope-banner{padding:8px 10px}.study-heading,.panel-heading{padding-left:10px}.alternative-card{padding-left:47px!important}.drawing-board,.design-controls section,.review-layout>aside,.review-table-wrap,.locate-panel{box-shadow:3px 3px 0 color-mix(in srgb,var(--line) 28%,transparent)}}
 
-/* Ground the internal tool in the live govpraya.org Transport Department identity. */
+/* Roadwork transport palette and drawing surfaces. */
 :root{--orange:#0d9488;--orange-soft:rgba(13,148,136,.11);--signal:#f59e0b;--transport-ink:#09090b;--bg:#f1f5f4;--panel:#fff;--panel-soft:#eaf2f1;--text:#122628;--muted:#607779;--line:#c7d7d5;--canvas:#d3dfdc;--accent:#0d9488;--accent-soft:rgba(13,148,136,.12)}
 :root[data-theme=dark]{--bg:#0f0f0f;--panel:#1a1a1a;--panel-soft:#202729;--text:#fafafa;--muted:#9baaaa;--line:#2c4447;--canvas:#102c36;--orange:#0d9488;--orange-soft:rgba(13,148,136,.14);--accent:#0d9488;--accent-soft:rgba(13,148,136,.14);--transport-ink:#09090b;--terrain:#31423e;--terrain-line:#506661;--water:#2d6b74}
 :root[data-theme=oled]{--panel:#090d0e;--panel-soft:#101819;--line:#20383b;--canvas:#09222b;--orange:#14b8a6;--orange-soft:rgba(20,184,166,.13);--accent:#14b8a6;--accent-soft:rgba(20,184,166,.13);--signal:#f59e0b}
@@ -55,3 +55,50 @@
 .station-mark{stroke:#fb923c}.station-dot{fill:#fb923c}.model-station{border-color:#fb923c}.model-station i{background:#fb923c}.center-line{stroke:#e4bc5a}.profile-road{stroke:#2dd4bf}
 @media(max-width:1050px){.transport-head{grid-template-columns:290px 1fr}.transport-title{text-align:right}.gov-strip{padding-inline:18px}}
 @media(max-width:700px){.gov-strip{height:27px;padding:0 10px}.gov-strip span{display:none}.gov-strip a{font-size:8px}.transport-head{height:70px;grid-template-columns:minmax(0,1fr) auto;padding:8px 12px;border-bottom-width:1px}.transport-brand{min-width:0}.transport-brand span{min-width:0}.transport-brand svg{width:39px;height:39px;flex:0 0 auto}.transport-brand strong{font-size:14px;white-space:nowrap}.transport-brand small{font-size:9px}.head-actions{min-width:40px}.scope-banner{padding:9px 10px}.drawing-board,.design-controls section,.review-layout>aside,.review-table-wrap,.locate-panel{border-radius:10px}.alternative-list{grid-template-columns:minmax(0,1fr)}.alternative-card{width:100%;min-width:0!important;border-radius:10px!important}.alternative-card dl{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}.alternative-card dl div{display:block;min-width:0}.alternative-card dd{overflow-wrap:anywhere}}
+
+/* Survey-backed Roadwork workspace. */
+[hidden]{display:none!important}
+.scope-banner{gap:13px}.scope-badge{flex:0 0 auto}.scope-banner strong{white-space:nowrap}
+.app-error{padding:13px 17px;margin-bottom:16px;background:#7b2723;color:#fff;border-radius:8px;line-height:1.45}
+.source-grid{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(260px,1fr);gap:24px;margin-top:20px}
+.source-grid>div{min-width:0;padding:19px;background:var(--panel-soft);border:1px solid var(--line);border-radius:9px}
+.source-grid label{display:block;margin-bottom:8px;font-size:12px;font-weight:700}.source-grid select{width:100%;padding:12px;background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:7px}
+.source-detail,.control-help{color:var(--muted);font-size:11px;line-height:1.55}.source-actions{display:flex;align-items:center;gap:15px;flex-wrap:wrap}.source-actions a{color:var(--orange);font-size:11px}
+.study-list{display:grid;gap:7px;margin-top:12px;max-height:250px;overflow:auto}.study-list p{color:var(--muted)}.saved-study{display:flex;align-items:center;justify-content:space-between;gap:14px;width:100%;text-align:left}.saved-study small{color:var(--muted)}
+.survey-facts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin-top:18px}.survey-facts>div{display:grid;gap:5px;padding:12px;background:var(--panel-soft);border:1px solid var(--line);border-radius:7px}.survey-facts strong{color:var(--muted);font-size:9px;text-transform:uppercase;letter-spacing:.08em}.survey-facts span{font-family:ui-monospace,Consolas,monospace;font-size:10px;overflow-wrap:anywhere}
+.model-view{position:relative;background:#102b34;perspective:none}.roadwork-canvas{display:block;width:100%;height:100%;touch-action:none}.model-count{position:absolute;left:12px;top:12px;padding:5px 8px;background:#071b1eee;color:#cce4e3;font-size:10px;border:1px solid #46636a;pointer-events:none}.empty-view{display:grid;place-items:center;height:100%;color:#c1d7d5}
+.main-view svg{background:#102b34}.view-legend .existing-key{background:#91a39b}.view-legend .proposed-key{background:#ffab65}.view-legend .earthwork-key{background:#42c8be}.roadwork-node{cursor:pointer}
+.point-list{display:grid;gap:8px;margin-bottom:10px}.point-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin:0;padding:8px;border:1px solid var(--line);border-radius:6px}.point-row legend{padding:0 4px;color:var(--muted);font-size:10px}.point-row label{display:grid!important;gap:4px;margin:0!important;color:var(--muted);font:600 9px ui-monospace,Consolas,monospace!important}.point-row input,.design-controls #road-width{width:100%;min-width:0;padding:8px;border:1px solid var(--line);border-radius:5px;background:var(--panel);color:var(--text)}.point-row input{font-size:11px}.design-controls #road-width{min-height:40px;margin-top:9px}.design-controls #add-point,.design-controls #remove-point{width:calc(50% - 4px);padding:7px 4px}.design-controls #compile-study{width:100%}.compile-state{min-height:31px;color:var(--muted);font-size:11px;line-height:1.5}
+.review-actions{display:flex;gap:7px;flex-wrap:wrap}.hash{font-family:ui-monospace,Consolas,monospace;overflow-wrap:anywhere}.segment-list,.change-list{margin-top:13px;padding:14px 17px;border:1px solid var(--line);border-radius:10px;background:var(--panel)}.segment-list h3,.change-list h3{margin:0 0 12px;font-size:15px}.change-list h3 small{font-size:10px;color:var(--muted);font-weight:400}.segment-list article{display:grid;grid-template-columns:1.1fr 1fr auto;gap:10px;padding:10px 0;border-top:1px solid var(--line);font-size:10px}.segment-list article small{grid-column:1/-1;color:var(--muted);font-family:ui-monospace,Consolas,monospace;overflow-wrap:anywhere}.change-rows{max-height:270px;overflow:auto}.change-rows>div{display:grid;grid-template-columns:105px 1fr auto;gap:8px;padding:6px 0;border-top:1px solid var(--line);font-size:9px}.change-rows code{font-size:9px}.change-rows span{overflow-wrap:anywhere}.change-rows b{color:var(--orange);font-weight:600}.muted{color:var(--muted)}
+.review-table-wrap table{min-width:570px}.review-layout dl{grid-template-columns:minmax(0,1fr) auto}.review-layout dd{text-align:right}
+@media(max-width:1050px){.source-grid{grid-template-columns:1fr}.survey-facts{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:700px){.scope-banner strong{white-space:normal}.source-grid>div{padding:14px}.survey-facts{grid-template-columns:1fr 1fr}.review-actions{width:100%}.review-actions button{flex:1}.change-rows>div{grid-template-columns:88px 1fr}.change-rows b{grid-column:2}.segment-list article{grid-template-columns:1fr 1fr}}
+@media(max-width:380px){.survey-facts{grid-template-columns:1fr}.source-actions{align-items:stretch}.source-actions button,.source-actions a{width:100%}.point-row input{font-size:9px}}
+
+/* Standalone application chrome, parallel to Builder's workspace shell. */
+.review-layout>div,.review-layout>aside{min-width:0}
+.roadwork-appbar{min-height:72px;display:flex;align-items:center;gap:28px;padding:12px 24px;background:var(--panel);border-bottom:1px solid var(--line)}
+.roadwork-home{display:flex;align-items:center;gap:12px;flex-shrink:0;text-decoration:none;color:var(--text)}
+.roadwork-home svg{width:30px;height:34px;stroke:var(--orange);stroke-width:1.8;stroke-linecap:round}
+.roadwork-wordmark h1{margin:0;font:750 29px/1 'Urbanist','DM Sans',sans-serif;letter-spacing:-1px;color:var(--text)}
+.roadwork-wordmark small{display:block;margin-top:5px;color:var(--muted);font-size:10px;line-height:1.2}
+.roadwork-workspace{padding-left:24px;border-left:1px solid var(--line);font-size:11px;color:var(--muted)}
+.roadwork-tools{margin-left:auto;display:flex;align-items:center;gap:9px}
+.roadwork-tools a{padding:9px 10px;color:var(--muted);font-size:11px;text-decoration:none;border-radius:6px}
+.roadwork-tools a:hover{background:var(--panel-soft);color:var(--text)}
+.roadwork-tools .theme-toggle{background:var(--panel)!important;border-color:var(--line)!important;color:var(--text)!important;border-radius:6px!important}
+.workflow-tabs{padding:0 24px;background:var(--panel);border-bottom:1px solid var(--line)}
+.workflow-tabs:before{display:none;content:none}
+.workflow-tabs button{color:var(--muted)!important;letter-spacing:0!important;font-size:12px!important;padding:8px 16px!important}
+.workflow-tabs button[aria-current=step]{background:var(--orange-soft)!important;color:var(--text)!important}
+.workflow-tabs p{color:var(--muted);font-size:10px}
+.scope-banner{min-height:35px;padding:8px 24px;background:var(--bg);color:var(--muted);border-bottom:1px solid var(--line);font-size:10px}
+.scope-banner strong{color:var(--muted);font-size:8px;font-weight:500;letter-spacing:.04em}
+.scope-badge{background:var(--orange-soft);color:var(--orange);border-color:var(--line);border-radius:4px}
+#transport-main{padding-top:22px}
+@media(max-width:800px){.roadwork-workspace{display:none}.roadwork-appbar{gap:12px}}
+@media(max-width:520px){.roadwork-appbar{min-height:66px;padding:10px 12px}.roadwork-home{gap:8px}.roadwork-home svg{width:25px;height:30px}.roadwork-wordmark h1{font-size:26px}.roadwork-wordmark small{font-size:9px}.roadwork-tools{gap:4px}.roadwork-tools a{display:none}.workflow-tabs{padding:0 8px}.workflow-tabs button{padding:8px 11px!important}.workflow-tabs button span{display:inline}.workflow-tabs p{font-size:9px}.scope-banner{padding:8px 12px}}
+/* Four measured options and compact section controls. */
+.alternative-list{grid-template-columns:repeat(4,minmax(0,1fr))}.alternative-card{min-width:0!important}.alt-top{flex-wrap:wrap}.alternative-card dl{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.alternative-card dl div{display:block;min-width:0}.alternative-card dd{overflow-wrap:anywhere}.design-controls #road-section{width:100%;min-width:0;padding:9px;background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:5px}.model-count{max-width:calc(100% - 24px)}
+@media(max-width:1100px){.alternative-list{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:700px){.alternative-list{grid-template-columns:minmax(0,1fr)}}

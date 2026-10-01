@@ -2,6 +2,8 @@
 
 Status: product direction endorsed by the user on 2026-09-11, following the September 10 proposal. The detailed schema and implementation stages remain proposed; no registry has been implemented by this document. Institution names and boundaries are not established canon. The user confirmed that Praya already has street addresses for the most part: ingest and verify those existing records rather than inventing a new numbering system.
 
+Implementation update, September 28: [the address-aware project library](../../project-register-2026-09-28.md) implements paginated summaries and persistent per-site-application address/location metadata without rewriting existing designs. October 1: [independent records and a coordinate map](../../municipal-register-2026-10-01.md) now implement the next increment. Production address ingestion, BlueMap basemap overlays and guided geometric subdivision remain outstanding.
+
 ## Purpose
 
 Organize hundreds of designs around persistent places and buildings. Address is a searchable human label, not the primary identifier. Keep unassigned architectural studies first-class.

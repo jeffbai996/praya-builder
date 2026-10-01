@@ -2,6 +2,8 @@
 
 Date: 2026-09-11. Audience: the next agent/designer implementing a transport-department version of Praya Builder.
 
+September 23 implementation: the product is named **Roadwork**. See [the Minecraft corridor implementation record](roadwork-minecraft-2026-09-23.md) for the survey-to-block pipeline, current boundaries and validation. The synthetic interface milestone below is historical; the next acceptance target is a surveyed corridor with exact segment artifacts, followed by a chosen Sandbox trial.
+
 ## Brief and authority
 
 The user wants a transport-department version of Builder for transport infrastructure, including subways and freeways. They also endorsed the direction of an address/parcel/building register and confirmed that Praya already has street addresses for the most part. Deliver a transport workspace that works with those shared place records and existing infrastructure.

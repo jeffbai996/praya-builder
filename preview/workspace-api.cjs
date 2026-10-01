@@ -1,3 +1,6 @@
+const {RevisionReview}=require('./revision-review.cjs');
+const {MunicipalRegister}=require('./municipal-register.cjs');
+const {ProjectRegister}=require('./project-register.cjs');
 const fs=require('node:fs');
 const path=require('node:path');
 const {FileStore}=require('./workspace-store.cjs');
@@ -37,6 +40,9 @@ function workspaceApi({artifacts,port}){
  const store=new FileStore(process.env.BUILDER_WORKSPACE_DIR||path.join(__dirname,'.workspace'));
  claimWorkspace(store.root);
  const service=new DesignService(store),construction=new ConstructionService(store),cached=new Map();
+ const revisionReview=new RevisionReview(store,service);
+ const register=new ProjectRegister(store);
+ const places=new MunicipalRegister(store.root);
  const sheets=new ReviewSheetService({store,catalogue:artifacts,baseUrl:`http://127.0.0.1:${port}`});
  const bakeoffs=new BakeoffService({store,service,sheets});
  const surveyBridge=process.env.BUILDER_SURVEY_URL?new PaperBridge({url:process.env.BUILDER_SURVEY_URL,token:process.env.BUILDER_SURVEY_TOKEN||''}):construction.bridge;
@@ -51,6 +57,22 @@ function workspaceApi({artifacts,port}){
    if(write&&req.headers['x-builder-write']!=='1'){send({error:'X-Builder-Write header required'},403);return true;}
    const body=write?await readBody(req):null;
    if(route==='context'&&req.method==='GET')send({schemaVersion:1,sites:store.list('sites').map(({blocks,...s})=>({...s,cells:blocks.length})),drafts:store.list('drafts').map(d=>({id:d.id,name:d.plan.name,version:d.version,valid:d.valid,candidateHash:d.candidate.hash,parentHash:d.parentHash,project:d.project,siteId:d.siteId,author:d.author||null,createdAt:d.createdAt})),revisions:store.list('revisions'),jobs:store.list('jobs').map(j=>({id:j.id,state:j.state,kind:j.kind,artifactHash:j.artifactHash,world:j.world,createdAt:j.createdAt})),limits:LIMITS,models:'External agent workflow; no provider calls'});
+   else if(route==='places'&&req.method==='GET')send(places.list(url.searchParams));
+   else if(route==='places'&&req.method==='POST')send(places.transaction(body),201);
+   else if(route==='places/sources'&&req.method==='GET')send({surveys:store.list('sites').slice(0,500).map(s=>({id:s.id,name:s.name,world:s.world,worldId:s.worldId||'',origin:s.origin})),designs:store.list('drafts').slice(0,500).map(d=>({id:d.id,name:d.plan.name}))});
+   else if(route==='places/validate'&&req.method==='POST'){
+    send(places.transaction({...body,expectedVersion:places.read().version},{dryRun:true}));
+   }
+   else if(/^places\/[a-z0-9-]+$/.test(route)&&req.method==='GET')send(places.detail(route.split('/')[1]));
+   else if(route==='library/projects'&&req.method==='GET')send(register.list(url.searchParams));
+   else if(/^library\/projects\/[a-z0-9-]+$/.test(route)&&req.method==='GET')send(register.detail(route.split('/')[2]));
+   else if(/^library\/locations\/[a-f0-9]{64}$/.test(route)&&req.method==='POST')send(register.update(route.split('/')[2],body));
+   else if(route==='revision-requests'&&req.method==='GET')send(store.list('requests').map(r=>({...r,candidates:store.list('candidates').filter(c=>c.requestId===r.id).map(({plan,changes,...c})=>({...c,changeCount:changes.length}))})));
+   else if(/^requests\/[a-z0-9-]+\/context$/.test(route)&&req.method==='GET')send(revisionReview.context(route.split('/')[1]));
+   else if(/^requests\/[a-z0-9-]+\/candidates$/.test(route)&&req.method==='POST')send(await revisionReview.submit(route.split('/')[1],body),201);
+   else if(/^candidates\/[a-z0-9-]+(?:\/accept)?$/.test(route)){
+    const [,id,action]=route.split('/');if(req.method==='GET'&&!action)send(store.get('candidates',id));else if(req.method==='POST'&&action==='accept')send(await revisionReview.accept(id),201);else send({error:'Unknown candidate operation'},404);
+   }
    else if(route==='bakeoffs'&&req.method==='GET')send(bakeoffs.list());
    else if(route==='bakeoffs'&&req.method==='POST')send(bakeoffs.view(bakeoffs.create(body)),201);
    else if(/^bakeoffs\/[a-z0-9-]+(?:\/(?:entry|reveal))?$/.test(route)){

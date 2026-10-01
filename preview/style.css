@@ -274,3 +274,24 @@ button,select,input[type=search],input[type=text]{border-radius:8px}
 .edition-link span{font-size:11px;color:var(--muted)}
 .edition-link:hover strong{color:var(--accent)}
 .library-drafts{margin-top:8px}
+.library-location-filters{margin-top:-4px;justify-content:flex-start}
+.library-location-filters select{font-size:12px}
+.project-locations{padding:0 14px 12px;display:grid;gap:8px}
+.project-location{display:flex;align-items:baseline;gap:6px 10px;flex-wrap:wrap;font-size:12px;line-height:1.5}
+.location-address{overflow-wrap:anywhere}
+.address-status{color:var(--muted);font-size:10px}
+.address-status.verified{color:var(--success,#70b894)}
+.location-edit{justify-self:start;background:transparent;border:0;color:var(--accent);font:inherit;font-size:12px;cursor:pointer;min-height:36px;padding:4px 0;text-align:left}
+.location-edit:hover{text-decoration:underline}
+.location-dialog{box-sizing:border-box;width:min(600px,calc(100vw - 32px));max-height:calc(100dvh - 32px);overflow:auto;padding:24px;background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:10px}
+.location-dialog::backdrop{background:rgb(0 0 0 / .6)}
+.location-heading{display:flex;align-items:center;justify-content:space-between;gap:12px}.location-heading h2{margin:0}
+.location-fields{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:18px 0}
+.location-dialog label{display:grid;gap:7px;font-size:12px;min-width:0}
+.location-dialog input,.location-dialog select{box-sizing:border-box;width:100%;min-width:0;min-height:42px;border:1px solid var(--line);border-radius:5px;padding:9px 10px;color:var(--text);background:var(--bg);font:inherit}
+.location-source{grid-column:1/-1}
+.location-dialog .hint{line-height:1.6;overflow-wrap:anywhere}
+.location-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:16px}
+.location-error{color:var(--danger,#dc8b80);font-size:13px}
+@media(max-width:700px){.library-tools input{flex-basis:100%}}
+@media(max-width:480px){.location-dialog{padding:18px}.location-fields{grid-template-columns:1fr}.library-location-filters select{min-width:0}.project-location{display:block}.address-status{display:block}}
