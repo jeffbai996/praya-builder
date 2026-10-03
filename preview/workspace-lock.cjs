@@ -7,6 +7,7 @@ function startTime(pid){
 }
 
 function isWriter(lock){
+ if(!lock||!Number.isInteger(lock.pid)||lock.pid<=0)return false;
  try{
   process.kill(lock.pid,0);
   if(lock.startTime)return startTime(lock.pid)===lock.startTime;
@@ -22,12 +23,25 @@ function isWriter(lock){
 
 function claimWorkspace(root){
  const file=path.join(root,'service.lock'),nonce=randomUUID();
- if(fs.existsSync(file)){
-  const lock=JSON.parse(fs.readFileSync(file,'utf8'));
+ let existing;
+ try{existing=fs.statSync(file);}catch(error){if(error.code!=='ENOENT')throw error;}
+ if(existing){
+  let lock;
+  // Interrupted writes and unreadable records cannot establish ownership.
+  try{lock=JSON.parse(fs.readFileSync(file,'utf8'));}catch{}
   if(isWriter(lock))throw Error('This workspace already has a running writer');
-  fs.unlinkSync(file);
+  try{
+   const current=fs.statSync(file);
+   if(current.dev!==existing.dev||current.ino!==existing.ino)throw Error('This workspace lock changed during claim');
+   fs.unlinkSync(file);
+  }catch(error){if(error.code!=='ENOENT')throw error;}
  }
- fs.writeFileSync(file,JSON.stringify({pid:process.pid,startTime:startTime(process.pid),nonce}),{flag:'wx',mode:0o600});
+ const temp=path.join(root,`.service.lock.${nonce}.tmp`);
+ try{
+  fs.writeFileSync(temp,JSON.stringify({pid:process.pid,startTime:startTime(process.pid),nonce}),{flag:'wx',mode:0o600});
+  // A hard link publishes complete contents and fails if another claimant won.
+  fs.linkSync(temp,file);
+ }finally{try{fs.unlinkSync(temp);}catch(error){if(error.code!=='ENOENT')throw error;}}
  process.once('exit',()=>{try{if(JSON.parse(fs.readFileSync(file,'utf8')).nonce===nonce)fs.unlinkSync(file);}catch{}});
  // Any in-flight world batch already has durable intent; startup requires reconciliation.
  process.once('SIGTERM',()=>process.exit(0));process.once('SIGINT',()=>process.exit(0));
