@@ -24,3 +24,7 @@ Many existing Praya buildings have empty interiors because building labour/time 
 - A user-selected pilot building and intended room programme when implementation begins.
 
 Current priority remains design experimentation and studio usability. No world changes are required to record or develop this roadmap.
+
+## Priority furnished-house references
+
+The user selected Hilltop and Dragonpeak as heavily weighted positive references for future houses and interiors on 2026-10-04. Use their actual furnished layouts and source blocks when developing fit-outs; see [the residential reference record](reference-hilltop-dragonpeak-2026-10-04.md) and the owning rule in building-style.md.

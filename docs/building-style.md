@@ -163,3 +163,12 @@ User endorsed Terraced Residences R1 as a good direction and requested a slightl
 Do not leave sign rows 1 and 4 empty by default. Frame short notices with balanced dash rules, grounded in the saved-world Microsoft and Please-wait specimens. Preserve actual address/bilingual formats rather than applying framing indiscriminately to historical signs.
 
 Pane and iron-bar corners must be authored with the correct directional connection states, not only visually patched in Studio. Resolve neighboring arms before compiling and verify the same states in schematic exports. Terraced Residences R3 uses the thin-block connection authoring utility; earlier immutable designs are not retroactively modified.
+
+## Priority house and interior references — 2026-10-04
+
+**Direct user direction:** weight the existing Hilltop (`-289 92 -195`) and Dragonpeak (`-328 102 -275`) builds heavily in future house and interior work; the user calls them some of the best examples. Start residential studies from these positive existing references before drawing on assistant-generated house specimens. See the [source record and observed techniques](praya/reference-hilltop-dragonpeak-2026-10-04.md).
+
+- Study their whole buildings, site fit, room layout, circulation, furnishing compositions and distinctive amenities. Preserve inventive combinations of ordinary blocks, custom heads, signs, trapdoors and lighting rather than replacing the detail with generic furniture.
+- Match each adaptation to its brief, site and usable room dimensions. Priority as references does not mean every house needs the same massing, palette, pool, roof lounge or climbing wall.
+- Dragonpeak has the terrain-side climbing-wall treatment identified in the source viewer: small stone buttons act as holds on the natural rock face. Retain the exact source and evidence boundary when studying it; rendered visibility does not prove in-game functionality or safety.
+- User approval of the existing references does not approve every material or lighting choice in their Blender/browser render derivatives. Use the saved block states and furnishings as the architectural evidence.

@@ -4,6 +4,7 @@ Maintained from 2026-09-08 at the user's request. This directory is the single e
 
 ## Read first
 
+- [Priority house and interior references, October 4](reference-hilltop-dragonpeak-2026-10-04.md): user-selected Hilltop and Dragonpeak, source surveys and distinctive interior/site features.
 - [Transport Department Oakville location, September 16](reference-oakville-transport-department-2026-09-16.md): user-confirmed local Transport Department/DMV function, original screenshot, facade observations and evidence limits.
 - [Oakville / BCPL Oakville branch reference, September 11](reference-oakville-bcpl-2026-09-11.md): user-confirmed branch identification, original screenshot, BCPL logo evidence and architectural observations.
 

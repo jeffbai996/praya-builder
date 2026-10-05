@@ -56,3 +56,7 @@ Future canon questions should consult the relevant GOV.PRAYA page before asking 
 ## S9 — saved-world sign catalogue, 2026-09-08
 
 Read-only extraction of 176,441 chunks across the three saved Praya world directories: 24,069 sign blocks, 20,115 nonblank faces, no decode errors. See sign-formats.md for scope limits and exact examples. Resolves the earlier provisional Commonwealth address plaque transcription; historical sign content is not automatically promoted to current canon.
+
+## S16 — Hilltop and Dragonpeak residential reference weighting, 2026-10-04
+
+Direct user selection and priority designation in the Blender house-tour task, with read-only saved-world block/entity surveys. See [the dated reference record](reference-hilltop-dragonpeak-2026-10-04.md) for locators, project paths, observed sign identity, climbing-wall candidate and render/validation limits.
