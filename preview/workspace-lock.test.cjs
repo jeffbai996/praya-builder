@@ -9,10 +9,10 @@ const worker=`
  const fs=require('node:fs'),path=require('node:path');
  const root=process.argv[1],file=path.join(root,'service.lock');
  const {claimWorkspace}=require(process.argv[2]);
- if(process.argv[3]==='unreadable'){
-  const read=fs.readFileSync;
+ if(process.argv[3].startsWith('unreadable:')){
+  const read=fs.readFileSync,code=process.argv[3].slice('unreadable:'.length);
   fs.readFileSync=function(name,...args){
-   if(name===file){fs.readFileSync=read;throw Object.assign(Error('Unreadable lock'),{code:'EACCES'});}
+   if(name===file){fs.readFileSync=read;throw Object.assign(Error('Unreadable lock'),{code});}
    return read.call(this,name,...args);
   };
  }
@@ -75,7 +75,6 @@ for(const [name,contents,mode] of [
  ['an invalid ownership record','null'],
  ['a valid stale lock',JSON.stringify({pid:process.pid,startTime:'stale-process-instance',nonce:'old'})],
  ['a lock owned by a dead process',JSON.stringify({pid:2147483647,startTime:'old',nonce:'old'})],
- ['an unreadable lock','{}','unreadable'],
 ])test(`recovers ${name}`,{timeout:10000},async t=>{
  const {root,file}=setup(t,contents),child=await contender(t,root,mode);
  const result=await claim(child);assert.equal(result.claimed,true,result.error);
@@ -109,6 +108,17 @@ test('preserves a legacy lock owned by a live writer',{timeout:10000},async t=>{
  fs.writeFileSync(file,original);
  const other=await contender(t,root),result=await claim(other);
  assert.equal(result.claimed,false);assert.match(result.error,/already has a running writer/);
+ assert.equal(fs.readFileSync(file,'utf8'),original);
+});
+
+// A read error says nothing about ownership: the lock may belong to a live
+// writer, so the claim must refuse rather than replace it.
+for(const code of ['EACCES','EIO'])test(`refuses a lock it cannot read (${code})`,{timeout:10000},async t=>{
+ const {root,file}=setup(t),owner=await contender(t,root);
+ assert.equal((await claim(owner)).claimed,true);
+ const original=fs.readFileSync(file,'utf8'),other=await contender(t,root,`unreadable:${code}`);
+ const result=await claim(other);
+ assert.equal(result.claimed,false);assert.equal(result.code,code);
  assert.equal(fs.readFileSync(file,'utf8'),original);
 });
 

@@ -26,9 +26,11 @@ function claimWorkspace(root){
  let existing;
  try{existing=fs.statSync(file);}catch(error){if(error.code!=='ENOENT')throw error;}
  if(existing){
-  let lock;
-  // Interrupted writes and unreadable records cannot establish ownership.
-  try{lock=JSON.parse(fs.readFileSync(file,'utf8'));}catch{}
+  // An empty or malformed record cannot establish ownership. A read that
+  // fails says nothing about the owner, so it refuses rather than replaces.
+  let text,lock;
+  try{text=fs.readFileSync(file,'utf8');}catch(error){if(error.code!=='ENOENT')throw error;}
+  if(text!==undefined){try{lock=JSON.parse(text);}catch{}}
   if(isWriter(lock))throw Error('This workspace already has a running writer');
   try{
    const current=fs.statSync(file);
